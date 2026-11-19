@@ -11,6 +11,46 @@ An illustrated dinosaur series in one shared style: cel-shaded vector drawings w
 
 `project/` holds the poster and rig-sheet boards (`*.dc.html`) and their layout (`canvas.json`), including `Group.dc.html`, a poster of all four at their real lengths.
 
+## Roadmap
+
+Each round reuses the rigs and toolkit built before it, so the order runs from the easiest additions to the biggest new techniques.
+
+```mermaid
+timeline
+    title Dino series roadmap
+    section Done
+        Series start : T. rex
+        First set : Triceratops : Stegosaurus : Titanosaur : Group poster to scale
+    section Next
+        Round 1, Hell Creek set : Ankylosaurus : Edmontosaurus : Pachycephalosaurus
+        Round 2, Morrison set : Allosaurus : Diplodocus
+    section Later
+        Round 3, new techniques : Spinosaurus : Parasaurolophus : Velociraptor : Therizinosaurus
+        Round 4, beyond dinosaurs : Pteranodon : Mosasaurus
+        Capstone : Deep-time poster
+```
+
+| Round | Animal | Signature move or focus | Effort |
+|---|---|---|---|
+| Done | T. rex | Roar | Done |
+| Done | Triceratops, Stegosaurus, titanosaur, group poster | Charge, tail swing, neck-up call; all four to scale | Done |
+| 1. Hell Creek set | Ankylosaurus | Tail-club strike | Low to medium |
+| | Edmontosaurus | Rears up to browse | |
+| | Pachycephalosaurus | Dome head-butt | |
+| | Floodplain scene poster | With the T. rex and Triceratops | |
+| 2. Morrison set | Allosaurus | Lunge and bite (reuses the T. rex rig) | Low |
+| | Diplodocus | Whip-tail crack (reuses the titanosaur rig) | |
+| | Jurassic scene poster | With the Stegosaurus | |
+| 3. New techniques | Spinosaurus | Sail, swimming pose | Medium to high |
+| | Parasaurolophus | Crest call with sound rings | |
+| | Velociraptor | Feathers, pounce | |
+| | Therizinosaurus | Giant claws, feathers | |
+| 4. Beyond dinosaurs | Pteranodon | Flight and glide cycle | High |
+| | Mosasaurus | Underwater swim loop | |
+| Capstone | Deep-time poster | Every species on one timeline, Jurassic to end-Cretaceous | Medium |
+
+Pteranodon and Mosasaurus are prehistoric reptiles, not dinosaurs, and their posters should say so.
+
 ## Using the drawings
 
 Every moving part is its own group with an id. Each group sits inside a wrapper whose origin is the joint, so rotating or scaling with `transform-origin: 0 0` pivots in the right place. In GSAP, use `svgOrigin: "0 0"`.

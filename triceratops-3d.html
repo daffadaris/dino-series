@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Triceratops 3D model</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/BufferGeometryUtils.js" crossorigin>
+<style>
+  html, body { margin: 0; height: 100%; background: #CBD9D0; overflow: hidden; font-family: 'Public Sans', system-ui, sans-serif; color: #2B1E16; }
+  #stage { position: fixed; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  #stage:active { cursor: grabbing; }
+  .panel { position: fixed; left: 24px; top: 20px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+  .panel h1 { margin: 0; font-family: 'Big Shoulders Display', 'Public Sans', sans-serif; font-weight: 800; font-size: 64px; line-height: 0.9; }
+  .panel p { margin: 0; font-size: 15px; line-height: 1.45; max-width: 34ch; }
+  .controls { position: fixed; left: 24px; bottom: 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  button { font: 600 16px 'Public Sans', system-ui, sans-serif; color: #F4ECE0; background: #2B1E16; border: 0; border-radius: 10px; padding: 12px 20px; min-height: 44px; cursor: pointer; }
+  button:hover { background: #4A3426; }
+  button:focus-visible { outline: 3px solid #2B1E16; outline-offset: 3px; }
+  button.quiet { color: #2B1E16; background: rgba(255,255,255,0.55); }
+  button.quiet:hover { background: rgba(255,255,255,0.8); }
+  .status { position: fixed; inset: 0; display: grid; place-items: center; font-size: 16px; pointer-events: none; }
+  @media (max-width: 600px) { .panel h1 { font-size: 44px; } .panel p { font-size: 14px; } }
+</style>
+</head>
+<body>
+<canvas id="stage" aria-label="Interactive 3D model of a Triceratops. Drag to orbit, scroll or pinch to zoom, click the dinosaur to make it charge."></canvas>
+<div class="panel">
+  <h1>Triceratops</h1>
+  <p>Drag to turn it around, scroll or pinch to zoom, and click the dinosaur to make it charge.</p>
+</div>
+<div class="controls">
+  <button type="button" id="roar">Charge</button>
+  <button type="button" id="reset" class="quiet">Reset view</button>
+</div>
+<div class="status" id="status">Loading the model…</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+{ const f = document.createElement('link'); f.rel = 'stylesheet';
+  f.href = 'https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=Public+Sans:wght@400;600&display=swap';
+  document.head.appendChild(f); }
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+// ---------------------------------------------------------------- palette
+const C = {
+  skin: new THREE.Color('#7A8450'), belly: new THREE.Color('#DCCFA6'), outline: '#2A1C22',
+  frill: '#C27A48', horn: '#E6D9BC', beak: '#4A3A30', claw: '#3A2A2C', eye: '#E0B04A',
+  sky: '#CBD9D0', ground: '#9AA864', hill: '#A9B596', hill2: '#93A27A', river: '#9DBFC6'
+};
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------------------------------------------------------------- renderer, scene, camera
+const canvas = document.getElementById('stage');
+const MAX_PR = Math.min(devicePixelRatio, 1.5);
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: devicePixelRatio < 2, powerPreference: 'high-performance' });
+let pixelRatio = MAX_PR; renderer.setPixelRatio(pixelRatio);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.shadowMap.autoUpdate = false;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(C.sky);
+scene.fog = new THREE.Fog(C.sky, 30, 75);
+const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 200);
+const HOME = { pos: new THREE.Vector3(3.4, 3.1, 16), target: new THREE.Vector3(0, 1.6, 0) };
+camera.position.copy(HOME.pos);
+const controls = new OrbitControls(camera, canvas);
+controls.target.copy(HOME.target);
+controls.enableDamping = true;
+controls.minDistance = 5; controls.maxDistance = 32;
+controls.maxPolarAngle = Math.PI * 0.49;
+controls.enablePan = false;
+
+scene.add(new THREE.HemisphereLight('#E8EFF2', '#A07A50', 1.4));
+const sun = new THREE.DirectionalLight('#FFF1DC', 2.2);
+sun.position.set(6, 14, 9);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+Object.assign(sun.shadow.camera, { left: -8, right: 8, top: 6, bottom: -3, near: 4, far: 30 });
+sun.shadow.bias = -0.0008;
+scene.add(sun);
+
+// ---------------------------------------------------------------- materials
+const ramp = new THREE.DataTexture(new Uint8Array([90, 170, 230, 255]), 4, 1, THREE.RedFormat);
+ramp.minFilter = ramp.magFilter = THREE.NearestFilter; ramp.needsUpdate = true;
+const toon = (color, vc = false) => new THREE.MeshToonMaterial({ color, gradientMap: ramp, vertexColors: vc });
+const skinMat = toon(C.skin);
+skinMat.onBeforeCompile = (sh) => {
+  sh.uniforms.belly = { value: C.belly };
+  sh.vertexShader = sh.vertexShader
+    .replace('#include <common>', '#include <common>\nattribute vec3 restPos; attribute vec3 restNrm; attribute vec2 paint; varying vec3 vRest; varying vec3 vRestN; varying vec2 vPaint;')
+    .replace('#include <begin_vertex>', '#include <begin_vertex>\nvRest = restPos; vRestN = restNrm; vPaint = paint;');
+  sh.fragmentShader = sh.fragmentShader
+    .replace('#include <common>', `#include <common>
+uniform vec3 belly; varying vec3 vRest; varying vec3 vRestN; varying vec2 vPaint;
+float mottle(vec3 p){ return sin(p.x*3.4 + sin(p.z*5.3))*sin(p.y*4.3 + p.x*1.0) + 0.5*sin(p.x*8.5 + p.y*6.6 + p.z*3.5); }`)
+    .replace('vec4 diffuseColor = vec4( diffuse, opacity );', `
+vec3 base = diffuse;
+float ny = normalize(vRestN).y;
+float bellyAmt = smoothstep(-0.02, -0.38, ny) * vPaint.y;
+base = mix(base, belly, bellyAmt);
+float up = smoothstep(-0.05, 0.35, ny);
+float band = sin(vRest.x * 3.0 + 0.4 * sin(vRest.y * 2.0));
+float edge = 1.0 - (0.45 + 0.35 * up) * 0.9;
+float aa = fwidth(band) * 1.2;
+float stripe = vPaint.x * up * smoothstep(edge - aa, edge + aa, band);
+base *= mix(1.0, 0.62, stripe);
+float m = mottle(vRest * 1.6);
+base *= mix(1.0, 0.86, smoothstep(0.9, 1.0, m));
+base = mix(base, base * 1.12, smoothstep(-1.05, -1.15, m) * 0.6);
+vec4 diffuseColor = vec4( base, opacity );`);
+};
+const outlineMat = new THREE.ShaderMaterial({
+  uniforms: { thickness: { value: 0.035 }, color: { value: new THREE.Color(C.outline) } },
+  vertexShader: `uniform float thickness; void main(){ vec3 p = position + normal * thickness; gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }`,
+  fragmentShader: `uniform vec3 color; void main(){ gl_FragColor = vec4(color, 1.0); }`,
+  side: THREE.BackSide
+});
+
+const skinMeshes = [];
+function mesh(geo, mat = skinMat, { outline = true, kind = 'body', stripes = false, shadow = true } = {}) {
+  const m = new THREE.Mesh(geo, mat);
+  m.castShadow = shadow; m.receiveShadow = shadow;
+  if (outline) { const o = new THREE.Mesh(geo, outlineMat); o.raycast = () => {}; m.add(o); }
+  if (mat === skinMat) skinMeshes.push({ m, kind, stripes });
+  return m;
+}
+function smooth(geo) {
+  for (const k of ['uv', 'normal']) if (geo.getAttribute(k)) geo.deleteAttribute(k);
+  geo = mergeVertices(geo, 1e-4);
+  geo.computeVertexNormals();
+  return geo;
+}
+const ellipsoid = (rx, ry, rz, w = 44, h = 30) => new THREE.SphereGeometry(1, w, h).scale(rx, ry, rz);
+
+// a tapered limb between two points
+const UP = new THREE.Vector3(0, 1, 0);
+function limb(a, b, r1, r2, opts) {
+  const dir = new THREE.Vector3().subVectors(b, a); const len = dir.length();
+  const geo = new THREE.CylinderGeometry(r2, r1, len, 18, 3, false);
+  const m = mesh(geo, skinMat, opts);
+  m.position.copy(a).addScaledVector(dir, 0.5);
+  m.quaternion.setFromUnitVectors(UP, dir.normalize());
+  return m;
+}
+const ball = (p, r, opts) => { const m = mesh(new THREE.SphereGeometry(r, 18, 12), skinMat, opts); m.position.copy(p); return m; };
+
+// SVG path (M, L, C, Z) to a THREE.Shape; x right, y flipped up
+function shapeFromSvg(d, s, ox, oy) {
+  const t = d.match(/[MLCZ]|-?\d*\.?\d+/g); const shape = new THREE.Shape(); let i = 0, cmd = 'M';
+  const P = () => { const x = (+t[i++] - ox) * s, y = -(+t[i++] - oy) * s; return [x, y]; };
+  while (i < t.length) {
+    if (/[MLCZ]/.test(t[i])) { cmd = t[i++]; if (cmd === 'Z') continue; }
+    if (cmd === 'M') { shape.moveTo(...P()); cmd = 'L'; }
+    else if (cmd === 'L') shape.lineTo(...P());
+    else if (cmd === 'C') { const a = P(), b = P(), c = P(); shape.bezierCurveTo(...a, ...b, ...c); }
+  }
+  return shape;
+}
+// extrude a side profile, then taper its width toward the snout
+function profile(d, depth, taper, { s, ox, oy, x0, x1 }) {
+  let geo = new THREE.ExtrudeGeometry(shapeFromSvg(d, s, ox, oy), { depth, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.06, bevelSegments: 3, curveSegments: 20 });
+  geo.translate(0, 0, -depth / 2);
+  const p = geo.attributes.position;
+  for (let k = 0; k < p.count; k++) {
+    const u = THREE.MathUtils.clamp((p.getX(k) - x0) / (x1 - x0), 0, 1);
+    p.setZ(k, p.getZ(k) * (1 - taper * u * u));
+  }
+  return smooth(geo);
+}
+
+// ---------------------------------------------------------------- the animal
+const rex = new THREE.Group(); scene.add(rex);                    // whole animal (lunges on the charge)
+const hips = new THREE.Group(); hips.position.set(0, 2.26, 0); rex.add(hips);
+const trunk = new THREE.Group(); hips.add(trunk);                 // breathes
+
+// barrel body
+const hipMass = mesh(ellipsoid(1.45, 1.15, 0.92), skinMat, { stripes: true }); hipMass.position.set(-0.6, 0.02, 0); trunk.add(hipMass);
+const belly = mesh(ellipsoid(2.3, 1.25, 1.04), skinMat, { stripes: true }); belly.position.set(0.5, -0.22, 0); trunk.add(belly);
+const chest = mesh(ellipsoid(1.2, 1.1, 0.92), skinMat, { stripes: true }); chest.position.set(1.95, -0.32, 0); chest.rotation.z = 0.12; trunk.add(chest);
+const neck = mesh(ellipsoid(0.75, 0.78, 0.7), skinMat, { stripes: true }); neck.position.set(2.65, -0.1, 0); trunk.add(neck);
+
+// head: skull, jaw and beak extruded from the same outlines as the 2D drawing
+const headPivot = new THREE.Group(); headPivot.position.set(2.6, 0.08, 0); trunk.add(headPivot);
+const head = new THREE.Group(); headPivot.add(head);
+const HS = { s: 0.0094, ox: 700, oy: 300, x0: 0, x1: 2.5 };
+const SKULL = 'M700 252 C740 236 800 238 842 252 C882 266 912 288 932 308 L952 332 C958 340 954 350 944 352 L902 354 C870 362 830 366 790 364 C750 362 716 346 702 326 C692 310 690 272 700 252 Z', JAWP = 'M786 346 C834 352 892 352 938 344 C950 344 956 352 948 364 C922 386 868 396 818 392 C794 390 780 372 782 356 Z', BEAK = 'M926 302 C946 312 962 328 964 344 C964 356 954 362 942 360 L918 352 C930 338 932 318 926 302 Z', LBEAK = 'M916 352 C934 348 948 348 952 356 C948 368 938 378 922 380 Z';
+const toothMat = toon(C.horn), clawMat = toon(C.claw), hornMat = toon(C.horn), beakMat = toon(C.beak), frillMat = toon(C.frill);
+head.add(mesh(profile(SKULL, 1.05, 0.55, HS), skinMat, { kind: 'head' }));
+head.add(mesh(profile(JAWP, 0.84, 0.55, HS), skinMat, { kind: 'head' }));
+head.add(mesh(profile(BEAK, 0.34, 0.3, HS), beakMat, {}));
+head.add(mesh(profile(LBEAK, 0.3, 0.3, HS), beakMat, {}));
+const headX = x => (x - HS.ox) * HS.s, headY = y => -(y - HS.oy) * HS.s;
+const halfW = (X, depth) => (depth / 2) * (1 - 0.55 * Math.min(Math.max(X / 2.5, 0), 1) ** 2) + 0.08;
+
+function batcher(mat) {
+  const parts = [];
+  return { add(m) { m.updateMatrix(); parts.push(m.geometry.clone().applyMatrix4(m.matrix)); },
+           flush(parent, opts) { if (parts.length) { const m = mesh(mergeGeometries(parts), mat, opts || { outline: false, shadow: false }); parent.add(m); return m; } } };
+}
+// a cone pointing from `base` along `dir`
+function cone(base, dir, r, len, mat, opts) {
+  const g = new THREE.ConeGeometry(r, len, 14).translate(0, len / 2, 0);
+  const m = mesh(g, mat, opts || {}); m.position.copy(base); m.quaternion.setFromUnitVectors(UP, dir.clone().normalize()); return m;
+}
+
+// frill: a broad, slightly cupped shield tilted back, with a skin-coloured rim and bumps
+const frillG = new THREE.CylinderGeometry(1.0, 1.0, 0.09, 48, 1).rotateZ(Math.PI / 2).scale(1, 0.95, 1.12);
+{ const p = frillG.attributes.position; for (let k = 0; k < p.count; k++) { const y = p.getY(k), z = p.getZ(k); p.setX(k, p.getX(k) + 0.12 * y * y + 0.62 * z * z); } frillG.computeVertexNormals(); }
+const frill = new THREE.Group(); frill.position.set(-0.05, 0.7, 0); frill.rotation.z = 0.85; frill.scale.setScalar(1.12); head.add(frill);
+frill.add(mesh(frillG, frillMat, {}));
+const rimG = new THREE.TorusGeometry(1.0, 0.07, 10, 64).rotateY(Math.PI / 2).scale(1, 0.95, 1.12);
+{ const p = rimG.attributes.position; for (let k = 0; k < p.count; k++) { const y = p.getY(k), z = p.getZ(k); p.setX(k, p.getX(k) + 0.12 * y * y + 0.62 * z * z); } rimG.computeVertexNormals(); }
+frill.add(mesh(rimG, skinMat, { kind: 'head' }));
+const bumps = batcher(skinMat);
+for (let k = 0; k < 22; k++) {
+  const a = (k / 22) * Math.PI * 2; if (Math.sin(a) < -0.55) continue;     // none where the frill meets the neck
+  const y = Math.sin(a) * 0.95 * 1.04, z = Math.cos(a) * 1.12 * 1.04, x = 0.12 * y * y + 0.62 * z * z;
+  const b = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.16, 8).translate(0, 0.08, 0), skinMat);
+  b.position.set(x, y, z); b.quaternion.setFromUnitVectors(UP, new THREE.Vector3(0, Math.sin(a), Math.cos(a))); bumps.add(b);
+}
+bumps.flush(frill, { kind: 'head' });
+
+// horns, eyes, cheek points
+const BROW = new THREE.Vector3(0.62, 0.42, 0);
+for (const side of [1, -1]) {
+  head.add(cone(new THREE.Vector3(0.78, 0.5, side * 0.28), new THREE.Vector3(0.8, 0.62, side * 0.1), 0.13, 1.25, hornMat));
+  const ex = headX(772), ey = headY(284), ez = side * (halfW(ex, 1.05) - 0.03);
+  const eye = new THREE.Group(); eye.position.set(ex, ey, ez); head.add(eye); eye.userData.isEye = true;
+  eye.add(new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 10), toon(C.eye)));
+  const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.033, 10, 8), toon('#15110D')); pupil.position.z = side * 0.04; eye.add(pupil);
+  const brow = mesh(ellipsoid(0.18, 0.06, 0.08, 14, 8), skinMat, { kind: 'head', shadow: false }); brow.position.set(ex + 0.01, ey + 0.08, ez * 0.95); head.add(brow);
+  head.add(cone(new THREE.Vector3(0.42, -0.62, side * 0.44), new THREE.Vector3(-0.3, -0.8, side * 0.5), 0.08, 0.26, skinMat, { kind: 'head' }));
+}
+head.add(cone(new THREE.Vector3(headX(884), headY(266), 0), new THREE.Vector3(0.35, 1, 0), 0.1, 0.38, hornMat));
+const eyes = []; head.traverse(o => { if (o.userData.isEye) eyes.push(o); });
+
+// legs: thick hind pillars, shorter front legs; hoof-like nails
+const legGroups = [];
+function hoofs(g, at, side) {
+  const nails = batcher(clawMat);
+  for (const dz of [-0.16, 0, 0.16]) { const n = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8).scale(1.1, 0.7, 0.9), clawMat); n.position.set(at.x + 0.3, at.y - 0.06, dz); nails.add(n); }
+  nails.flush(g);
+}
+function hindLeg(side, dx) {
+  const g = new THREE.Group(); legGroups.push(g); g.position.set(dx, 0, side * 0.72); hips.add(g);
+  const P = (x, y) => new THREE.Vector3(x, y, 0);
+  const thigh = mesh(ellipsoid(0.66, 1.0, 0.52), skinMat, { kind: 'leg' }); thigh.position.set(-0.5, -0.72, 0); thigh.rotation.z = -0.1; g.add(thigh);
+  const knee = P(-0.42, -1.42), ankle = P(-0.52, -2.0), foot = P(-0.42, -2.12);
+  g.add(limb(knee, ankle, 0.34, 0.27, { kind: 'leg' }), ball(knee, 0.34, { kind: 'leg' }));
+  const f = mesh(ellipsoid(0.42, 0.13, 0.34, 20, 12), skinMat, { kind: 'leg' }); f.position.copy(foot); g.add(f);
+  hoofs(g, foot, side);
+}
+function frontLeg(side, dx) {
+  const g = new THREE.Group(); legGroups.push(g); g.position.set(dx, 0, side * 0.74); hips.add(g);
+  const P = (x, y, z = 0) => new THREE.Vector3(x, y, z);
+  const shoulder = P(1.95, -0.55), elbow = P(1.78, -1.32, side * 0.14), wrist = P(1.92, -1.98, side * 0.06), foot = P(1.98, -2.12);
+  const upper = mesh(ellipsoid(0.42, 0.62, 0.4), skinMat, { kind: 'leg' }); upper.position.set(1.9, -0.88, side * 0.05); upper.rotation.z = 0.2; g.add(upper);
+  g.add(limb(elbow, wrist, 0.25, 0.2, { kind: 'leg' }), ball(elbow, 0.26, { kind: 'leg' }));
+  const f = mesh(ellipsoid(0.36, 0.12, 0.3, 20, 12), skinMat, { kind: 'leg' }); f.position.copy(foot); g.add(f);
+  hoofs(g, foot, side);
+}
+hindLeg(1, 0.1); hindLeg(-1, -0.3); frontLeg(1, 0.05); frontLeg(-1, -0.25);
+
+// tail: one continuous tapered mesh, bent each frame along a swaying centreline
+const TL = 3.9, RINGS = 48, RAD = 24;
+const tailR = u => 0.62 * Math.pow(1 - u, 1.1) + 0.03;
+const tailGeo = new THREE.BufferGeometry();
+const tPos = [], tOff = [], tRing = [], tIdx = [];
+for (let i = 0; i <= RINGS; i++) {
+  const u = i / RINGS, r = tailR(u);
+  for (let k = 0; k < RAD; k++) {
+    const a = (k / RAD) * Math.PI * 2, oy = Math.cos(a) * r * 1.1, oz = Math.sin(a) * r * 0.85;
+    tPos.push(-u * TL, oy, oz); tOff.push(0, oy, oz); tRing.push(i);
+  }
+}
+const tipIndex = tPos.length / 3; tPos.push(-TL - 0.05, 0, 0); tOff.push(0, 0, 0); tRing.push(RINGS + 1);
+for (let i = 0; i < RINGS; i++) for (let k = 0; k < RAD; k++) {
+  const a = i * RAD + k, b = i * RAD + (k + 1) % RAD, c = a + RAD, d = b + RAD;
+  tIdx.push(a, c, b, b, c, d);
+}
+for (let k = 0; k < RAD; k++) tIdx.push(RINGS * RAD + k, tipIndex, RINGS * RAD + (k + 1) % RAD);
+tailGeo.setIndex(tIdx);
+tailGeo.setAttribute('position', new THREE.Float32BufferAttribute(tPos, 3));
+tailGeo.computeVertexNormals();
+const tailRestN = tailGeo.attributes.normal.array.slice();
+const tail = mesh(tailGeo, skinMat, { stripes: true, kind: 'tail' });
+tail.position.set(-1.3, -0.12, 0); tail.frustumCulled = false; tail.children[0].frustumCulled = false; trunk.add(tail);
+const ringM = Array.from({ length: RINGS + 2 }, () => new THREE.Matrix4()), ringC = Array.from({ length: RINGS + 2 }, () => new THREE.Vector3());
+const mz = new THREE.Matrix4(), my = new THREE.Matrix4(), tv = new THREE.Vector3(), tn = new THREE.Vector3();
+const tailC = new THREE.Vector3();
+function bendTail(t) {
+  const step = TL / RINGS; const c = tailC.set(0, 0, 0);
+  for (let i = 0; i <= RINGS + 1; i++) {
+    const u = Math.min(i / RINGS, 1);
+    const pitch = 0.05 + 0.12 * u * u + (reduceMotion ? 0 : 0.03 * Math.sin(t * 0.9 - u * 2.5) * u);
+    const yaw = reduceMotion ? 0 : 0.26 * Math.sin(t * 1.1 - u * 2.6) * u * u;
+    ringM[i].multiplyMatrices(my.makeRotationY(yaw), mz.makeRotationZ(pitch));
+    ringC[i].copy(c);
+    if (i <= RINGS) c.add(tv.set(-step, 0, 0).applyMatrix4(ringM[i]));
+  }
+  const P = tailGeo.attributes.position.array, N = tailGeo.attributes.normal.array;
+  for (let v = 0; v < tRing.length; v++) {
+    const i = tRing[v];
+    if (i > RINGS) { tv.set(-0.05, 0, 0).applyMatrix4(ringM[RINGS]).add(ringC[RINGS + 1]); }
+    else tv.set(tOff[v * 3], tOff[v * 3 + 1], tOff[v * 3 + 2]).applyMatrix4(ringM[i]).add(ringC[i]);
+    P[v * 3] = tv.x; P[v * 3 + 1] = tv.y; P[v * 3 + 2] = tv.z;
+    tn.set(tailRestN[v * 3], tailRestN[v * 3 + 1], tailRestN[v * 3 + 2]).applyMatrix4(ringM[Math.min(i, RINGS)]);
+    N[v * 3] = tn.x; N[v * 3 + 1] = tn.y; N[v * 3 + 2] = tn.z;
+  }
+  tailGeo.attributes.position.needsUpdate = true; tailGeo.attributes.normal.needsUpdate = true;
+}
+bendTail(0);
+
+// ---------------------------------------------------------------- paint (rest-pose coordinates, so markings stick to the skin)
+rex.updateMatrixWorld(true);
+const v = new THREE.Vector3(), n = new THREE.Vector3(), nm = new THREE.Matrix3();
+for (const { m, stripes, kind } of skinMeshes) {
+  const g = m.geometry, p = g.attributes.position, no = g.attributes.normal;
+  const rp = new Float32Array(p.count * 3), rn = new Float32Array(p.count * 3), pa = new Float32Array(p.count * 2);
+  nm.getNormalMatrix(m.matrixWorld);
+  for (let k = 0; k < p.count; k++) {
+    v.fromBufferAttribute(p, k).applyMatrix4(m.matrixWorld);
+    n.fromBufferAttribute(no, k).applyMatrix3(nm).normalize();
+    rp.set([v.x, v.y, v.z], k * 3); rn.set([n.x, n.y, n.z], k * 3);
+    pa.set([stripes ? 1 : 0, kind === 'leg' ? 0.35 : 1], k * 2);
+  }
+  g.setAttribute('restPos', new THREE.BufferAttribute(rp, 3));
+  g.setAttribute('restNrm', new THREE.BufferAttribute(rn, 3));
+  g.setAttribute('paint', new THREE.BufferAttribute(pa, 2));
+}
+
+// ---------------------------------------------------------------- merge static skin pieces: one mesh + one outline per moving group
+function mergeSkin(group, exclude = []) {
+  const ms = group.children.filter(o => o.isMesh && o.material === skinMat && !exclude.includes(o));
+  if (ms.length < 2) return;
+  const geos = ms.map(m => { m.updateMatrix(); const g = m.geometry.clone(); if (g.getAttribute('uv')) g.deleteAttribute('uv'); return g.applyMatrix4(m.matrix); });
+  const merged = mergeGeometries(geos);
+  if (!merged) return;                       // attribute mismatch: keep the separate pieces
+  ms.forEach(m => group.remove(m));
+  group.add(mesh(merged, skinMat, { shadow: ms.some(m => m.castShadow) }));
+}
+legGroups.forEach(g => mergeSkin(g));
+mergeSkin(trunk, [tail]);
+mergeSkin(head);
+
+// ---------------------------------------------------------------- scenery: Hell Creek floodplain
+const ground = new THREE.Mesh(new THREE.CircleGeometry(70, 64).rotateX(-Math.PI / 2), toon(C.ground)); ground.receiveShadow = true; scene.add(ground);
+for (const [r, w, h, c] of [[11, 1.2, 0.04, '#8C9A58'], [15, 1.6, 0.03, '#A7B26E'], [20, 1.4, 0.02, '#7F8D4E']]) {
+  const ring = new THREE.Mesh(new THREE.RingGeometry(r, r + w, 64).rotateX(-Math.PI / 2), toon(c)); ring.position.y = h; ring.receiveShadow = true; scene.add(ring);
+}
+const river = new THREE.Mesh(new THREE.PlaneGeometry(140, 3.2).rotateX(-Math.PI / 2), toon(C.river)); river.position.set(0, 0.05, -24); scene.add(river);
+for (const [x, z, rx, ry, c] of [[-34, -46, 22, 6, C.hill], [4, -54, 26, 8, C.hill], [36, -44, 18, 5, C.hill], [-14, -38, 14, 4, C.hill2], [22, -36, 12, 3.5, C.hill2]]) {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2).scale(rx, ry, 8), toon(c)); m.position.set(x, 0, z); scene.add(m);
+}
+
+// ---------------------------------------------------------------- motion
+const clock = new THREE.Clock();
+let roarStart = -10, nextBlink = 2.5;
+const ease = t => t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+const backOut = t => { const c = 1.9; return 1 + (c + 1) * (t - 1) ** 3 + c * (t - 1) ** 2; };
+function chargeCurve(t) {          // lunge in metres, dip 0..1 (negative = lift before the charge)
+  if (t < 0 || t > 1.6) return { lunge: 0, dip: 0 };
+  if (t < 0.28) { const u = ease(t / 0.28); return { lunge: -0.25 * u, dip: -0.5 * u }; }
+  if (t < 0.68) { const u = backOut((t - 0.28) / 0.4); return { lunge: -0.25 + 0.85 * u, dip: -0.5 + 1.5 * u }; }
+  if (t < 1.1) return { lunge: 0.6, dip: 1 - 0.04 * Math.abs(Math.sin((t - 0.68) * 30)) };
+  const u = ease((t - 1.1) / 0.5); return { lunge: 0.6 * (1 - u), dip: 1 - u };
+}
+function roar() { roarStart = clock.getElapsedTime(); }
+document.getElementById('roar').addEventListener('click', roar);
+document.getElementById('reset').addEventListener('click', () => { camera.position.copy(HOME.pos); controls.target.copy(HOME.target); controls.update(); });
+
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(); let down = null;
+canvas.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY }; });
+canvas.addEventListener('pointerup', e => {
+  if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) return;
+  const r = canvas.getBoundingClientRect();
+  ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ptr, camera);
+  if (ray.intersectObject(rex, true).length) roar();
+});
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h;
+  camera.position.z = HOME.pos.z * Math.max(1, 1.35 / (w / h)); // keep the whole animal in frame on tall screens
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+const headBase = headPivot.rotation.z;
+let frame = 0, acc = 0, lastNow = performance.now();
+function adapt() {                       // keep frames near 60 fps by trading resolution
+  const now = performance.now(), dt = now - lastNow; lastNow = now; acc += dt;
+  if (++frame % 60) return;
+  const avg = acc / 60; acc = 0;
+  const next = avg > 22 ? Math.max(0.75, pixelRatio - 0.25) : avg < 14 ? Math.min(MAX_PR, pixelRatio + 0.25) : pixelRatio;
+  if (next !== pixelRatio) { pixelRatio = next; renderer.setPixelRatio(pixelRatio); resize(); }
+}
+function loop() {
+  if (document.hidden) return;
+  adapt();
+  renderer.shadowMap.needsUpdate = frame % 2 === 0;
+  const t = clock.getElapsedTime();
+  if (!reduceMotion) {
+    trunk.scale.set(1, 1 + 0.012 * Math.sin(t * 2.0), 1 + 0.008 * Math.sin(t * 2.0));
+    bendTail(t);
+    headPivot.rotation.y = 0.06 * Math.sin(t * 0.35);
+    if (t > nextBlink) { const k = t - nextBlink; const s = k < 0.07 ? 1 - k / 0.07 : k < 0.16 ? (k - 0.07) / 0.09 : 1; eyes.forEach(e => e.scale.y = Math.max(0.08, s)); if (k > 0.16) nextBlink = t + 3 + Math.random() * 3; }
+  }
+  const { lunge, dip } = chargeCurve(t - roarStart);
+  rex.position.x = lunge;
+  headPivot.rotation.z = headBase - 0.22 * dip;
+  controls.update();
+  renderer.render(scene, camera);
+}
+// compile every shader before the first frame, off the main thread where the browser supports it
+function start() { renderer.setAnimationLoop(loop); document.getElementById('status').remove(); }
+renderer.shadowMap.needsUpdate = true;
+(renderer.compileAsync ? renderer.compileAsync(scene, camera) : Promise.resolve()).catch(() => {}).then(start);
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+__pycache__/
+shots/*
+!shots/.gitkeep
+*.fonts.html
+assets/

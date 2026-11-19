@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stegosaurus 3D model</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/BufferGeometryUtils.js" crossorigin>
+<style>
+  html, body { margin: 0; height: 100%; background: #D8DED8; overflow: hidden; font-family: 'Public Sans', system-ui, sans-serif; color: #2B1E16; }
+  #stage { position: fixed; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  #stage:active { cursor: grabbing; }
+  .panel { position: fixed; left: 24px; top: 20px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+  .panel h1 { margin: 0; font-family: 'Big Shoulders Display', 'Public Sans', sans-serif; font-weight: 800; font-size: 64px; line-height: 0.9; }
+  .panel p { margin: 0; font-size: 15px; line-height: 1.45; max-width: 34ch; }
+  .controls { position: fixed; left: 24px; bottom: 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  button { font: 600 16px 'Public Sans', system-ui, sans-serif; color: #F4ECE0; background: #2B1E16; border: 0; border-radius: 10px; padding: 12px 20px; min-height: 44px; cursor: pointer; }
+  button:hover { background: #4A3426; }
+  button:focus-visible { outline: 3px solid #2B1E16; outline-offset: 3px; }
+  button.quiet { color: #2B1E16; background: rgba(255,255,255,0.55); }
+  button.quiet:hover { background: rgba(255,255,255,0.8); }
+  .status { position: fixed; inset: 0; display: grid; place-items: center; font-size: 16px; pointer-events: none; }
+  @media (max-width: 600px) { .panel h1 { font-size: 44px; } .panel p { font-size: 14px; } }
+</style>
+</head>
+<body>
+<canvas id="stage" aria-label="Interactive 3D model of a Stegosaurus. Drag to orbit, scroll or pinch to zoom, click the dinosaur to make it swing its tail."></canvas>
+<div class="panel">
+  <h1>Stegosaurus</h1>
+  <p>Drag to turn it around, scroll or pinch to zoom, and click the dinosaur to make it swing its spiked tail.</p>
+</div>
+<div class="controls">
+  <button type="button" id="act">Swing</button>
+  <button type="button" id="reset" class="quiet">Reset view</button>
+</div>
+<div class="status" id="status">Loading the model…</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+{ const f = document.createElement('link'); f.rel = 'stylesheet';
+  f.href = 'https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=Public+Sans:wght@400;600&display=swap';
+  document.head.appendChild(f); }
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+// ---------------------------------------------------------------- palette
+const C = {
+  skin: new THREE.Color('#5E7E7A'), belly: new THREE.Color('#DCD2B2'), outline: '#2A1C22',
+  plate: '#B25C3A', spike: '#E6D9BC', claw: '#3A2A2C', eye: '#E0B04A', beak: '#4A3A30',
+  sky: '#D8DED8', ground: '#CDAE72', mesa: '#CBB9A0', tree: '#6F7A5A'
+};
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------------------------------------------------------------- renderer, scene, camera
+const canvas = document.getElementById('stage');
+const MAX_PR = Math.min(devicePixelRatio, 1.5);
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: devicePixelRatio < 2, powerPreference: 'high-performance' });
+let pixelRatio = MAX_PR; renderer.setPixelRatio(pixelRatio);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.shadowMap.autoUpdate = false;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(C.sky);
+scene.fog = new THREE.Fog(C.sky, 30, 75);
+const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 200);
+const HOME = { pos: new THREE.Vector3(3.2, 3.6, 16), target: new THREE.Vector3(-0.8, 1.7, 0) };
+camera.position.copy(HOME.pos);
+const controls = new OrbitControls(camera, canvas);
+controls.target.copy(HOME.target);
+controls.enableDamping = true;
+controls.minDistance = 7; controls.maxDistance = 40;
+controls.maxPolarAngle = Math.PI * 0.49;
+controls.enablePan = false;
+
+scene.add(new THREE.HemisphereLight('#E8EFF2', '#A07A50', 1.4));
+const sun = new THREE.DirectionalLight('#FFF1DC', 2.2);
+sun.position.set(6, 14, 9);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+Object.assign(sun.shadow.camera, { left: -8, right: 8, top: 6, bottom: -4, near: 4, far: 30 });
+sun.shadow.bias = -0.0008;
+scene.add(sun);
+
+// ---------------------------------------------------------------- materials
+const ramp = new THREE.DataTexture(new Uint8Array([90, 170, 230, 255]), 4, 1, THREE.RedFormat);
+ramp.minFilter = ramp.magFilter = THREE.NearestFilter; ramp.needsUpdate = true;
+const toon = (color, vc = false) => new THREE.MeshToonMaterial({ color, gradientMap: ramp, vertexColors: vc });
+const skinMat = toon(C.skin);
+skinMat.onBeforeCompile = (sh) => {
+  sh.uniforms.belly = { value: C.belly };
+  sh.vertexShader = sh.vertexShader
+    .replace('#include <common>', '#include <common>\nattribute vec3 restPos; attribute vec3 restNrm; attribute vec2 paint; varying vec3 vRest; varying vec3 vRestN; varying vec2 vPaint;')
+    .replace('#include <begin_vertex>', '#include <begin_vertex>\nvRest = restPos; vRestN = restNrm; vPaint = paint;');
+  sh.fragmentShader = sh.fragmentShader
+    .replace('#include <common>', `#include <common>
+uniform vec3 belly; varying vec3 vRest; varying vec3 vRestN; varying vec2 vPaint;
+float mottle(vec3 p){ return sin(p.x*3.4 + sin(p.z*5.3))*sin(p.y*4.3 + p.x*1.0) + 0.5*sin(p.x*8.5 + p.y*6.6 + p.z*3.5); }`)
+    .replace('vec4 diffuseColor = vec4( diffuse, opacity );', `
+vec3 base = diffuse;
+float ny = normalize(vRestN).y;
+float bellyAmt = smoothstep(-0.02, -0.38, ny) * vPaint.y;
+base = mix(base, belly, bellyAmt);
+float up = smoothstep(-0.05, 0.35, ny);
+float band = sin(vRest.x * 3.0 + 0.4 * sin(vRest.y * 2.0));
+float edge = 1.0 - (0.45 + 0.35 * up) * 0.9;
+float aa = fwidth(band) * 1.2;
+float stripe = vPaint.x * up * smoothstep(edge - aa, edge + aa, band);
+base *= mix(1.0, 0.62, stripe);
+float m = mottle(vRest * 1.6);
+base *= mix(1.0, 0.86, smoothstep(0.9, 1.0, m));
+base = mix(base, base * 1.12, smoothstep(-1.05, -1.15, m) * 0.6);
+vec4 diffuseColor = vec4( base, opacity );`);
+};
+const outlineMat = new THREE.ShaderMaterial({
+  uniforms: { thickness: { value: 0.035 }, color: { value: new THREE.Color(C.outline) } },
+  vertexShader: `uniform float thickness; void main(){ vec3 p = position + normal * thickness; gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }`,
+  fragmentShader: `uniform vec3 color; void main(){ gl_FragColor = vec4(color, 1.0); }`,
+  side: THREE.BackSide
+});
+
+const skinMeshes = [];
+function mesh(geo, mat = skinMat, { outline = true, kind = 'body', stripes = false, shadow = true } = {}) {
+  const m = new THREE.Mesh(geo, mat);
+  m.castShadow = shadow; m.receiveShadow = shadow;
+  if (outline) { const o = new THREE.Mesh(geo, outlineMat); o.raycast = () => {}; m.add(o); }
+  if (mat === skinMat) skinMeshes.push({ m, kind, stripes });
+  return m;
+}
+function smooth(geo) {
+  for (const k of ['uv', 'normal']) if (geo.getAttribute(k)) geo.deleteAttribute(k);
+  geo = mergeVertices(geo, 1e-4);
+  geo.computeVertexNormals();
+  return geo;
+}
+const ellipsoid = (rx, ry, rz, w = 44, h = 30) => new THREE.SphereGeometry(1, w, h).scale(rx, ry, rz);
+
+// a tapered limb between two points
+const UP = new THREE.Vector3(0, 1, 0);
+function limb(a, b, r1, r2, opts) {
+  const dir = new THREE.Vector3().subVectors(b, a); const len = dir.length();
+  const geo = new THREE.CylinderGeometry(r2, r1, len, 18, 3, false);
+  const m = mesh(geo, skinMat, opts);
+  m.position.copy(a).addScaledVector(dir, 0.5);
+  m.quaternion.setFromUnitVectors(UP, dir.normalize());
+  return m;
+}
+const ball = (p, r, opts) => { const m = mesh(new THREE.SphereGeometry(r, 18, 12), skinMat, opts); m.position.copy(p); return m; };
+
+// SVG path (M, L, C, Z) to a THREE.Shape; x right, y flipped up
+function shapeFromSvg(d, s, ox, oy) {
+  const t = d.match(/[MLCZ]|-?\d*\.?\d+/g); const shape = new THREE.Shape(); let i = 0, cmd = 'M';
+  const P = () => { const x = (+t[i++] - ox) * s, y = -(+t[i++] - oy) * s; return [x, y]; };
+  while (i < t.length) {
+    if (/[MLCZ]/.test(t[i])) { cmd = t[i++]; if (cmd === 'Z') continue; }
+    if (cmd === 'M') { shape.moveTo(...P()); cmd = 'L'; }
+    else if (cmd === 'L') shape.lineTo(...P());
+    else if (cmd === 'C') { const a = P(), b = P(), c = P(); shape.bezierCurveTo(...a, ...b, ...c); }
+  }
+  return shape;
+}
+// extrude a side profile, then taper its width toward the snout
+function profile(d, depth, taper, { s, ox, oy, x0, x1 }) {
+  let geo = new THREE.ExtrudeGeometry(shapeFromSvg(d, s, ox, oy), { depth, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.06, bevelSegments: 3, curveSegments: 20 });
+  geo.translate(0, 0, -depth / 2);
+  const p = geo.attributes.position;
+  for (let k = 0; k < p.count; k++) {
+    const u = THREE.MathUtils.clamp((p.getX(k) - x0) / (x1 - x0), 0, 1);
+    p.setZ(k, p.getZ(k) * (1 - taper * u * u));
+  }
+  return smooth(geo);
+}
+
+
+// ---------------------------------------------------------------- the animal
+const dino = new THREE.Group(); scene.add(dino);
+const hips = new THREE.Group(); hips.position.set(0, 2.6, 0); dino.add(hips);
+const trunk = new THREE.Group(); hips.add(trunk);                  // breathes and counter-turns on the swing
+const toothMat = toon(C.spike), clawMat = toon(C.claw);
+function batcher(mat) {
+  const parts = [];
+  return { add(m) { m.updateMatrix(); parts.push(m.geometry.clone().applyMatrix4(m.matrix)); },
+           flush(parent) { if (parts.length) parent.add(new THREE.Mesh(mergeGeometries(parts), mat)); } };
+}
+
+// arched body: hips highest, chest low
+const hipMass = mesh(ellipsoid(1.25, 1.25, 0.92), skinMat, { stripes: true }); hipMass.position.set(-0.35, 0.25, 0); trunk.add(hipMass);
+const barrel = mesh(ellipsoid(2.2, 1.12, 0.98), skinMat, { stripes: true }); barrel.position.set(0.5, -0.15, 0); barrel.rotation.z = -0.3; trunk.add(barrel);
+const chest = mesh(ellipsoid(0.95, 0.88, 0.78), skinMat, { stripes: true }); chest.position.set(1.85, -0.62, 0); chest.rotation.z = -0.3; trunk.add(chest);
+
+// short neck and small low head
+const headPivot = new THREE.Group(); headPivot.position.set(2.25, -0.62, 0); trunk.add(headPivot);
+const P = (x, y, z = 0) => new THREE.Vector3(x, y, z);
+headPivot.add(limb(P(0, 0), P(1.05, -0.78), 0.44, 0.24, { stripes: true }), ball(P(1.05, -0.78), 0.24));
+const headMesh = mesh(ellipsoid(0.44, 0.19, 0.17, 30, 20), skinMat, { kind: 'head' }); headMesh.position.set(1.38, -0.9, 0); headMesh.rotation.z = -0.22; headPivot.add(headMesh);
+const beak = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.26, 12).rotateZ(-Math.PI / 2), toon(C.beak)); beak.position.set(1.84, -1.0, 0); beak.rotation.z = -0.22; headPivot.add(beak);
+const eyes = [];
+for (const side of [1, -1]) {
+  const eye = new THREE.Group(); eye.position.set(1.22, -0.8, side * 0.14); headPivot.add(eye);
+  eye.add(new THREE.Mesh(new THREE.SphereGeometry(0.045, 14, 10), toon(C.eye)));
+  const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.024, 10, 8), toon('#15110D')); pupil.position.z = side * 0.032; eye.add(pupil);
+  eyes.push(eye);
+}
+
+// legs: long columnar hind legs, short forelegs, hoofed feet
+const legGroups = [];
+function legChain(g, pts, radii) {
+  for (let i = 0; i < pts.length - 1; i++) g.add(limb(pts[i], pts[i + 1], radii[i], radii[i + 1], { kind: 'leg' }), ball(pts[i + 1], radii[i + 1], { kind: 'leg' }));
+}
+function foot(g, at, sideZ) {
+  const pad = mesh(ellipsoid(0.34, 0.12, 0.28, 24, 14), skinMat, { kind: 'leg' }); pad.position.copy(at).add(P(0.08, 0.04)); g.add(pad);
+  const nails = batcher(clawMat);
+  for (const dz of [-0.14, 0, 0.14]) { const n = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8).scale(1.2, 0.7, 0.9), clawMat); n.position.copy(at).add(P(0.38, 0.02, dz)); nails.add(n); }
+  nails.flush(g);
+}
+for (const [side, dx] of [[1, 0.1], [-1, -0.35]]) {        // hind
+  const g = new THREE.Group(); g.position.set(dx, 0, side * 0.62); hips.add(g); legGroups.push(g);
+  const thigh = mesh(ellipsoid(0.55, 0.98, 0.45), skinMat, { kind: 'leg' }); thigh.position.set(-0.05, -0.7, 0); thigh.rotation.z = 0.12; g.add(thigh);
+  legChain(g, [P(0.05, -1.2), P(-0.02, -2.0), P(0.12, -2.5)], [0.34, 0.25, 0.22]);
+  foot(g, P(0.12, -2.52), side);
+}
+for (const [side, dx] of [[1, 1.78], [-1, 1.55]]) {        // fore
+  const g = new THREE.Group(); g.position.set(dx, 0, side * 0.55); hips.add(g); legGroups.push(g);
+  const upper = mesh(ellipsoid(0.32, 0.5, 0.3), skinMat, { kind: 'leg' }); upper.position.set(0, -0.95, 0); g.add(upper);
+  legChain(g, [P(0, -1.25), P(-0.06, -1.95), P(0.06, -2.5)], [0.25, 0.2, 0.19]);
+  foot(g, P(0.06, -2.52), side);
+}
+
+// tail: one continuous tapered mesh, bent each frame; plates and spikes ride on its rings
+const TL = 5.0, RINGS = 54, RAD = 26;
+const tailR = u => 0.78 * Math.pow(1 - u, 1.2) + 0.05;
+const tailGeo = new THREE.BufferGeometry();
+const tPos = [], tOff = [], tRing = [], tIdx = [];
+for (let i = 0; i <= RINGS; i++) {
+  const u = i / RINGS, r = tailR(u);
+  for (let k = 0; k < RAD; k++) {
+    const a = (k / RAD) * Math.PI * 2, oy = Math.cos(a) * r * 1.1, oz = Math.sin(a) * r * 0.82;
+    tPos.push(-u * TL, oy, oz); tOff.push(0, oy, oz); tRing.push(i);
+  }
+}
+const tipIndex = tPos.length / 3; tPos.push(-TL - 0.05, 0, 0); tOff.push(0, 0, 0); tRing.push(RINGS + 1);
+for (let i = 0; i < RINGS; i++) for (let k = 0; k < RAD; k++) {
+  const a = i * RAD + k, b = i * RAD + (k + 1) % RAD, c = a + RAD, d = b + RAD;
+  tIdx.push(a, c, b, b, c, d);
+}
+for (let k = 0; k < RAD; k++) tIdx.push(RINGS * RAD + k, tipIndex, RINGS * RAD + (k + 1) % RAD);
+tailGeo.setIndex(tIdx);
+tailGeo.setAttribute('position', new THREE.Float32BufferAttribute(tPos, 3));
+tailGeo.computeVertexNormals();
+const tailRestN = tailGeo.attributes.normal.array.slice();
+const tail = mesh(tailGeo, skinMat, { stripes: true, kind: 'tail' });
+tail.position.set(-0.85, 0.32, 0); tail.frustumCulled = false; tail.children[0].frustumCulled = false; trunk.add(tail);
+const tailRiders = new THREE.Group(); tailRiders.position.copy(tail.position); trunk.add(tailRiders);   // follows the bent tail
+const ringM = Array.from({ length: RINGS + 2 }, () => new THREE.Matrix4()), ringC = Array.from({ length: RINGS + 2 }, () => new THREE.Vector3());
+const mz = new THREE.Matrix4(), my = new THREE.Matrix4(), tv = new THREE.Vector3(), tn = new THREE.Vector3(), tailC = new THREE.Vector3();
+let whip = 0, whipLift = 0;                                         // set by the swing each frame
+function bendTail(t) {
+  const step = TL / RINGS; const c = tailC.set(0, 0, 0);
+  for (let i = 0; i <= RINGS + 1; i++) {
+    const u = Math.min(i / RINGS, 1);
+    const pitch = -0.16 + 0.12 * u + (reduceMotion ? 0 : 0.03 * Math.sin(t * 0.9 - u * 2.5) * u) - whipLift * u;
+    const yaw = (reduceMotion ? 0 : 0.18 * Math.sin(t * 1.1 - u * 2.6) * u * u) + whip * Math.pow(u, 1.3) * 1.6;
+    ringM[i].multiplyMatrices(my.makeRotationY(yaw), mz.makeRotationZ(pitch));
+    ringC[i].copy(c);
+    if (i <= RINGS) c.add(tv.set(-step, 0, 0).applyMatrix4(ringM[i]));
+  }
+  const Pa = tailGeo.attributes.position.array, N = tailGeo.attributes.normal.array;
+  for (let v = 0; v < tRing.length; v++) {
+    const i = tRing[v];
+    if (i > RINGS) tv.set(-0.05, 0, 0).applyMatrix4(ringM[RINGS]).add(ringC[RINGS + 1]);
+    else tv.set(tOff[v * 3], tOff[v * 3 + 1], tOff[v * 3 + 2]).applyMatrix4(ringM[i]).add(ringC[i]);
+    Pa[v * 3] = tv.x; Pa[v * 3 + 1] = tv.y; Pa[v * 3 + 2] = tv.z;
+    tn.set(tailRestN[v * 3], tailRestN[v * 3 + 1], tailRestN[v * 3 + 2]).applyMatrix4(ringM[Math.min(i, RINGS)]);
+    N[v * 3] = tn.x; N[v * 3 + 1] = tn.y; N[v * 3 + 2] = tn.z;
+  }
+  tailGeo.attributes.position.needsUpdate = true; tailGeo.attributes.normal.needsUpdate = true;
+  for (const r of riders) {                                          // plates and spikes stay glued to their ring
+    r.obj.position.copy(r.local).applyMatrix4(ringM[r.ring]).add(ringC[r.ring]);
+    r.obj.quaternion.setFromRotationMatrix(ringM[r.ring]).multiply(r.rest);
+  }
+}
+
+// plates: thin bevelled kites in two staggered rows; heights peak over the hips and tail base
+const plateMat = toon(C.plate);
+function kite(h, w) {
+  const s = new THREE.Shape();
+  s.moveTo(-w * 0.3, 0); s.bezierCurveTo(-w * 0.75, h * 0.35, -w * 0.5 - 0.08, h * 0.82, -0.08, h);
+  s.bezierCurveTo(w * 0.5 - 0.08, h * 0.84, w * 0.72, h * 0.36, w * 0.3, 0); s.lineTo(-w * 0.3, 0);
+  const g = new THREE.ExtrudeGeometry(s, { depth: 0.05, bevelEnabled: true, bevelThickness: 0.025, bevelSize: 0.02, bevelSegments: 2, curveSegments: 12 });
+  g.translate(0, -0.06, -0.025); return g;
+}
+function plateMesh(h, w) { const m = mesh(kite(h, w), plateMat, { outline: true, shadow: true }); m.userData.plate = true; return m; }
+const down = new THREE.Raycaster(), bodyParts = [hipMass, barrel, chest];
+dino.updateMatrixWorld(true);
+function topAt(x) {                                                 // height of the back at x (trunk space)
+  down.set(new THREE.Vector3(x, 6, 0).applyMatrix4(trunk.matrixWorld), new THREE.Vector3(0, -1, 0));
+  const hit = down.intersectObjects(bodyParts, false)[0];
+  return hit ? trunk.worldToLocal(hit.point.clone()).y : 0;
+}
+const PLATES = [   // x along the back, height, width, row (+1 near / -1 far)
+  [2.05, 0.34, 0.3, 1], [1.72, 0.48, 0.38, -1], [1.36, 0.62, 0.48, 1], [0.98, 0.76, 0.56, -1], [0.58, 0.86, 0.62, 1],
+  [0.18, 0.92, 0.66, -1], [-0.22, 0.9, 0.64, 1], [-0.6, 0.82, 0.58, -1], [-0.96, 0.7, 0.5, 1]];
+for (const [x, h, w, row] of PLATES) {
+  const m = plateMesh(h, w); m.position.set(x, topAt(x) - 0.04, row * 0.07); m.rotation.z = 0.08 + (x < 0 ? 0.08 : 0); trunk.add(m);
+}
+const riders = [];
+function ride(obj, u, local, restQ) {
+  const ring = Math.round(u * RINGS); riders.push({ obj, ring, local, rest: restQ || new THREE.Quaternion() }); tailRiders.add(obj);
+}
+for (const [u, h, w, row] of [[0.08, 0.6, 0.46, -1], [0.18, 0.5, 0.4, 1], [0.29, 0.4, 0.34, -1], [0.4, 0.3, 0.26, 1], [0.5, 0.22, 0.2, -1]]) {
+  const r = tailR(u) * 1.1;
+  ride(plateMesh(h, w), u, new THREE.Vector3(0, r - 0.05, row * 0.06), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, 0.12)));
+}
+const spikeMat = toon(C.spike);
+for (const [u, side] of [[0.84, 1], [0.84, -1], [0.93, 1], [0.93, -1]]) {
+  const geo = new THREE.ConeGeometry(0.07, 0.78, 12).translate(0, 0.39, 0);
+  const s = mesh(geo, spikeMat, { outline: true });
+  const dir = new THREE.Vector3(-0.45, 0.55, side * 0.72).normalize();
+  ride(s, u, new THREE.Vector3(0, tailR(u) * 0.8, side * tailR(u) * 0.5), new THREE.Quaternion().setFromUnitVectors(UP, dir));
+}
+bendTail(0);
+
+// ---------------------------------------------------------------- paint (rest-pose coordinates, so markings stick to the skin)
+dino.updateMatrixWorld(true);
+const v = new THREE.Vector3(), n = new THREE.Vector3(), nm = new THREE.Matrix3();
+for (const { m, stripes, kind } of skinMeshes) {
+  const g = m.geometry, p = g.attributes.position, no = g.attributes.normal;
+  const rp = new Float32Array(p.count * 3), rn = new Float32Array(p.count * 3), pa = new Float32Array(p.count * 2);
+  nm.getNormalMatrix(m.matrixWorld);
+  for (let k = 0; k < p.count; k++) {
+    v.fromBufferAttribute(p, k).applyMatrix4(m.matrixWorld);
+    n.fromBufferAttribute(no, k).applyMatrix3(nm).normalize();
+    rp.set([v.x, v.y, v.z], k * 3); rn.set([n.x, n.y, n.z], k * 3);
+    pa.set([stripes ? 1 : 0, kind === 'leg' ? 0.35 : 1], k * 2);
+  }
+  g.setAttribute('restPos', new THREE.BufferAttribute(rp, 3));
+  g.setAttribute('restNrm', new THREE.BufferAttribute(rn, 3));
+  g.setAttribute('paint', new THREE.BufferAttribute(pa, 2));
+}
+
+// ---------------------------------------------------------------- merge static skin pieces: one mesh + one outline per moving group
+function mergeSkin(group, exclude = []) {
+  const ms = group.children.filter(o => o.isMesh && o.material === skinMat && !exclude.includes(o));
+  if (ms.length < 2) return;
+  const geos = ms.map(m => { m.updateMatrix(); const g = m.geometry.clone(); if (g.getAttribute('uv')) g.deleteAttribute('uv'); return g.applyMatrix4(m.matrix); });
+  const merged = mergeGeometries(geos);
+  if (!merged) return;                       // attribute mismatch: keep the separate pieces
+  ms.forEach(m => group.remove(m));
+  group.add(mesh(merged, skinMat, { shadow: ms.some(m => m.castShadow) }));
+}
+legGroups.forEach(g => mergeSkin(g));
+mergeSkin(trunk, [tail]);
+mergeSkin(headPivot);
+
+// ---------------------------------------------------------------- scenery: Morrison plain
+const ground = new THREE.Mesh(new THREE.CircleGeometry(70, 64).rotateX(-Math.PI / 2), toon(C.ground)); ground.receiveShadow = true; scene.add(ground);
+for (const [r, w, h, c] of [[12, 1.2, 0.04, '#BF9C5E'], [16, 1.6, 0.03, '#D9BE86'], [22, 1.4, 0.02, '#B58A4E']]) {
+  const ring = new THREE.Mesh(new THREE.RingGeometry(r, r + w, 64).rotateX(-Math.PI / 2), toon(c)); ring.position.y = h; ring.receiveShadow = true; scene.add(ring);
+}
+const mesaMat = toon(C.mesa);
+for (const [x, z, w, h] of [[-32, -44, 18, 4.5], [-6, -52, 22, 6], [24, -46, 15, 4], [42, -30, 10, 5], [-44, -22, 9, 3.5]]) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.45, w * 0.55, h, 7), mesaMat); m.position.set(x, h / 2, z); scene.add(m);
+}
+const treeMat = toon(C.tree), trunkMat = toon('#5E5444');
+for (const [x, z, h] of [[-16, -20, 11], [-21, -26, 9], [17, -22, 12], [22, -17, 9.5]]) {
+  const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.3, h, 8), trunkMat); tr.position.set(x, h / 2, z); scene.add(tr);
+  for (let k = 0; k < 4; k++) {
+    const crown = new THREE.Mesh(new THREE.CylinderGeometry(1.0 + k * 0.45, 1.3 + k * 0.5, 0.35, 10), treeMat);
+    crown.position.set(x, h - 0.2 - k * 0.8, z); scene.add(crown);
+  }
+}
+
+// ---------------------------------------------------------------- motion
+const clock = new THREE.Clock();
+let actStart = -10, nextBlink = 2.5;
+function swingCurve(s) {            // damped side-to-side whip of the spiked tail, with a small lift
+  if (s < 0 || s > 2.4) return { w: 0, lift: 0, glow: 0 };
+  const env = Math.min(1, s / 0.18) * Math.exp(-1.5 * s);
+  return { w: 0.95 * Math.sin(s * 7.2) * env, lift: 0.18 * Math.sin(Math.min(s, 0.6) / 0.6 * Math.PI) , glow: Math.min(1, s / 0.25) * Math.max(0, 1 - (s - 0.9) / 1.2) };
+}
+function act() { actStart = clock.getElapsedTime(); }
+document.getElementById('act').addEventListener('click', act);
+document.getElementById('reset').addEventListener('click', () => { camera.position.copy(HOME.pos); controls.target.copy(HOME.target); controls.update(); });
+
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(); let downAt = null;
+canvas.addEventListener('pointerdown', e => { downAt = { x: e.clientX, y: e.clientY }; });
+canvas.addEventListener('pointerup', e => {
+  if (!downAt || Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 6) return;
+  const r = canvas.getBoundingClientRect();
+  ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ptr, camera);
+  if (ray.intersectObject(dino, true).length) act();
+});
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h;
+  camera.position.z = HOME.pos.z * Math.max(1, 1.35 / (w / h)); // keep the whole animal in frame on tall screens
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+const plateBase = new THREE.Color(C.plate), plateHot = new THREE.Color('#E8402A');
+let frame = 0, acc = 0, lastNow = performance.now();
+function adapt() {                       // keep frames near 60 fps by trading resolution
+  const now = performance.now(), dt = now - lastNow; lastNow = now; acc += dt;
+  if (++frame % 60) return;
+  const avg = acc / 60; acc = 0;
+  const next = avg > 22 ? Math.max(0.75, pixelRatio - 0.25) : avg < 14 ? Math.min(MAX_PR, pixelRatio + 0.25) : pixelRatio;
+  if (next !== pixelRatio) { pixelRatio = next; renderer.setPixelRatio(pixelRatio); resize(); }
+}
+function loop() {
+  if (document.hidden) return;
+  adapt();
+  renderer.shadowMap.needsUpdate = frame % 2 === 0;
+  const t = clock.getElapsedTime();
+  const { w, lift, glow } = swingCurve(t - actStart);
+  whip = w; whipLift = lift;
+  trunk.rotation.y = -0.08 * w;
+  headPivot.rotation.z = -0.08 * glow;
+  plateMat.color.copy(plateBase).lerp(plateHot, 0.55 * glow);
+  if (!reduceMotion) {
+    trunk.scale.set(1, 1 + 0.01 * Math.sin(t * 2.0), 1 + 0.007 * Math.sin(t * 2.0));
+    headPivot.rotation.y = 0.08 * Math.sin(t * 0.35);
+    if (t > nextBlink) { const k = t - nextBlink; const s = k < 0.07 ? 1 - k / 0.07 : k < 0.16 ? (k - 0.07) / 0.09 : 1; eyes.forEach(e => e.scale.y = Math.max(0.08, s)); if (k > 0.16) nextBlink = t + 3 + Math.random() * 3; }
+  }
+  bendTail(reduceMotion ? 0 : t);
+  controls.update();
+  renderer.render(scene, camera);
+}
+// compile every shader before the first frame, off the main thread where the browser supports it
+function start() { renderer.setAnimationLoop(loop); document.getElementById('status').remove(); }
+renderer.shadowMap.needsUpdate = true;
+(renderer.compileAsync ? renderer.compileAsync(scene, camera) : Promise.resolve()).catch(() => {}).then(start);
+</script>
+</body>
+</html>

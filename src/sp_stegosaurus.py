@@ -1,5 +1,6 @@
 import os as _os
-HERE = _os.path.dirname(_os.path.abspath(__file__))  # repo root: all paths are relative to it
+HERE = _os.path.dirname(_os.path.abspath(__file__))  # src/
+ROOT = _os.path.dirname(HERE)                          # repository root
 """Stegosaurus for the dinosaur series. Building SPEC has no side effects; run as a script to write outputs."""
 import sys
 sys.path.insert(0, HERE)

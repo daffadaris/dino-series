@@ -1,5 +1,6 @@
 import os as _os
-HERE = _os.path.dirname(_os.path.abspath(__file__))  # repo root: all paths are relative to it
+HERE = _os.path.dirname(_os.path.abspath(__file__))  # src/
+ROOT = _os.path.dirname(HERE)                          # repository root
 """Titanosaur (Patagotitan mayorum) for the dinosaur series. Import has no side effects;
 run as a script to write the SVG, GSAP page, poster board and rig board."""
 import sys

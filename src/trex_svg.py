@@ -1,5 +1,6 @@
 import os as _os
-HERE = _os.path.dirname(_os.path.abspath(__file__))  # repo root: all paths are relative to it
+HERE = _os.path.dirname(_os.path.abspath(__file__))  # src/
+ROOT = _os.path.dirname(HERE)                          # repository root
 """Detail pass over the definitive boxy-head build (build4.py).
 
 Adds shading, texture, wrinkles, muscle lines and rim light as extra layers.
@@ -8,7 +9,7 @@ check_baseline() enforces that against versions/boxy-head-definitive/baseline.js
 """
 import re, json, random, pathlib, importlib.util
 
-spec = importlib.util.spec_from_file_location("base", HERE + "/build4.py")
+spec = importlib.util.spec_from_file_location("base", HERE + "/trex_drawing.py")
 B = importlib.util.module_from_spec(spec); spec.loader.exec_module(B)
 SKIN, OL, D = B.SKIN, B.OL, B.D
 HEAD_SCALE = 1.4
@@ -155,7 +156,7 @@ assert TAIL in FRAG and BODY in FRAG and LEG in FRAG and HEAD in FRAG and FAR in
 
 # ------------------------------------------------------------------ guard rails against the saved baseline
 def check_baseline(svg_text):
-    base = json.loads(pathlib.Path(HERE + "/versions/boxy-head-definitive/baseline.json").read_text())
+    base = json.loads(pathlib.Path(ROOT + "/baseline/trex-boxy-head/baseline.json").read_text())
     new_head_paths = set(re.findall(r'd="([^"]+)"', HEAD))
     allowed = {OUTLINE_FIX[0].join(["", ""]) : OUTLINE_FIX[1]}
     missing = [d for d in base["head_paths"] if d not in new_head_paths and not any(d.startswith(k) for k in allowed)]
@@ -175,4 +176,4 @@ DEFAULT_SKIN, SWATCHES = B.DEFAULT_SKIN, B.SWATCHES
 std = B.std.replace(B.FRAG.replace(SKIN, DEFAULT_SKIN), FRAG.replace(SKIN, DEFAULT_SKIN))
 assert std != B.std
 check_baseline(std)
-pathlib.Path(HERE + "/trex-animated.svg").write_text(std)
+pathlib.Path(ROOT + "/svg/trex-animated.svg").write_text(std)

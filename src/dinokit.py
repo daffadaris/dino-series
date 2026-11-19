@@ -1,5 +1,6 @@
 import os as _os
-HERE = _os.path.dirname(_os.path.abspath(__file__))  # repo root: all paths are relative to it
+HERE = _os.path.dirname(_os.path.abspath(__file__))  # src/
+ROOT = _os.path.dirname(HERE)                          # repository root
 """Shared toolkit for the dinosaur series (T. rex style: outlines, stripes, pale belly,
 gradient shading, scale texture, rim light). Each species module builds parts with these
 helpers; write_all() emits the standalone SVG, GSAP page, poster board and rig board."""
@@ -9,7 +10,7 @@ from matplotlib.path import Path as MPath
 OL, D, L = "#2A1C22", "#000000", "#FFFFFF"
 CLAW, EYE, IVORY = "#3A2A2C", "#E0B04A", "#EFE6D0"
 SKIN = "SKIN"          # placeholder, replaced by a colour or {{skin}}
-OUT = pathlib.Path(HERE)
+OUT = pathlib.Path(ROOT)   # repository root; outputs go to svg/, gsap/, boards/, shots/
 
 # ------------------------------------------------------------------ primitives
 def piv(gid, cls, x, y, inner):
@@ -154,7 +155,7 @@ def write_all(sp):
 {frag.replace(SKIN, look.skin)}
 </svg>
 '''
-    (OUT / f"{sp['slug']}-animated.svg").write_text(svg)
+    (OUT / "svg" / f"{sp['slug']}-animated.svg").write_text(svg)
 
     # GSAP page
     gsap_page = f'''<!doctype html>
@@ -208,7 +209,7 @@ def write_all(sp):
 </body>
 </html>
 '''
-    (OUT / f"{sp['slug']}-gsap.html").write_text(gsap_page)
+    (OUT / "gsap" / f"{sp['slug']}-gsap.html").write_text(gsap_page)
     sp["css_click"] = css_click
     return frag
 
@@ -287,7 +288,7 @@ this._t = setTimeout(() => this.setState({{ acting: false }}), {int(sp['dur'] * 
 </body>
 </html>
 '''
-    (OUT / "project" / f"{sp['board']}.dc.html").write_text(html)
+    (OUT / "boards" / f"{sp['board']}.dc.html").write_text(html)
     preview(html, f"{sp['slug']}-poster", look.skin)
     return html
 
@@ -343,7 +344,7 @@ renderVals() {{ return {{ skin: this.props.skin ?? '{look.skin}' }}; }}
 </body>
 </html>
 '''
-    (OUT / "project" / f"{sp['board']}Rig.dc.html").write_text(html)
+    (OUT / "boards" / f"{sp['board']}Rig.dc.html").write_text(html)
     preview(html, f"{sp['slug']}-rig", look.skin)
     return html
 
@@ -358,7 +359,7 @@ def preview(html, name, skin):
 def shoot(name, w, h, out=None):
     """screenshot a preview or file into shots/"""
     import subprocess
-    src = OUT / "shots" / f"{name}.html" if not name.endswith(".svg") else OUT / name
+    src = OUT / "shots" / f"{name}.html" if not name.endswith(".svg") else OUT / "svg" / name
     out = out or (OUT / "shots" / f"{pathlib.Path(name).stem}.png")
     subprocess.run(["google-chrome", "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars", f"--window-size={w},{h}",
                     "--virtual-time-budget=3000", "--default-background-color=C9D6DAFF", f"--screenshot={out}", f"file://{src}"],

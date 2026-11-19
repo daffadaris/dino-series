@@ -1,5 +1,6 @@
 import os as _os
-HERE = _os.path.dirname(_os.path.abspath(__file__))  # repo root: all paths are relative to it
+HERE = _os.path.dirname(_os.path.abspath(__file__))  # src/
+ROOT = _os.path.dirname(HERE)                          # repository root
 """Realistic-proportion T. rex, built from layered shapes; same group ids and pivots as before."""
 import pathlib, random, re
 from matplotlib.path import Path as MPath
@@ -232,4 +233,4 @@ std = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="
 {FRAG.replace(SKIN, DEFAULT_SKIN)}
 </svg>
 '''
-pathlib.Path(HERE + "/trex-animated.svg").write_text(std)
+pathlib.Path(ROOT + "/svg/trex-animated.svg").write_text(std)

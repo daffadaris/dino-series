@@ -1,7 +1,8 @@
 import os as _os
-HERE = _os.path.dirname(_os.path.abspath(__file__))  # repo root: all paths are relative to it
+HERE = _os.path.dirname(_os.path.abspath(__file__))  # src/
+ROOT = _os.path.dirname(HERE)                          # repository root
 import pathlib, importlib.util
-spec = importlib.util.spec_from_file_location("dino", HERE + "/build5.py")
+spec = importlib.util.spec_from_file_location("dino", HERE + "/trex_svg.py")
 dino = importlib.util.module_from_spec(spec); spec.loader.exec_module(dino)
 
 page = f'''<!doctype html>
@@ -71,5 +72,5 @@ page = f'''<!doctype html>
 </body>
 </html>
 '''
-pathlib.Path(HERE + "/trex-gsap.html").write_text(page)
+pathlib.Path(ROOT + "/gsap/trex-gsap.html").write_text(page)
 print("ok")

@@ -1,12 +1,13 @@
 import os as _os
-HERE = _os.path.dirname(_os.path.abspath(__file__))  # repo root: all paths are relative to it
+HERE = _os.path.dirname(_os.path.abspath(__file__))  # src/
+ROOT = _os.path.dirname(HERE)                          # repository root
 """Generate triceratops-3d.html from the T. rex 3D engine: same renderer, shaders, paint, merge and loading code;
 new animal build, scenery and motion."""
 import pathlib, re, sys
 sys.path.insert(0, HERE)
 import sp_triceratops as T
 
-src = pathlib.Path(HERE + "/trex-3d.html").read_text()
+src = pathlib.Path(ROOT + "/3d/trex-3d.html").read_text()
 lines = src.split("\n")
 def find(prefix):
     return next(i for i, l in enumerate(lines) if l.startswith(prefix))
@@ -273,5 +274,5 @@ renderer.shadowMap.needsUpdate = true;
 merge_def = "\n".join(lines[a_merge_calls - 10:a_merge_calls])   # mergeSkin() definition lines live just before the calls
 assert "function mergeSkin" in paint_part or "function mergeSkin" in merge_def
 out = head_part + "\n" + ANIMAL + "\n" + paint_part + "\n" + MERGE_CALLS + "\n" + SCENERY + "\n" + MOTION
-pathlib.Path(HERE + "/triceratops-3d.html").write_text(out)
+pathlib.Path(ROOT + "/3d/triceratops-3d.html").write_text(out)
 print("ok", len(out))

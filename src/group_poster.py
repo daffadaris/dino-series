@@ -1,5 +1,6 @@
 import os as _os
-HERE = _os.path.dirname(_os.path.abspath(__file__))  # repo root: all paths are relative to it
+HERE = _os.path.dirname(_os.path.abspath(__file__))  # src/
+ROOT = _os.path.dirname(HERE)                          # repository root
 """Group poster: all four dinosaurs at their real lengths (series layout)."""
 import json, re, sys, pathlib, subprocess, importlib.util
 sys.path.insert(0, HERE)
@@ -8,8 +9,8 @@ import dinokit as K
 def load(name, path):
     spec = importlib.util.spec_from_file_location(name, path); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m); return m
 
-rex = load("rex5", HERE + "/build5.py")
-poster = load("rexposter", HERE + "/build_poster.py")          # gives the T. rex click CSS
+rex = load("rex5", HERE + "/trex_svg.py")
+poster = load("rexposter", HERE + "/trex_poster.py")          # gives the T. rex click CSS
 species = {s: load(f"sp_{s}", f"{HERE}/sp_{s}.py").SPEC for s in ("triceratops", "stegosaurus", "titanosaur")}
 
 # ---- measure each drawing's nose-to-tail span (viewBox units) in a real browser
@@ -22,7 +23,7 @@ def measure():
         b = p.chromium.launch(executable_path="/usr/bin/google-chrome", args=["--no-sandbox"])
         pg = b.new_page()
         for k, (f, a, z) in files.items():
-            pg.goto(f"file://{HERE}/{f}"); pg.wait_for_timeout(200)
+            pg.goto(f"file://{ROOT}/svg/{f}"); pg.wait_for_timeout(200)
             out[k] = pg.evaluate(f"""() => {{ const s = document.querySelector('svg'); s.classList.remove('tr-anim','tri-anim','stg-anim','tit-anim');
               const vb = s.viewBox.baseVal, r = s.getBoundingClientRect(), k = vb.width / r.width;
               const t = document.querySelector('{a}').getBoundingClientRect(), h = document.querySelector('{z}').getBoundingClientRect();
@@ -164,10 +165,10 @@ titAct: go('tit', {int(species["titanosaur"]["dur"] * 1000) + 100})
 </body>
 </html>
 '''
-pathlib.Path(HERE + "/project/Group.dc.html").write_text(HTML)
+pathlib.Path(ROOT + "/boards/Group.dc.html").write_text(HTML)
 prev = HTML.replace('<script src="./support.js"></script>', "").replace("<helmet>", "").replace("</helmet>", "").replace("<x-dc>", "").replace("</x-dc>", "")
 for h in ("trexClass", "triClass", "stgClass", "titClass"): prev = prev.replace("{{" + h + "}}", "")
 prev = re.sub(r'onClick="\{\{[a-zA-Z]+\}\}"', "", prev)
 prev = prev[:prev.index('<script type="text/x-dc"')] + "</body></html>"
-pathlib.Path(HERE + "/shots/group-poster.html").write_text(prev)
+pathlib.Path(ROOT + "/shots/group-poster.html").write_text(prev)
 print(json.dumps({k: {"span": round(v["right"] - v["left"]), "scale": round(scale_of(k), 3)} for k, v in M.items()}))

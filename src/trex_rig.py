@@ -1,7 +1,8 @@
 import os as _os
-HERE = _os.path.dirname(_os.path.abspath(__file__))  # repo root: all paths are relative to it
+HERE = _os.path.dirname(_os.path.abspath(__file__))  # src/
+ROOT = _os.path.dirname(HERE)                          # repository root
 import pathlib, json, importlib.util
-spec = importlib.util.spec_from_file_location("dino", HERE + "/build5.py")
+spec = importlib.util.spec_from_file_location("dino", HERE + "/trex_svg.py")
 dino = importlib.util.module_from_spec(spec); spec.loader.exec_module(dino)
 sk = lambda m: m.replace(dino.SKIN, "{{skin}}")
 
@@ -75,9 +76,9 @@ return {{ skin: this.props.skin ?? '{dino.DEFAULT_SKIN}' }};
 </body>
 </html>
 '''
-pathlib.Path(HERE + "/project/Rig.dc.html").write_text(HTML)
+pathlib.Path(ROOT + "/boards/Rig.dc.html").write_text(HTML)
 prev = (HTML.replace('<script src="./support.js"></script>', "").replace("<helmet>", "").replace("</helmet>", "")
         .replace("<x-dc>", "").replace("</x-dc>", "").replace("{{skin}}", dino.DEFAULT_SKIN))
 prev = prev[:prev.index('<script type="text/x-dc"')] + "</body></html>"
-pathlib.Path(HERE + "/shots/rig.html").write_text(prev)
+pathlib.Path(ROOT + "/shots/rig.html").write_text(prev)
 print("ok")

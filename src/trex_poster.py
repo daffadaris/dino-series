@@ -1,7 +1,8 @@
 import os as _os
-HERE = _os.path.dirname(_os.path.abspath(__file__))  # repo root: all paths are relative to it
+HERE = _os.path.dirname(_os.path.abspath(__file__))  # src/
+ROOT = _os.path.dirname(HERE)                          # repository root
 import pathlib, importlib.util
-spec = importlib.util.spec_from_file_location("dino", HERE + "/build5.py")
+spec = importlib.util.spec_from_file_location("dino", HERE + "/trex_svg.py")
 dino = importlib.util.module_from_spec(spec); spec.loader.exec_module(dino)
 
 SKY, FAR, SAND, OCHRE, BUFF, RUST, UMBER, LABEL = "#C9D6DA", "#A7B2B9", "#D6AB72", "#C08A55", "#E5C895", "#B5763F", "#2B1E16", "#CDB894"
@@ -156,12 +157,12 @@ this._roarTimer = setTimeout(() => this.setState({{ roaring: false }}), 1600);
 </body>
 </html>
 '''
-pathlib.Path(HERE + "/project/Main.dc.html").write_text(HTML)
+pathlib.Path(ROOT + "/boards/Main.dc.html").write_text(HTML)
 
 # local preview with the template holes filled in, for a screenshot check
 prev = (HTML.replace('<script src="./support.js"></script>', "")
         .replace("<helmet>", "").replace("</helmet>", "").replace("<x-dc>", "").replace("</x-dc>", "")
         .replace("{{skin}}", "#9E6B7B").replace("{{animClass}}", "").replace('onClick="{{roar}}"', ""))
 prev = prev[:prev.index('<script type="text/x-dc"')] + "</body></html>"
-pathlib.Path(HERE + "/shots/preview.html").write_text(prev)
+pathlib.Path(ROOT + "/shots/preview.html").write_text(prev)
 print("ok", HTML.count("{{"), "holes")

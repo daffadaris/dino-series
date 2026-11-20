@@ -5,7 +5,13 @@ ROOT = _os.path.dirname(HERE)                          # repository root
 import sys
 sys.path.insert(0, HERE)
 import dinokit as K
-from dinokit import SKIN, D, OL, path, stroke, line, rim, piv, skin_part, stripes, spots, dots, plate, spike, eye
+from dinokit import SKIN, D, OL, path, stroke, line, rim, piv, skin_part, stripes, spots, dots, spike, eye
+
+def plate(x, y, w, h, lean=-8):
+    """broad, round-topped plate standing on (x, y), as on the S. stenops skeleton 'Sophie'"""
+    return (f"M{x-.3*w:.1f} {y} C{x-.62*w:.1f} {y-.3*h:.1f} {x-.6*w+lean*.4:.1f} {y-.72*h:.1f} {x-.28*w+lean*.7:.1f} {y-.9*h:.1f} "
+            f"C{x-.1*w+lean:.1f} {y-1.0*h:.1f} {x+.1*w+lean:.1f} {y-1.02*h:.1f} {x+.3*w+lean*.7:.1f} {y-.88*h:.1f} "
+            f"C{x+.62*w+lean*.4:.1f} {y-.68*h:.1f} {x+.62*w:.1f} {y-.3*h:.1f} {x+.3*w:.1f} {y} Z")
 
 C = "stg"
 LOOK = K.Look(C, skin="#5E7E7A", belly="#DCD2B2", accent="#B25C3A")
@@ -17,11 +23,21 @@ BODY_D = ("M318 233 C350 190 410 160 470 160 C560 160 650 210 720 280 C740 300 7
 BODY_TOP = "M318 233 C350 190 410 160 470 160 C560 160 650 210 720 280"
 TAIL_D = "M340 238 C250 220 150 206 40 194 C30 193 28 202 36 206 C150 226 250 256 340 310 Z"
 TAIL_TOP = "M340 238 C250 220 150 206 40 194"
-HIND_D = ("M380 250 C430 224 510 236 530 290 C546 336 530 390 500 410 L504 476 C506 496 498 508 484 508 "
-          "L432 508 C420 506 416 494 420 482 L424 418 C396 396 372 350 370 310 C368 284 372 262 380 250 Z")
+# long, nearly straight hind leg: heavy thigh, knee at the front, shin down to a short ankle and three-toed foot
+HIND_D = ("M380 250 C430 224 510 236 530 290 C544 330 540 364 526 388 C520 400 516 412 514 426 "
+          "C510 448 506 466 504 480 C504 490 508 496 512 500 L512 508 L432 508 C424 500 428 490 436 484 "
+          "C442 462 442 438 436 418 C430 402 418 392 404 380 C380 356 368 322 370 296 C370 276 372 262 380 250 Z")
 HIND_FOOT = "M420 494 C432 486 480 486 498 494 C506 500 506 512 498 514 L426 514 C416 514 414 500 420 494 Z"
-FORE_D = ("M660 320 C688 310 720 322 724 352 C728 380 712 404 694 414 L696 474 C698 494 690 506 676 508 "
-          "L646 508 C634 506 632 494 636 484 L640 420 C634 400 636 370 642 346 C646 332 652 324 660 320 Z")
+# short, stout foreleg with the elbow slightly flexed back and a column-like hand
+FORE_D = ("M660 320 C690 308 722 322 724 352 C726 376 714 394 700 404 C696 428 698 456 700 480 "
+          "C702 496 694 508 680 508 L646 508 C634 506 632 496 636 486 C642 466 642 444 636 426 "
+          "C628 408 628 380 634 356 C638 338 648 326 660 320 Z")
+def open_top(d):
+    """outline for a limb: drops the first segment (the arc where it meets the body) and the closing Z"""
+    head, rest = d.split(" C", 1)
+    first_end = " ".join(rest.split(" ")[4:6])
+    return "M" + first_end + " C" + rest.split(" C", 1)[1].rstrip(" Z")
+HIND_OUT = open_top(HIND_D)
 FORE_FOOT = "M632 494 C644 486 682 486 696 494 C704 500 704 512 696 514 L638 514 C628 514 626 500 632 494 Z"
 NECK_D = "M696 286 C740 290 790 320 826 352 L838 410 C800 410 756 396 716 372 C700 344 692 306 696 286 Z"
 HEAD_D = "M812 350 C842 340 886 346 916 362 C936 372 942 388 932 396 C906 408 866 410 836 406 C814 402 802 378 812 350 Z"
@@ -60,8 +76,8 @@ def plate_veins(specs):
 
 # plates along the back: (t on spine, height, width), far row slightly darker and offset
 # tallest plates over the hips and base of the tail, smaller toward the shoulders; S. stenops plates are broad
-NEAR_PLATES = [(0.08, 104, 78), (0.24, 114, 82), (0.42, 100, 74), (0.6, 78, 60), (0.78, 54, 44), (0.92, 34, 30)]
-FAR_PLATES = [(0.16, 112, 80), (0.33, 108, 78), (0.51, 90, 66), (0.69, 66, 52), (0.86, 42, 36)]
+NEAR_PLATES = [(0.08, 100, 78), (0.24, 108, 84), (0.42, 94, 74), (0.6, 74, 58), (0.78, 52, 42), (0.92, 32, 28)]
+FAR_PLATES = [(0.16, 108, 84), (0.33, 102, 80), (0.51, 84, 66), (0.69, 62, 50), (0.86, 40, 32)]
 def plate_specs(rows, dy):
     out = []
     for t, h, w in rows:
@@ -69,8 +85,8 @@ def plate_specs(rows, dy):
         out.append((round(x, 1), round(y + dy, 1), w, h, -8 - 6 * (1 - t)))
     return out
 near_specs, far_specs = plate_specs(NEAR_PLATES, 8), plate_specs(FAR_PLATES, 6)
-TAIL_NEAR = [(0.1, 86, 64), (0.3, 56, 44), (0.5, 30, 26)]
-TAIL_FAR = [(0.2, 72, 54), (0.4, 42, 34)]
+TAIL_NEAR = [(0.07, 84, 66), (0.22, 62, 50), (0.37, 42, 34), (0.5, 26, 22)]
+TAIL_FAR = [(0.14, 72, 58), (0.3, 50, 40), (0.44, 32, 26)]
 def tail_plate_specs(rows, dy):
     out = []
     for t, h, w in rows:
@@ -85,8 +101,8 @@ def flush_group(specs):
 
 # ------------------------------------------------------------------ parts
 LOOK_L = LOOK
-far_hind = (skin_part(LOOK, HIND_D, ao=True, far=True, tex=False) + skin_part(LOOK, HIND_FOOT, ao=True, far=True, tex=False) + nails(500))
-far_fore = (skin_part(LOOK, FORE_D, ao=True, far=True, tex=False) + skin_part(LOOK, FORE_FOOT, ao=True, far=True, tex=False) + nails(698))
+far_hind = (skin_part(LOOK, HIND_D, ao=True, far=True, tex=False, outline_d=open_top(HIND_D)) + skin_part(LOOK, HIND_FOOT, ao=True, far=True, tex=False) + nails(500))
+far_fore = (skin_part(LOOK, FORE_D, ao=True, far=True, tex=False, outline_d=open_top(FORE_D)) + skin_part(LOOK, FORE_FOOT, ao=True, far=True, tex=False) + nails(698))
 LEG_FAR = f'<g id="leg-far" transform="translate(36 -2)">{far_hind}</g>'
 FORELEG_FAR = f'<g id="foreleg-far" transform="translate(32 -2)">{far_fore}</g>'
 
@@ -137,14 +153,14 @@ body_inner = (PLATES + skin_part(
 BODY = piv("body", f"{C}-body", 520, 410, body_inner)
 
 LEG_NEAR = ('<g id="leg-near">'
-            + skin_part(LOOK, HIND_D, light=True, ao=True,
+            + skin_part(LOOK, HIND_D, ao=True, outline_d=HIND_OUT,
                         layers=line("M380 300 C410 286 452 288 486 302 M398 340 C420 352 444 356 468 354", 0.12, 2.2)
-                        + line("M428 430 C440 436 456 438 470 436 M426 446 C438 452 456 454 470 452", 0.22, 1.8),
+                        + line("M444 446 C458 452 476 454 494 450 M444 460 C458 466 476 468 494 464 M500 396 C512 404 522 404 528 398", 0.22, 1.8),
                         rim_d="M392 246 C430 226 500 232 526 280")
             + skin_part(LOOK, HIND_FOOT, ao=True) + line("M448 490 L448 512 M472 490 L472 512", 0.26, 1.8) + nails(500)
             + "</g>")
 FORELEG_NEAR = ('<g id="foreleg-near">'
-                + skin_part(LOOK, FORE_D, ao=True, layers=line("M648 430 C660 436 676 438 690 434 M646 444 C658 450 676 452 690 448", 0.22, 1.8)
+                + skin_part(LOOK, FORE_D, ao=True, outline_d=open_top(FORE_D), layers=line("M644 444 C656 450 674 452 694 448 M644 458 C656 464 674 466 694 462 M634 410 C650 418 676 416 700 404", 0.22, 1.8)
                             + line("M664 330 C684 336 704 350 716 368", 0.12, 2.2))
                 + skin_part(LOOK, FORE_FOOT, ao=True) + line("M660 490 L660 512 M680 490 L680 512", 0.26, 1.8) + nails(698)
                 + "</g>")

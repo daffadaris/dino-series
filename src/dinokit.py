@@ -297,10 +297,21 @@ def rig_board(sp, frag, S=0.8):
     c, look = sp["code"], sp["look"]
     vb_w, vb_h = sp["viewbox"]
     sk = lambda m: m.replace(SKIN, "{{skin}}")
-    def part_svg(markup, vb, label):
+    # a ring marks the joint each part pivots around
+    def pivots(ids):
+        out = []
+        for gid in re.findall(r"#([\w-]+)", ids):
+            m = re.search(rf'<g transform="translate\(([-\d.]+) ([-\d.]+)\)"><g id="{gid}"', frag)
+            if m:
+                px, py = m.groups()
+                out.append(f'<circle cx="{px}" cy="{py}" r="7" fill="none" stroke="#F2C14E" stroke-width="2.5"></circle>'
+                           f'<circle cx="{px}" cy="{py}" r="2.5" fill="#F2C14E"></circle>')
+        return "".join(out)
+    def part_svg(markup, vb, label, ids):
         x, y, w, h = vb
-        return f'<svg role="img" aria-label="{label}" viewBox="{x} {y} {w} {h}" width="{w*S:.0f}" height="{h*S:.0f}" style="display: block">{sk(markup)}</svg>'
-    items = "".join(f'''<div style="display: flex; flex-direction: column; gap: 14px; align-items: flex-start">{part_svg(m, vb, n)}<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 17px; font-weight: 600; color: #ECE6E8">{n}</span><span style="font-size: 14px; color: #B9B3B6">{ids}</span></div></div>''' for n, ids, m, vb in sp["rig_parts"])
+        return (f'<svg role="img" aria-label="{label}" viewBox="{x} {y} {w} {h}" width="{w*S:.0f}" height="{h*S:.0f}" style="display: block">'
+                f'{sk(markup)}{pivots(ids)}</svg>')
+    items = "".join(f'''<div style="display: flex; flex-direction: column; gap: 14px; align-items: flex-start">{part_svg(m, vb, n, ids)}<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 17px; font-weight: 600; color: #ECE6E8">{n}</span><span style="font-size: 14px; color: #B9B3B6">{ids}</span></div></div>''' for n, ids, m, vb in sp["rig_parts"])
     big_h = 560 * vb_h / vb_w * 1000 / 560
     html = f'''<!doctype html>
 <html lang="en">
@@ -325,7 +336,7 @@ a{{color:#ECE6E8}}a:hover{{color:#FFFFFF}}
 <div style="display: flex; justify-content: space-between; align-items: flex-start">
 <div style="display: flex; flex-direction: column; gap: 6px; max-width: 420px">
 <h1 style="margin: 0; font-size: 34px; font-weight: 600">{sp['name']} rig</h1>
-<p style="margin: 0; font-size: 17px; line-height: 1.5; color: #B9B3B6">Each part is its own group in the SVG, pivoting at its joint. Overlapping ends stay hidden when the parts are assembled.</p>
+<p style="margin: 0; font-size: 17px; line-height: 1.5; color: #B9B3B6">Each part is its own group in the SVG. The yellow ring marks the joint it pivots around. Overlapping ends stay hidden when the parts are assembled.</p>
 </div>
 <svg role="img" aria-label="Assembled {sp['name']}" viewBox="0 0 {vb_w} {vb_h}" width="1000" height="{big_h:.0f}" style="display: block; margin-top: -24px">
 {sk(frag)}

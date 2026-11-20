@@ -13,17 +13,27 @@ HORN, BEAK = "#E6D9BC", "#4A3A30"
 
 # ------------------------------------------------------------------ legs
 # hind legs long and columnar under high hips; forelegs shorter, elbows flexed back (rhino-like stance)
-HIND = "M350 262 C380 226 460 222 492 262 C512 290 508 340 486 372 L484 470 C486 492 478 506 464 508 L414 508 C402 506 398 494 402 482 L404 390 C372 370 350 330 346 300 C344 284 346 272 350 262 Z"
+HIND = ("M350 262 C380 226 460 222 492 262 C512 290 510 336 496 364 C490 376 486 388 484 402 "
+        "C480 428 476 452 474 474 C474 486 478 492 484 496 L484 508 L410 508 C402 500 404 490 414 484 "
+        "C420 466 422 444 416 424 C410 406 398 394 384 382 C362 362 348 330 346 300 C344 284 346 272 350 262 Z")
 HIND_FOOT = "M398 494 C410 486 466 486 482 494 C490 500 490 512 482 514 L404 514 C394 514 392 500 398 494 Z"
 # hooves: three on each hand, four on each foot (three show on the near side)
 HIND_NAIL = "M474 492 C486 492 494 498 494 506 C494 512 488 514 480 514 Z M456 496 C464 496 470 501 470 507 C470 512 465 514 459 514 Z M438 498 C445 498 450 502 450 507 C450 512 446 514 440 514 Z"
-FRONT = "M626 288 C662 276 704 294 708 330 C712 360 694 386 670 398 C676 426 680 456 678 480 C678 496 670 506 656 508 L620 508 C608 506 604 494 608 484 C612 462 606 440 596 420 C582 394 582 358 592 328 C598 306 610 294 626 288 Z"
+FRONT = ("M628 288 C664 276 706 292 708 328 C710 352 700 372 684 386 C674 396 666 404 664 416 "
+         "C664 440 668 462 672 480 C676 494 672 506 660 508 L616 508 C606 506 604 496 610 486 "
+         "C616 470 614 448 606 430 C594 424 586 412 584 396 C580 370 584 346 592 326 C598 306 610 294 628 288 Z")
 FRONT_FOOT = "M602 494 C614 486 658 486 672 494 C680 500 680 512 672 514 L608 514 C598 514 596 500 602 494 Z"
 FRONT_NAIL = "M664 492 C676 492 684 498 684 506 C684 512 678 514 670 514 Z M646 496 C654 496 660 501 660 507 C660 512 655 514 649 514 Z M628 498 C635 498 640 502 640 507 C640 512 636 514 630 514 Z"
 
+def open_top(d):
+    """outline for a limb: drops the first segment (the arc where it meets the body) and the closing Z"""
+    head, rest = d.split(" C", 1)
+    first_end = " ".join(rest.split(" ")[4:6])
+    return "M" + first_end + " C" + rest.split(" C", 1)[1].rstrip(" Z")
+
 def leg(gid, d, foot, nails, far=False, dx=0, wrinkles=""):
     t = f' transform="translate({dx} -2)"' if dx else ""
-    body = skin_part(LOOK, d, light=not far, ao=True, far=far, tex=not far,
+    body = skin_part(LOOK, d, ao=True, far=far, tex=not far, outline_d=open_top(d),
                      layers=(line(wrinkles, 0.2, 2) if wrinkles else ""))
     ft = skin_part(LOOK, foot, ao=True, far=far, tex=False)
     nl = path(nails, CLAW) + stroke(nails, 2)
@@ -32,9 +42,9 @@ def leg(gid, d, foot, nails, far=False, dx=0, wrinkles=""):
 FAR_HIND = leg("leg-far", HIND, HIND_FOOT, HIND_NAIL, far=True, dx=44)
 FAR_FRONT = leg("foreleg-far", FRONT, FRONT_FOOT, FRONT_NAIL, far=True, dx=40)
 NEAR_HIND = leg("leg-near", HIND, HIND_FOOT, HIND_NAIL,
-                wrinkles="M406 432 C418 438 434 440 448 438 M406 446 C418 452 432 454 446 452 M360 296 C372 282 390 272 408 270")
+                wrinkles="M420 448 C434 454 452 456 470 452 M420 462 C434 468 452 470 470 466 M360 296 C372 282 390 272 408 270 M478 380 C488 388 496 388 500 382")
 NEAR_FRONT = leg("foreleg-near", FRONT, FRONT_FOOT, FRONT_NAIL,
-                 wrinkles="M612 440 C622 446 638 448 652 446 M612 454 C622 460 636 462 650 460 M600 404 C616 412 640 410 662 398")
+                 wrinkles="M614 446 C626 452 642 454 662 450 M616 460 C628 466 644 468 664 464 M588 400 C604 410 632 412 662 404")
 
 # ------------------------------------------------------------------ tail
 # a fairly short, thick tail that slopes down from the hips

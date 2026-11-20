@@ -171,6 +171,9 @@ NECK = piv("neck", f"{C}-neck", 676, 334, skin_part(
     rim_d="M644 300 C682 286 716 260 748 236 C768 220 788 212 808 216")
     + HEAD)
 
+# snout-to-tail midline in drawing units, used by the group poster to measure length along the S-curved neck
+MIDLINE = [(950, 266), (800, 236), (760, 236), (700, 290), (640, 320), (430, 320), (260, 316), (58, 334)]
+
 SHADOW = '<ellipse cx="500" cy="514" rx="320" ry="12" fill="#000000" opacity="0.3"></ellipse>'
 ANIMAL = SHADOW + LEG_FAR + ARM_FAR + TAIL + BODY + LEG_NEAR + NECK + ARM_NEAR
 FRAG = piv("act", f"{C}-act", 500, 514, ANIMAL)
@@ -246,7 +249,7 @@ SPEC = dict(
     facts=[("14 m", "snout to tail tip"), ("100–94", "million years ago"), ("1.65 m", "longest sail spine")],
     footer="Fossils come from the Kem Kem beds of Morocco and the Bahariya Formation of Egypt, where the first skeleton was found; it was destroyed in 1944.",
     hint="Tap the Spinosaurus to make it strike", skin_swatches=["#A0694A", "#7A8450", "#5E7E7A", "#8A6A3E"],
-    dino_top=262, rig_parts=RIG, rig_h=960,
+    dino_top=262, rig_parts=RIG, rig_h=960, midline=MIDLINE,
 )
 
 if __name__ == "__main__":

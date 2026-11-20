@@ -2,7 +2,7 @@ import os as _os
 HERE = _os.path.dirname(_os.path.abspath(__file__))  # src/
 ROOT = _os.path.dirname(HERE)                          # repository root
 """Group poster: every species at its real length (series layout)."""
-import json, re, sys, pathlib, subprocess, importlib.util
+import json, math, re, sys, pathlib, subprocess, importlib.util
 sys.path.insert(0, HERE)
 import dinokit as K
 
@@ -37,8 +37,14 @@ M = measure()
 # Stegosaurus stenops about 6.5 m (9 m belongs to S. ungulatus); Patagotitan about 31 m (revised down from
 # the 37 m of 2017); Ankylosaurus 6-8 m, drawn at 7; Spinosaurus about 14 m (Sereno et al. 2022)
 LENGTH = {"trex": 12, "triceratops": 8.5, "stegosaurus": 6.5, "titanosaur": 31, "ankylosaurus": 7, "spinosaurus": 14}
-PX_PER_M = 24
-def scale_of(k): return LENGTH[k] * PX_PER_M / (M[k]["right"] - M[k]["left"])
+PX_PER_M = 30
+def drawn_length(k):
+    """length of the drawing in viewBox units: along its midline when the species gives one (raised necks and
+    curved tails make the straight-line span shorter than the animal), otherwise the nose-to-tail span"""
+    mid = species.get(k, {}).get("midline")
+    if mid: return sum(math.dist(a, b) for a, b in zip(mid, mid[1:]))
+    return M[k]["right"] - M[k]["left"]
+def scale_of(k): return LENGTH[k] * PX_PER_M / drawn_length(k)
 
 def strip_ids(frag, keep):
     return re.sub(r' id="([^"]+)"', lambda m: m.group(0) if any(m.group(1).startswith(p) for p in keep) else "", frag)
@@ -62,11 +68,11 @@ BACK_G, MID_G, FRONT_G = 790, 836, 884
 g = lambda s: species[s].get("ground", 514)
 figures = [
     place("titanosaur", frags["titanosaur"], 150, BACK_G, species["titanosaur"].get("ground", 650), "titClass", "titAct", "Make the titanosaur call"),
-    place("spinosaurus", frags["spinosaurus"], 40, MID_G, g("spinosaurus"), "spnClass", "spnAct", "Make the Spinosaurus strike"),
-    place("trex", rex_frag, 720, MID_G + 4, 514, "trexClass", "trexAct", "Make the T. rex roar"),
-    place("ankylosaurus", frags["ankylosaurus"], 60, FRONT_G, g("ankylosaurus"), "ankClass", "ankAct", "Make the Ankylosaurus swing its tail club"),
-    place("triceratops", frags["triceratops"], 310, FRONT_G - 2, g("triceratops"), "triClass", "triAct", "Make the Triceratops charge"),
-    place("stegosaurus", frags["stegosaurus"], 570, FRONT_G - 4, g("stegosaurus"), "stgClass", "stgAct", "Make the Stegosaurus swing its tail"),
+    place("spinosaurus", frags["spinosaurus"], 24, MID_G, g("spinosaurus"), "spnClass", "spnAct", "Make the Spinosaurus strike"),
+    place("trex", rex_frag, 690, MID_G + 4, 514, "trexClass", "trexAct", "Make the T. rex roar"),
+    place("ankylosaurus", frags["ankylosaurus"], 40, FRONT_G, g("ankylosaurus"), "ankClass", "ankAct", "Make the Ankylosaurus swing its tail club"),
+    place("triceratops", frags["triceratops"], 300, FRONT_G - 2, g("triceratops"), "triClass", "triAct", "Make the Triceratops charge"),
+    place("stegosaurus", frags["stegosaurus"], 620, FRONT_G - 4, g("stegosaurus"), "stgClass", "stgAct", "Make the Stegosaurus swing its tail"),
 ]
 
 ten_m = 10 * PX_PER_M
@@ -104,7 +110,32 @@ facts_html = "\n".join(f'''<div style="display: flex; flex-direction: column; ga
 
 trex_css = re.search(r"<style>\n(.*?)\n</style>", poster.HTML, re.S).group(1)
 trex_css = "\n".join(l for l in trex_css.splitlines() if l.startswith((".tr-", "@keyframes tr-", "@media")))
-css = "\n".join([trex_css] + list(click_css.values()))
+# ---- action poses: each animal is frozen at the height of its move until it is tapped
+PEAK = {"triceratops": 0.5, "stegosaurus": 0.52, "titanosaur": 0.5, "ankylosaurus": 0.3, "spinosaurus": 0.4}
+NUM = re.compile(r"-?\d+(?:\.\d+)?")
+def at(frames, t):
+    """value of a keyframe list at time t, interpolating the numbers when both ends share a form"""
+    for (t0, v0), (t1, v1) in zip(frames, frames[1:]):
+        if t0 <= t <= t1:
+            if NUM.sub("#", v0) != NUM.sub("#", v1): return v0 if t - t0 < t1 - t else v1
+            u = (t - t0) / (t1 - t0) if t1 > t0 else 0
+            b = iter(float(n) for n in NUM.findall(v1))
+            return NUM.sub(lambda m: f"{float(m.group()) + (next(b) - float(m.group())) * u:.2f}".rstrip("0").rstrip("."), v0)
+    return frames[-1][1]
+def pose_css(code, action, t, acting="acting"):
+    out = []
+    for part, frames in action.items():
+        v = at(frames, t)
+        if part == "flush": out.append(f".{code}-posed:not(.{code}-{acting}) .{code}-flush{{opacity:{v} !important}}")
+        else:
+            v = v.replace("rotate(0)", "rotate(0deg)")
+            out.append(f".{code}-posed:not(.{code}-{acting}) .{code}-{part}{{transform:{v} !important;animation:none !important}}")
+    return "\n".join(out)
+pose = [pose_css(sp["code"], sp["action"], PEAK[s]) for s, sp in species.items()]
+# T. rex: mid-roar (its keyframes live in trex_poster.py)
+pose.append(pose_css("tr", {"head": [(0, "rotate(-8deg)"), (1, "rotate(-8deg)")], "jaw": [(0, "rotate(16deg)"), (1, "rotate(16deg)")],
+                            "arm": [(0, "rotate(14deg)"), (1, "rotate(14deg)")], "arm-far": [(0, "rotate(14deg)"), (1, "rotate(14deg)")]}, 0.5, "roaring"))
+css = "\n".join([trex_css] + list(click_css.values()) + pose)
 
 HTML = f'''<!doctype html>
 <html lang="en">
@@ -133,7 +164,7 @@ a{{color:{UMBER}}}a:hover{{color:#000}}
 <p style="margin: 0; font-size: 28px; color: {UMBER}">Six dinosaurs at their real lengths</p>
 </div>
 {"".join(figures)}
-<p style="position: absolute; left: 64px; top: 318px; margin: 0; padding: 6px 12px; border-radius: 8px; background: rgba(243, 223, 194, 0.9); font-size: 17px; font-weight: 500; color: {UMBER}">Tap any dinosaur to see its move</p>
+<p style="position: absolute; left: 64px; top: 318px; margin: 0; padding: 6px 12px; border-radius: 8px; background: rgba(243, 223, 194, 0.9); font-size: 17px; font-weight: 500; color: {UMBER}">Each is shown mid-move. Tap one to play it</p>
 </div>
 <div style="box-sizing: border-box; height: 450px; padding: 52px 64px 48px; display: flex; flex-direction: column; gap: 36px; color: {BUFF}">
 <p style="margin: 0; font-size: 30px; line-height: 1.4; max-width: 900px">Shown together for size only: they lived millions of years apart, from Stegosaurus, 152–145 million years ago, to T. rex, Triceratops and Ankylosaurus, about 68–66 million.</p>
@@ -157,12 +188,12 @@ const go = (key, ms) => () => {{
   this._t[key] = setTimeout(() => this.setState({{ [key]: false }}), ms);
 }};
 return {{
-trexClass: (animate ? 'tr-anim' : '') + (st.trex ? ' tr-roaring' : ''),
-triClass: (animate ? 'tri-anim' : '') + (st.tri ? ' tri-acting' : ''),
-stgClass: (animate ? 'stg-anim' : '') + (st.stg ? ' stg-acting' : ''),
-titClass: (animate ? 'tit-anim' : '') + (st.tit ? ' tit-acting' : ''),
-ankClass: (animate ? 'ank-anim' : '') + (st.ank ? ' ank-acting' : ''),
-spnClass: (animate ? 'spn-anim' : '') + (st.spn ? ' spn-acting' : ''),
+trexClass: 'tr-posed' + (animate ? ' tr-anim' : '') + (st.trex ? ' tr-roaring' : ''),
+triClass: 'tri-posed' + (animate ? ' tri-anim' : '') + (st.tri ? ' tri-acting' : ''),
+stgClass: 'stg-posed' + (animate ? ' stg-anim' : '') + (st.stg ? ' stg-acting' : ''),
+titClass: 'tit-posed' + (animate ? ' tit-anim' : '') + (st.tit ? ' tit-acting' : ''),
+ankClass: 'ank-posed' + (animate ? ' ank-anim' : '') + (st.ank ? ' ank-acting' : ''),
+spnClass: 'spn-posed' + (animate ? ' spn-anim' : '') + (st.spn ? ' spn-acting' : ''),
 trexAct: go('trex', 1700),
 triAct: go('tri', {int(species["triceratops"]["dur"] * 1000) + 100}),
 stgAct: go('stg', {int(species["stegosaurus"]["dur"] * 1000) + 100}),
@@ -178,7 +209,7 @@ spnAct: go('spn', {int(species["spinosaurus"]["dur"] * 1000) + 100})
 '''
 pathlib.Path(ROOT + "/boards/Group.dc.html").write_text(HTML)
 prev = HTML.replace('<script src="./support.js"></script>', "").replace("<helmet>", "").replace("</helmet>", "").replace("<x-dc>", "").replace("</x-dc>", "")
-for h in ("trexClass", "triClass", "stgClass", "titClass", "ankClass", "spnClass"): prev = prev.replace("{{" + h + "}}", "")
+for h, c in (("trexClass", "tr"), ("triClass", "tri"), ("stgClass", "stg"), ("titClass", "tit"), ("ankClass", "ank"), ("spnClass", "spn")): prev = prev.replace("{{" + h + "}}", c + "-posed")
 prev = re.sub(r'onClick="\{\{[a-zA-Z]+\}\}"', "", prev)
 prev = prev[:prev.index('<script type="text/x-dc"')] + "</body></html>"
 pathlib.Path(ROOT + "/shots/group-poster.html").write_text(prev)

@@ -11,65 +11,69 @@ from dinokit import SKIN, D, L, OL, CLAW, path, stroke, line, rim, stripes, spot
 C = "tit"
 LOOK = K.Look(C, skin="#7C8AA0", belly="#D8D2C2")
 
+# ------------------------------------------------------------------ proportions
+# Follows published skeletal reconstructions of Patagotitan for general proportions (not traced): at 31 m the back
+# stands about 4.7 m high and the head about 11-12 m up; a long neck raised at roughly 45 degrees, a comparatively
+# small, deep torso, short pillar-like legs and a long, tapering tail. About 34 drawing units per metre.
+
 # ------------------------------------------------------------------ legs (columnar, padded feet)
-HIND = "M300 380 C340 350 400 356 416 400 C428 440 420 480 404 500 L406 620 C408 640 400 650 386 650 L338 650 C326 650 322 640 324 628 L326 500 C304 470 292 420 300 380 Z"
-HIND_FOOT = "M316 634 C326 624 404 624 418 634 C424 640 422 650 414 650 L322 650 C312 650 310 640 316 634 Z"
-HIND_NAILS = "M408 637 C415 637 420 642 419 648 C414 646 410 645 406 645 Z M396 639 C402 639 406 643 405 648 C401 646 398 646 395 646 Z"
-FORE = "M600 380 C636 362 690 372 698 412 C704 450 692 490 680 504 L682 620 C684 640 676 650 662 650 L618 650 C606 650 602 640 604 628 L606 500 C590 470 588 410 600 380 Z"
-FORE_FOOT = "M596 634 C606 624 678 624 690 634 C696 640 694 650 686 650 L602 650 C594 650 590 640 596 634 Z"
+HIND = ("M438 520 C466 502 520 504 530 530 C536 550 530 566 522 578 L524 632 C526 644 518 650 508 650 "
+        "L468 650 C458 650 454 642 456 632 L458 586 C444 572 432 540 438 520 Z")
+HIND_FOOT = "M450 636 C458 628 520 628 532 636 C536 642 534 650 528 650 L456 650 C448 650 446 642 450 636 Z"
+HIND_NAILS = "M522 638 C529 638 534 643 533 649 C528 647 524 646 520 646 Z M510 640 C516 640 520 644 519 649 C515 647 512 647 509 647 Z"
+FORE = ("M642 518 C670 502 712 508 718 530 C722 550 716 566 708 578 L710 632 C712 644 704 650 694 650 "
+        "L658 650 C648 650 644 642 646 632 L648 586 C638 572 634 536 642 518 Z")
+FORE_FOOT = "M640 638 C648 630 708 630 718 638 C722 644 720 650 714 650 L646 650 C638 650 636 642 640 638 Z"
 
-def leg(gid, d, foot, nails=None, far=False, dx=0):
-    inner = []
+def open_top(d):
+    """limb outline without the arc where it meets the body"""
+    head, rest = d.split(" C", 1)
+    return "M" + " ".join(rest.split(" ")[4:6]) + " C" + rest.split(" C", 1)[1].rstrip(" Z")
+
+def leg(gid, d, foot, nails=None, far=False, dx=0, creases=""):
     if far:
-        inner.append(f'<g fill="{SKIN}" stroke="{OL}" stroke-width="3" stroke-linejoin="round">{path(d, SKIN)}{path(foot, SKIN)}</g>')
-        inner.append(f'<g fill="{D}" opacity="0.34">{path(d, D)}{path(foot, D)}</g>')
-        if nails: inner.append(path(nails, CLAW, 0.85))
+        inner = (skin_part(LOOK, d, ao=True, far=True, tex=False, outline_d=open_top(d))
+                 + skin_part(LOOK, foot, far=True, tex=False) + (path(nails, CLAW, 0.85) if nails else ""))
     else:
-        inner.append(skin_part(LOOK, d, ao=True, layers=dots([(310, 390), (410, 400), (404, 600), (330, 600)] if "M300" in d else [(606, 390), (694, 412), (680, 600), (610, 600)], 40, 0.8, 1.5, 0.1)))
-        inner.append(line("M330 500 C350 506 380 506 402 500 M330 520 C352 526 380 526 402 520" if "M300" in d else "M608 500 C628 506 656 506 680 500 M608 520 C630 526 656 526 680 520", 0.18, 2))
-        inner.append(skin_part(LOOK, foot, tex=False))
-        inner.append(line("M346 636 L346 650 M372 636 L372 650" if "M300" in d else "M626 636 L626 650 M652 636 L652 650", 0.28, 2))
-        if nails: inner.append(path(nails, CLAW))
+        inner = (skin_part(LOOK, d, ao=True, outline_d=open_top(d), layers=line(creases, 0.18, 2))
+                 + skin_part(LOOK, foot, tex=False) + (path(nails, CLAW) if nails else ""))
     t = f' transform="translate({dx} -2)"' if dx else ""
-    return f'<g id="{gid}"{t}>{"".join(inner)}</g>'
+    return f'<g id="{gid}"{t}>{inner}</g>'
 
-LEG_FAR = leg("leg-far", HIND, HIND_FOOT, HIND_NAILS, far=True, dx=44)
-FORELEG_FAR = leg("foreleg-far", FORE, FORE_FOOT, far=True, dx=40)
-LEG_NEAR = leg("leg-near", HIND, HIND_FOOT, HIND_NAILS)
-FORELEG_NEAR = leg("foreleg-near", FORE, FORE_FOOT)
+LEG_FAR = leg("leg-far", HIND, HIND_FOOT, HIND_NAILS, far=True, dx=40)
+FORELEG_FAR = leg("foreleg-far", FORE, FORE_FOOT, far=True, dx=36)
+LEG_NEAR = leg("leg-near", HIND, HIND_FOOT, HIND_NAILS, creases="M462 600 C478 606 500 606 518 600 M462 614 C480 620 500 620 518 614")
+FORELEG_NEAR = leg("foreleg-near", FORE, FORE_FOOT, creases="M652 600 C668 606 688 606 706 600 M652 614 C670 620 688 620 706 614")
 
-# ------------------------------------------------------------------ tail
-TAIL_D = "M300 330 C220 336 120 366 24 418 C14 424 16 434 26 434 C120 408 226 396 306 424 Z"
-TAIL = piv("tail", f"{C}-tail", 300, 380, skin_part(
+# ------------------------------------------------------------------ tail (long and tapering)
+TAIL_TOP = "M424 506 C352 514 258 534 154 560 C104 572 64 582 36 590"
+TAIL_D = TAIL_TOP + " C28 592 28 600 38 598 C80 594 140 590 200 586 C300 578 380 576 440 580 Z"
+TAIL = piv("tail", f"{C}-tail", 420, 544, skin_part(
     LOOK, TAIL_D,
-    belly="M26 434 C120 408 226 396 306 424 L306 406 C226 380 120 394 32 426 Z",
-    layers=path("M300 330 C220 336 120 366 24 418 C20 420 20 422 24 422 C120 374 220 350 300 348 Z", D, 0.26)
-           + stripes([(80, 392, 10, 8), (140, 366, 14, 10), (196, 350, 20, 12), (250, 340, 24, 13)])
-           + dots([(40, 420), (300, 336), (300, 410), (120, 404)], 60)
-           + line("M296 370 C230 372 150 390 60 420", 0.12, 2.2),
-    fade=True, rim_d="M300 330 C220 336 120 366 24 418",
-    outline_d="M300 330 C220 336 120 366 24 418 C14 424 16 434 26 434 C120 408 226 396 306 424"))
+    belly="M38 598 C80 594 140 590 200 586 C300 578 380 576 440 580 L440 568 C380 564 300 566 200 576 C140 580 80 588 44 594 Z",
+    layers=path(TAIL_TOP + " C70 582 110 572 160 562 C260 540 356 522 424 520 Z", D, 0.24)
+           + stripes([(120, 568, 7, 6), (180, 554, 9, 7), (240, 540, 11, 8), (300, 526, 13, 9), (360, 514, 15, 10)])
+           + dots([(60, 590), (430, 490), (430, 566), (200, 578)], 60)
+           + line("M428 548 C350 550 250 560 120 582", 0.12, 2),
+    fade=True, rim_d=TAIL_TOP, outline_d=TAIL_D.rstrip(" Z")))
 
-# ------------------------------------------------------------------ body (with osteoderms)
-BODY_D = "M262 330 C320 268 440 250 540 262 C620 272 680 300 720 340 C750 370 756 420 730 456 C700 494 620 512 520 512 C420 512 330 494 290 460 C254 430 242 370 262 330 Z"
-BODY_POLY = [(280, 340), (540, 270), (710, 340), (730, 440), (520, 500), (300, 460)]
+# ------------------------------------------------------------------ body (with osteoderms): smaller and lower than before
+BODY_TOP = "M408 508 C466 494 560 486 640 486 C690 488 724 508 734 532"
+BODY_D = BODY_TOP + " C742 554 726 572 692 580 C620 592 520 590 460 582 C424 576 404 556 404 536 C404 524 404 514 408 508 Z"
+BODY_POLY = [(414, 512), (560, 494), (716, 508), (728, 552), (600, 582), (430, 570)]
 osteo = "".join(
-    f'<ellipse cx="{x}" cy="{y}" rx="{r*1.6:.1f}" ry="{r:.1f}" fill="{SKIN}" stroke="{OL}" stroke-width="1.4"></ellipse>'
+    f'<ellipse cx="{x}" cy="{y}" rx="{r*1.6:.1f}" ry="{r:.1f}" fill="{SKIN}" stroke="{OL}" stroke-width="1.2"></ellipse>'
     f'<ellipse cx="{x}" cy="{y}" rx="{r*1.6:.1f}" ry="{r:.1f}" fill="{D}" opacity="0.2"></ellipse>'
-    f'<path d="M{x-r} {y-r*0.3:.1f} C{x-r*0.4:.1f} {y-r*0.9:.1f} {x+r*0.4:.1f} {y-r*0.9:.1f} {x+r} {y-r*0.3:.1f}" fill="none" stroke="#FFE4C0" stroke-width="1.2" opacity="0.5"></path>'
-    for x, y, r in K.scatter([(300, 312), (420, 282), (560, 282), (680, 320), (660, 338), (540, 304), (420, 304), (300, 334)], 16, 3.2, 5.2, seed=21))
-BODY = piv("body", f"{C}-body", 500, 512, skin_part(
+    for x, y, r in K.scatter([(430, 510), (560, 494), (680, 494), (700, 512), (560, 510), (430, 524)], 12, 2.4, 3.6, seed=21))
+BODY = piv("body", f"{C}-body", 566, 588, skin_part(
     LOOK, BODY_D,
-    belly="M730 456 C700 494 620 512 520 512 C420 512 330 494 290 460 L300 444 C340 476 420 492 520 492 C610 492 680 476 716 440 Z",
-    layers=path("M262 330 C320 268 440 250 540 262 C620 272 680 300 720 340 L706 352 C668 316 612 292 540 284 C444 274 330 290 274 346 Z", D, 0.26)
-           + stripes([(300, 300, 32, 16), (350, 280, 40, 18), (400, 268, 46, 19), (452, 262, 50, 20), (504, 262, 50, 20), (556, 268, 48, 19), (606, 280, 42, 18), (654, 298, 34, 16)])
-           + spots(BODY_POLY, 28, 3, 7, 0.14, seed=7)
-           + dots(BODY_POLY, 260)
-           + line("M600 300 C616 350 616 410 600 470 M640 312 C656 360 656 420 640 470", 0.07, 2.4)
-           + line("M330 470 C380 488 450 496 520 498", 0.12, 2)
+    belly="M734 532 C742 554 726 572 692 580 C620 592 520 590 460 582 C424 576 404 556 404 536 L416 536 C418 552 436 564 464 568 C524 576 616 576 680 566 C710 558 728 546 732 532 Z",
+    layers=path(BODY_TOP + " L724 538 C712 516 686 502 640 500 C560 500 470 508 414 524 Z", D, 0.24)
+           + stripes([(430, 504, 18, 11), (476, 496, 20, 12), (520, 490, 22, 13), (564, 488, 22, 13), (608, 487, 20, 12), (652, 490, 18, 11)])
+           + spots(BODY_POLY, 20, 2.4, 5, 0.14, seed=7) + dots(BODY_POLY, 180)
+           + line("M640 496 C650 520 650 556 640 584", 0.07, 2.2)
            + osteo,
-    rim_d="M262 330 C320 268 440 250 540 262 C620 272 680 300 720 340",
-    outline_d="M262 330 C320 268 440 250 540 262 C620 272 680 300 720 340 C750 370 756 420 730 456 C700 494 620 512 520 512 C420 512 330 494 290 460"))
+    rim_d=BODY_TOP, outline_d=BODY_TOP + " C742 554 726 572 692 580 C620 592 520 590 460 582"))
 
 # ------------------------------------------------------------------ head + jaw (inside the neck)
 JAW = piv("jaw", f"{C}-jaw", 858, 154,
@@ -92,28 +96,35 @@ HEAD = piv("head", f"{C}-head", 850, 140,
     + K.eye(874, 122, f"{C}-eyelid", r=4)
     + path("M862 116 C868 110 882 110 888 116 C882 114 870 114 864 120 Z", D, 0.45))
 
-# ------------------------------------------------------------------ neck (contains the head)
-NECK_D = "M640 292 C690 238 752 168 818 126 C834 116 852 118 862 130 L876 150 C834 186 794 252 770 340 C760 366 722 380 690 372 C672 350 650 320 640 292 Z"
+# ------------------------------------------------------------------ neck (contains the head): long, raised at about 45 degrees
+NECK_TOP = ((560, 492), (690, 462), (780, 336), (848, 248))
+NECK_D = ("M560 492 C690 462 780 336 848 248 C870 226 896 212 920 216 L934 252 "
+          "C900 274 846 330 800 398 C770 444 750 500 732 562 C690 552 610 528 560 492 Z")
 neck_stripes = []
-for t, ln, w in [(0.22, 24, 13), (0.36, 22, 12), (0.5, 20, 11), (0.64, 18, 10), (0.78, 15, 9), (0.9, 12, 8)]:
-    x, y = bez((640, 292), (690, 238), (752, 168), (818, 126), t)
-    neck_stripes.append((round(x), round(y + 4), ln, w))
-NECK = piv("neck", f"{C}-neck", 690, 320, skin_part(
+for t, ln, w in [(0.2, 18, 11), (0.34, 17, 10), (0.48, 16, 10), (0.62, 14, 9), (0.76, 12, 8), (0.9, 10, 7)]:
+    x, y = bez(*NECK_TOP, t)
+    neck_stripes.append((round(x), round(y + 3), ln, w))
+# the head keeps its drawing, scaled to sauropod proportions and seated on the end of the neck
+HEAD_PLACED = f'<g transform="translate(924 238) scale(0.72) translate(-850 -140)">{HEAD}</g>'
+NECK = piv("neck", f"{C}-neck", 680, 510, skin_part(
     LOOK, NECK_D,
-    belly="M876 150 C834 186 794 252 770 340 C764 356 756 366 746 372 L738 360 C750 350 756 336 760 320 C782 246 822 178 864 142 Z",
-    layers=path("M648 284 C690 238 752 168 818 126 C834 116 852 118 862 130 L854 138 C842 130 830 130 822 134 C764 176 708 238 660 294 Z", D, 0.22)
+    belly="M934 252 C900 274 846 330 800 398 C770 444 750 500 732 560 L718 552 C736 494 756 440 786 392 C832 322 884 270 924 244 Z",
+    layers=path("M560 492 C690 462 780 336 848 248 C870 226 896 212 920 216 L912 230 C892 230 872 244 858 258 C786 340 700 470 580 506 Z", D, 0.22)
            + stripes(neck_stripes)
-           + dots([(660, 290), (820, 132), (860, 148), (770, 330), (700, 360)], 90)
-           + line("M806 200 C812 204 818 205 822 204 M784 236 C790 240 796 241 800 240 M768 272 C774 276 780 277 784 276 M758 308 C764 312 770 313 774 312", 0.2, 1.8)
-           + line("M700 300 C730 250 780 190 830 150", 0.08, 2.2),
-    rim_d="M648 284 C690 238 752 168 818 126",
-    outline_d="M648 284 C690 238 752 168 818 126 C834 116 852 118 862 130 L876 150 C834 186 794 252 770 340 C766 354 758 364 748 370")
-    + HEAD)
+           + dots([(610, 500), (700, 466), (780, 356), (850, 258), (922, 240), (800, 398), (730, 556), (660, 520)], 110)
+           + line("M852 292 C858 296 864 297 868 296 M824 328 C830 332 836 333 840 332 M798 366 C804 370 810 371 814 370 M776 406 C782 410 788 411 792 410", 0.2, 1.6),
+    rim_d="M566 488 C692 458 780 334 848 246 C868 226 892 214 914 216",
+    outline_d="M560 492 C690 462 780 336 848 248 C870 226 896 212 920 216 L934 252 C900 274 846 330 800 398 C770 444 750 500 732 562")
+    + HEAD_PLACED)
+
+# snout-to-tail midline in drawing units; the group poster measures length along it, since the raised neck
+# makes the straight-line span much shorter than the animal
+MIDLINE = [(996, 238), (924, 238), (860, 262), (800, 330), (740, 410), (680, 500), (600, 522), (420, 540), (250, 562), (36, 594)]
 
 # ------------------------------------------------------------------ assemble
-INNER = (f'<ellipse cx="520" cy="652" rx="330" ry="12" fill="{D}" opacity="0.3"></ellipse>'
+INNER = (f'<ellipse cx="540" cy="652" rx="300" ry="12" fill="{D}" opacity="0.3"></ellipse>'
          + LEG_FAR + FORELEG_FAR + TAIL + NECK + BODY + LEG_NEAR + FORELEG_NEAR)
-FRAG = piv("act", f"{C}-act", 500, 650, INNER)
+FRAG = piv("act", f"{C}-act", 540, 650, INNER)
 
 ACTION = {
     "neck": [(0, "rotate(0)"), (0.3, "rotate(-12deg)"), (0.75, "rotate(-12deg)"), (1, "rotate(0)")],
@@ -190,18 +201,18 @@ SPEC = dict(
     action_label="Make the titanosaur call", action_verb="make it call", page_bg="#D3DBDF",
     scene=SCENE, title="Titanosaur", title_px=180, binomial="Patagotitan mayorum", subtitle="the titan from Patagonia",
     paragraph="One of the largest animals ever to walk on land: a long-necked plant eater weighing around 50 to 57 tonnes by recent estimates.",
-    facts=[("31–37 m", "estimated length"), ("102", "million years ago"), ("2.38 m", "thigh bone")],
+    facts=[("31 m", "estimated length"), ("102", "million years ago"), ("2.38 m", "thigh bone")],
     footer="Known only from La Flecha ranch in Chubut Province, Argentina, in rocks about 101.6 million years old.",
     hint="Tap the titanosaur to make it call", skin_swatches=["#7C8AA0", "#7A8450", "#9E6B7B", "#5E7E7A"],
-    dino_top=130,
+    dino_top=130, midline=MIDLINE,
     rig_parts=[
-        ("Neck, head and jaw", "#neck, #head, #jaw", NECK, (628, 92, 332, 292)),
-        ("Body", "#body", BODY, (238, 248, 524, 272)),
-        ("Tail", "#tail", TAIL, (8, 322, 302, 118)),
-        ("Near hind leg", "#leg-near", LEG_NEAR, (286, 346, 140, 308)),
-        ("Far hind leg", "#leg-far", LEG_FAR, (330, 344, 140, 308)),
-        ("Near front leg", "#foreleg-near", FORELEG_NEAR, (584, 358, 116, 296)),
-        ("Far front leg", "#foreleg-far", FORELEG_FAR, (624, 356, 116, 296)),
+        ("Neck, head and jaw", "#neck, #head, #jaw", NECK, (550, 196, 450, 370)),
+        ("Body", "#body", BODY, (396, 476, 352, 122)),
+        ("Tail", "#tail", TAIL, (24, 494, 424, 112)),
+        ("Near hind leg", "#leg-near", LEG_NEAR, (426, 466, 116, 188)),
+        ("Far hind leg", "#leg-far", LEG_FAR, (466, 464, 116, 188)),
+        ("Near front leg", "#foreleg-near", FORELEG_NEAR, (630, 472, 96, 182)),
+        ("Far front leg", "#foreleg-far", FORELEG_FAR, (666, 470, 96, 182)),
     ],
     rig_h=1080,
 )

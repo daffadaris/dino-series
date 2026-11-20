@@ -19,8 +19,9 @@ An illustrated dinosaur series in one shared style: cel-shaded vector drawings w
 | *Stegosaurus stenops* | Spiked tail swing, plates flush red | `svg/stegosaurus-animated.svg` | `gsap/stegosaurus-gsap.html` | `3d/stegosaurus-3d.html` |
 | *Patagotitan mayorum* (titanosaur) | Neck raise and call | `svg/titanosaur-animated.svg` | `gsap/titanosaur-gsap.html` | `3d/titanosaur-3d.html` |
 | *Ankylosaurus magniventris* | Tail-club swing | `svg/ankylosaurus-animated.svg` | `gsap/ankylosaurus-gsap.html` | not yet |
+| *Spinosaurus aegyptiacus* | Strike at a fish | `svg/spinosaurus-animated.svg` | `gsap/spinosaurus-gsap.html` | not yet |
 
-Each species also has a poster and a rig sheet in `boards/`, and `boards/Group.dc.html` shows the first four together at their real lengths.
+Each species also has a poster and a rig sheet in `boards/`, and `boards/Group.dc.html` shows all six together at their real lengths.
 
 ## Project layout
 
@@ -32,11 +33,11 @@ dino-series/
 ├── boards/                    posters and rig sheets (*.dc.html) and their canvas layout (canvas.json)
 ├── src/                       builders
 │   ├── dinokit.py             shared toolkit: drawing helpers, motion CSS, poster and rig builders
-│   ├── sp_*.py                one builder per species (Triceratops, Stegosaurus, titanosaur, Ankylosaurus)
+│   ├── sp_*.py                one builder per species (Triceratops, Stegosaurus, titanosaur, Ankylosaurus, Spinosaurus)
 │   ├── trex_drawing.py        the definitive T. rex drawing
 │   ├── trex_svg.py            shading pass over it; writes svg/trex-animated.svg
 │   ├── trex_gsap.py, trex_poster.py, trex_rig.py
-│   ├── group_poster.py        all four to scale
+│   ├── group_poster.py        every species to scale
 │   └── triceratops_3d.py      Triceratops 3D page, generated from the T. rex engine
 ├── baseline/trex-boxy-head/   saved T. rex baseline: head shapes, ids and pivots
 ├── shots/                     local screenshots (not tracked)
@@ -55,6 +56,7 @@ Every moving part is its own group with an id. Each group sits inside a wrapper 
 | Stegosaurus | `#act` `#body` `#plates` `#tail` `#head` `#leg-near` `#leg-far` `#foreleg-near` `#foreleg-far` | `stg-` |
 | Titanosaur | `#act` `#body` `#tail` `#neck` `#head` `#jaw` `#leg-near` `#leg-far` `#foreleg-near` `#foreleg-far` | `tit-` |
 | Ankylosaurus | `#act` `#body` `#tail` `#head` `#leg-near` `#leg-far` `#foreleg-near` `#foreleg-far` | `ank-` |
+| Spinosaurus | `#act` `#body` `#tail` `#neck` `#head` `#jaw` `#leg-near` `#leg-far` `#arm-near` `#arm-far` | `spn-` |
 
 - The standalone SVGs loop on their own. Remove the `<prefix>anim` class from the root `<svg>` to stop the built-in animation and drive the groups yourself.
 - `#act` moves the whole animal, for example the Triceratops lunge.
@@ -76,6 +78,7 @@ python3 src/sp_triceratops.py
 python3 src/sp_stegosaurus.py
 python3 src/sp_titanosaur.py
 python3 src/sp_ankylosaurus.py
+python3 src/sp_spinosaurus.py
 
 # Group poster to scale (measures each drawing in a browser)
 python3 src/group_poster.py
@@ -98,6 +101,12 @@ The drawings follow published anatomy for general shape and proportion. Skin col
 | Stegosaurus | Proportions and plate shapes checked against mounted skeletons, chiefly *S. stenops* "Sophie" at the Natural History Museum: long, nearly straight hind legs and short, stout forelegs; broad, round-topped plates in two staggered rows, tallest over the hips and base of the tail, running down the tail and up the neck; four tail spikes pointing sideways and back rather than upright; bony studs on the throat; small, low head about a metre off the ground |
 | Triceratops | Proportions checked against mounted skeletons (Houston's "Lane", Los Angeles and London): a deep, barrel-shaped trunk, highest over the hips; long, columnar hind legs and shorter forelegs with the elbows flexed back; a short, thick tail sloping down from the hips; a solid frill swept up and back over the neck, with low edge bones as in adults; a deep face with a hooked beak and a skull about a third of the body length, carried low; brow horns about a metre long angled forward; three hooves on each hand; pebbly skin with widely spaced cone-tipped feature scales, as in the Lane specimen |
 
+| Spinosaurus | Researched against Wikipedia, the Natural History Museum, Ibrahim and others (2020) and Sereno and others (2022), with skeletal reconstructions for proportions. Drawn as a 14 m biped standing with its weight over the hips (Sereno and others 2022); the Museum notes that posture is still debated. Short hind legs with long, flat-bottomed toes; robust arms with three fingers and an enlarged thumb claw; a long, low, crocodile-like skull with straight conical teeth, a notch near the jaw tip, nostrils set well back and a small crest in front of the eyes; an S-curved neck; a thin sail of neural spines up to about 1.65 m, peaking over the rear of the back (its exact outline is not known); and a deep, paddle-like tail from tall neural spines and long chevrons (Ibrahim and others 2020) |
+
+### Lengths on the group poster
+
+T. rex 12 m (Natural History Museum; the most complete skeleton is 12.3–12.4 m). Triceratops 8–9 m, drawn at 8.5 m. *Stegosaurus stenops* about 6.5 m; the often-quoted 9 m belongs to the larger *S. ungulatus*. Patagotitan about 31 m: the 37 m estimate of 2017 was later revised down (Paul 2019, 2024). Ankylosaurus 6–8 m, drawn at 7 m. Spinosaurus about 14 m (Sereno and others 2022).
+
 ## Roadmap
 
 Each round reuses the rigs and toolkit built before it, so the order runs from the easiest additions to the biggest new techniques.
@@ -109,11 +118,12 @@ timeline
         Series start : T. rex
         First set : Triceratops : Stegosaurus : Titanosaur : Group poster to scale
         Round 1 started : Ankylosaurus
+        Round 3 started : Spinosaurus
     section Next
         Round 1, Hell Creek set : Edmontosaurus : Pachycephalosaurus
         Round 2, Morrison set : Allosaurus : Diplodocus
     section Later
-        Round 3, new techniques : Spinosaurus : Parasaurolophus : Velociraptor : Therizinosaurus
+        Round 3, new techniques : Parasaurolophus : Velociraptor : Therizinosaurus
         Round 4, beyond dinosaurs : Pteranodon : Mosasaurus
         Capstone : Deep-time poster
 ```
@@ -128,4 +138,4 @@ timeline
 
 ## Sources
 
-Anatomy follows Arbour and Mallon (2017), *Unusual cranial and postcranial anatomy in the archetypal ankylosaur* Ankylosaurus magniventris, FACETS 2: 764–794, for the Ankylosaurus, and Gilmore (1914) and Maidment and others (2015), as summarised by the Natural History Museum and Wikipedia, for the Stegosaurus. The Triceratops follows the Natural History Museum, Britannica and Wikipedia descriptions, including the Lane specimen's skin. Poster facts were checked in November 2026 against The Canadian Encyclopedia, National Geographic, the Natural History Museum's Dino Directory and the Western Australian Museum, among others. Lengths are estimates for large adults, and Patagotitan's 31–37 m range reflects revised estimates.
+Anatomy follows Arbour and Mallon (2017), *Unusual cranial and postcranial anatomy in the archetypal ankylosaur* Ankylosaurus magniventris, FACETS 2: 764–794, for the Ankylosaurus, and Gilmore (1914) and Maidment and others (2015), as summarised by the Natural History Museum and Wikipedia, for the Stegosaurus. The Triceratops follows the Natural History Museum, Britannica and Wikipedia descriptions, including the Lane specimen's skin. The Spinosaurus follows Ibrahim and others (2020, *Nature*) for the tail and Sereno and others (2022, *eLife*) for posture and size, with the Natural History Museum's Dino Directory. Poster facts were checked in November 2026 against The Canadian Encyclopedia, National Geographic, the Natural History Museum's Dino Directory and the Western Australian Museum, among others. Lengths are estimates for large adults, and Patagotitan's 31–37 m range reflects revised estimates.

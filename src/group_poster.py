@@ -1,7 +1,7 @@
 import os as _os
 HERE = _os.path.dirname(_os.path.abspath(__file__))  # src/
 ROOT = _os.path.dirname(HERE)                          # repository root
-"""Group poster: all four dinosaurs at their real lengths (series layout)."""
+"""Group poster: every species at its real length (series layout)."""
 import json, re, sys, pathlib, subprocess, importlib.util
 sys.path.insert(0, HERE)
 import dinokit as K
@@ -11,7 +11,7 @@ def load(name, path):
 
 rex = load("rex5", HERE + "/trex_svg.py")
 poster = load("rexposter", HERE + "/trex_poster.py")          # gives the T. rex click CSS
-species = {s: load(f"sp_{s}", f"{HERE}/sp_{s}.py").SPEC for s in ("triceratops", "stegosaurus", "titanosaur")}
+species = {s: load(f"sp_{s}", f"{HERE}/sp_{s}.py").SPEC for s in ("triceratops", "stegosaurus", "titanosaur", "ankylosaurus", "spinosaurus")}
 
 # ---- measure each drawing's nose-to-tail span (viewBox units) in a real browser
 def measure():
@@ -24,7 +24,7 @@ def measure():
         pg = b.new_page()
         for k, (f, a, z) in files.items():
             pg.goto(f"file://{ROOT}/svg/{f}"); pg.wait_for_timeout(200)
-            out[k] = pg.evaluate(f"""() => {{ const s = document.querySelector('svg'); s.classList.remove('tr-anim','tri-anim','stg-anim','tit-anim');
+            out[k] = pg.evaluate(f"""() => {{ const s = document.querySelector('svg'); s.classList.remove('tr-anim','tri-anim','stg-anim','tit-anim','ank-anim','spn-anim');
               const vb = s.viewBox.baseVal, r = s.getBoundingClientRect(), k = vb.width / r.width;
               const t = document.querySelector('{a}').getBoundingClientRect(), h = document.querySelector('{z}').getBoundingClientRect();
               return {{ left: (t.left - r.left) * k, right: (h.right - r.left) * k, vbw: vb.width, vbh: vb.height }}; }}""")
@@ -32,8 +32,12 @@ def measure():
     return out
 
 M = measure()
-LENGTH = {"trex": 12, "triceratops": 9, "stegosaurus": 9, "titanosaur": 34}     # metres (Patagotitan 31-37: midpoint)
-PX_PER_M = 26.5
+# checked adult lengths in metres, for the species drawn (README, "Sources"):
+# T. rex about 12 m (NHM; the most complete skeleton is 12.3-12.4 m); Triceratops 8-9 m, drawn at 8.5;
+# Stegosaurus stenops about 6.5 m (9 m belongs to S. ungulatus); Patagotitan about 31 m (revised down from
+# the 37 m of 2017); Ankylosaurus 6-8 m, drawn at 7; Spinosaurus about 14 m (Sereno et al. 2022)
+LENGTH = {"trex": 12, "triceratops": 8.5, "stegosaurus": 6.5, "titanosaur": 31, "ankylosaurus": 7, "spinosaurus": 14}
+PX_PER_M = 24
 def scale_of(k): return LENGTH[k] * PX_PER_M / (M[k]["right"] - M[k]["left"])
 
 def strip_ids(frag, keep):
@@ -46,20 +50,23 @@ def place(k, frag, x_nose_left, ground_y, ground_vb, cls_hole, act_hole, label):
     return (f'<button type="button" class="grp-btn" aria-label="{label}" onClick="{{{{{act_hole}}}}}" style="position: absolute; left: {left:.0f}px; top: {top:.0f}px; width: {w:.0f}px; height: {h:.0f}px; padding: 0; margin: 0; border: 0; background: none; cursor: pointer; display: block">'
             f'<svg class="{{{{{cls_hole}}}}}" aria-hidden="true" viewBox="0 0 {vbw} {vbh}" width="{w:.0f}" height="{h:.0f}" style="display: block; overflow: visible">{frag}</svg></button>')
 
-keep = ("trx-", "tri-", "stg-", "tit-")
+keep = ("trx-", "tri-", "stg-", "tit-", "ank-", "spn-")
 rex_frag = strip_ids(rex.FRAG.replace(rex.SKIN, rex.DEFAULT_SKIN), keep)
 frags = {s: strip_ids(sp["look"].defs() + sp["frag"].replace(K.SKIN, sp["look"].skin), keep) for s, sp in species.items()}
 for s, sp in species.items():
     K.motion_css(sp["code"], None, sp["action"], sp["dur"])
 click_css = {s: K.motion_css(sp["code"], None, sp["action"], sp["dur"])[0] for s, sp in species.items()}
 
-# ground lines: titanosaur stands further back, the other three in a front row
-BACK_G, FRONT_G = 812, 868
+# ground lines: titanosaur at the back, the two big theropods in the middle, the three smaller animals in front
+BACK_G, MID_G, FRONT_G = 790, 836, 884
+g = lambda s: species[s].get("ground", 514)
 figures = [
-    place("titanosaur", frags["titanosaur"], 70, BACK_G, species["titanosaur"].get("ground", 650), "titClass", "titAct", "Make the titanosaur call"),
-    place("trex", rex_frag, 48, FRONT_G, 514, "trexClass", "trexAct", "Make the T. rex roar"),
-    place("triceratops", frags["triceratops"], 420, FRONT_G + 6, species["triceratops"].get("ground", 514), "triClass", "triAct", "Make the Triceratops charge"),
-    place("stegosaurus", frags["stegosaurus"], 742, FRONT_G - 4, species["stegosaurus"].get("ground", 514), "stgClass", "stgAct", "Make the Stegosaurus swing its tail"),
+    place("titanosaur", frags["titanosaur"], 150, BACK_G, species["titanosaur"].get("ground", 650), "titClass", "titAct", "Make the titanosaur call"),
+    place("spinosaurus", frags["spinosaurus"], 40, MID_G, g("spinosaurus"), "spnClass", "spnAct", "Make the Spinosaurus strike"),
+    place("trex", rex_frag, 720, MID_G + 4, 514, "trexClass", "trexAct", "Make the T. rex roar"),
+    place("ankylosaurus", frags["ankylosaurus"], 60, FRONT_G, g("ankylosaurus"), "ankClass", "ankAct", "Make the Ankylosaurus swing its tail club"),
+    place("triceratops", frags["triceratops"], 310, FRONT_G - 2, g("triceratops"), "triClass", "triAct", "Make the Triceratops charge"),
+    place("stegosaurus", frags["stegosaurus"], 570, FRONT_G - 4, g("stegosaurus"), "stgClass", "stgAct", "Make the Stegosaurus swing its tail"),
 ]
 
 ten_m = 10 * PX_PER_M
@@ -89,7 +96,7 @@ SCENE = f'''<svg aria-hidden="true" viewBox="0 0 1080 900" width="1080" height="
 </svg>'''
 
 UMBER, BUFF, LABEL = K.UMBER, K.BUFF, K.LABEL
-facts = [("31–37 m", "Patagotitan"), ("12 m", "Tyrannosaurus rex"), ("8–9 m", "Triceratops and Stegosaurus")]
+facts = [("31 m", "Patagotitan"), ("14 m", "Spinosaurus"), ("12 m", "Tyrannosaurus rex")]
 facts_html = "\n".join(f'''<div style="display: flex; flex-direction: column; gap: 4px">
 <span style="font-family: 'Big Shoulders Display', 'Public Sans', sans-serif; font-weight: 800; font-size: 80px; line-height: 0.95; color: {BUFF}">{n}</span>
 <span style="font-size: 20px; color: {LABEL}">{l}</span>
@@ -103,7 +110,7 @@ HTML = f'''<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Four dinosaurs to scale</title>
+<title>Dinosaurs to scale</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -123,17 +130,17 @@ a{{color:{UMBER}}}a:hover{{color:#000}}
 {SCENE}
 <div style="position: absolute; top: 56px; left: 64px; display: flex; flex-direction: column; gap: 10px">
 <h1 style="margin: 0; font-family: 'Big Shoulders Display', 'Public Sans', sans-serif; font-weight: 900; font-size: 230px; line-height: 0.8; letter-spacing: -0.01em; color: {UMBER}">To scale</h1>
-<p style="margin: 0; font-size: 28px; color: {UMBER}">Four dinosaurs at their real lengths</p>
+<p style="margin: 0; font-size: 28px; color: {UMBER}">Six dinosaurs at their real lengths</p>
 </div>
 {"".join(figures)}
 <p style="position: absolute; left: 64px; top: 318px; margin: 0; padding: 6px 12px; border-radius: 8px; background: rgba(243, 223, 194, 0.9); font-size: 17px; font-weight: 500; color: {UMBER}">Tap any dinosaur to see its move</p>
 </div>
 <div style="box-sizing: border-box; height: 450px; padding: 52px 64px 48px; display: flex; flex-direction: column; gap: 36px; color: {BUFF}">
-<p style="margin: 0; font-size: 30px; line-height: 1.4; max-width: 900px">Shown side by side for size only. Stegosaurus lived about 152–145 million years ago, Patagotitan about 102 million, and T. rex and Triceratops 68–66 million.</p>
+<p style="margin: 0; font-size: 30px; line-height: 1.4; max-width: 900px">Shown together for size only: they lived millions of years apart, from Stegosaurus, 152–145 million years ago, to T. rex, Triceratops and Ankylosaurus, about 68–66 million.</p>
 <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px">
 {facts_html}
 </div>
-<p style="margin: 0; margin-top: auto; font-size: 18px; line-height: 1.5; color: {LABEL}">Lengths are estimates for large adults. Patagotitan is drawn at 34 m, the middle of its revised 31–37 m range.</p>
+<p style="margin: 0; margin-top: auto; font-size: 18px; line-height: 1.5; color: {LABEL}">Lengths are estimates for large adults: Triceratops 8–9 m (drawn at 8.5), Stegosaurus stenops 6.5 m, Ankylosaurus 6–8 m (drawn at 7). Patagotitan was first put at 37 m; later estimates give about 31 m.</p>
 </div>
 </div>
 </x-dc>
@@ -154,10 +161,14 @@ trexClass: (animate ? 'tr-anim' : '') + (st.trex ? ' tr-roaring' : ''),
 triClass: (animate ? 'tri-anim' : '') + (st.tri ? ' tri-acting' : ''),
 stgClass: (animate ? 'stg-anim' : '') + (st.stg ? ' stg-acting' : ''),
 titClass: (animate ? 'tit-anim' : '') + (st.tit ? ' tit-acting' : ''),
+ankClass: (animate ? 'ank-anim' : '') + (st.ank ? ' ank-acting' : ''),
+spnClass: (animate ? 'spn-anim' : '') + (st.spn ? ' spn-acting' : ''),
 trexAct: go('trex', 1700),
 triAct: go('tri', {int(species["triceratops"]["dur"] * 1000) + 100}),
 stgAct: go('stg', {int(species["stegosaurus"]["dur"] * 1000) + 100}),
-titAct: go('tit', {int(species["titanosaur"]["dur"] * 1000) + 100})
+titAct: go('tit', {int(species["titanosaur"]["dur"] * 1000) + 100}),
+ankAct: go('ank', {int(species["ankylosaurus"]["dur"] * 1000) + 100}),
+spnAct: go('spn', {int(species["spinosaurus"]["dur"] * 1000) + 100})
 }};
 }}
 }}
@@ -167,7 +178,7 @@ titAct: go('tit', {int(species["titanosaur"]["dur"] * 1000) + 100})
 '''
 pathlib.Path(ROOT + "/boards/Group.dc.html").write_text(HTML)
 prev = HTML.replace('<script src="./support.js"></script>', "").replace("<helmet>", "").replace("</helmet>", "").replace("<x-dc>", "").replace("</x-dc>", "")
-for h in ("trexClass", "triClass", "stgClass", "titClass"): prev = prev.replace("{{" + h + "}}", "")
+for h in ("trexClass", "triClass", "stgClass", "titClass", "ankClass", "spnClass"): prev = prev.replace("{{" + h + "}}", "")
 prev = re.sub(r'onClick="\{\{[a-zA-Z]+\}\}"', "", prev)
 prev = prev[:prev.index('<script type="text/x-dc"')] + "</body></html>"
 pathlib.Path(ROOT + "/shots/group-poster.html").write_text(prev)

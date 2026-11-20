@@ -276,7 +276,7 @@ SPEC = dict(
     action_label="Make the Stegosaurus swing its tail", action_verb="swing its tail", page_bg="#D9D4C4",
     scene=SCENE, title="Stegosaurus", title_px=190, binomial="Stegosaurus stenops", subtitle="the narrow-faced roof lizard",
     paragraph="A plant eater with two staggered rows of tall bony plates down its back and a spiked tail for defence, carrying its small head about a metre off the ground.",
-    facts=[("9 m", "longest individuals"), ("152–145", "million years ago"), ("4", "tail spikes")],
+    facts=[("6.5 m", "adult length"), ("152–145", "million years ago"), ("4", "tail spikes")],
     footer="Fossils come from the Morrison Formation of Colorado, Wyoming and Utah, with more found in Portugal.",
     hint="Tap the Stegosaurus to swing its tail", skin_swatches=["#5E7E7A", "#7A8450", "#9E6B7B", "#8A6A3E"],
     dino_top=262, rig_parts=RIG, rig_h=960,

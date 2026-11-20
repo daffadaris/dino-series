@@ -96,23 +96,31 @@ TAIL = piv("tail", f"{C}-tail", 440, 340, skin_part(
 BODY_D = ("M430 304 C500 296 600 300 662 314 C690 322 708 344 706 372 C704 400 684 420 650 428 "
           "C590 438 520 436 470 420 C440 410 424 380 424 350 C424 330 426 314 430 304 Z")
 BODY_TOP = "M430 304 C500 296 600 300 662 314 C690 322 708 344 706 372"
-# thin sail of neural spines; tallest over the rear of the back, sloping down toward the shoulders
-SAIL_D = ("M704 336 C684 304 644 266 596 234 C560 210 526 194 498 190 C474 188 456 200 448 224 "
-          "C440 250 434 280 430 306 C520 296 610 300 704 336 Z")
-SAIL_EDGE = "M704 336 C684 304 644 266 596 234 C560 210 526 194 498 190 C474 188 456 200 448 224 C440 250 434 280 430 306"
+# thin sail of neural spines; tallest over the rear of the back, sloping down toward the shoulders. The edge is
+# scalloped between spine tips so it reads as skin stretched over a row of spines.
+SAIL_SEGS = [((704, 336), (684, 304), (644, 266), (596, 234)), ((596, 234), (560, 210), (526, 194), (498, 190)),
+             ((498, 190), (474, 188), (456, 200), (448, 224)), ((448, 224), (440, 250), (434, 280), (430, 306))]
+SAIL_TIPS = [K.bez(*SAIL_SEGS[0], k / 5) for k in range(1, 6)] + [K.bez(*SAIL_SEGS[1], k / 4) for k in range(1, 5)] \
+            + [K.bez(*SAIL_SEGS[2], k / 2) for k in range(1, 3)] + [K.bez(*SAIL_SEGS[3], k / 3) for k in range(1, 3)]
+SAIL_TIPS = [(x - 2, y - 3) for x, y in SAIL_TIPS]
+def scalloped(points, start, sag=7, centre=(560, 330)):
+    d = [f"M{start[0]} {start[1]}"]
+    prev = start
+    for x, y in points:
+        mx, my = (prev[0] + x) / 2, (prev[1] + y) / 2
+        dx, dy = centre[0] - mx, centre[1] - my; n = (dx * dx + dy * dy) ** 0.5
+        d.append(f"Q{mx + dx / n * sag:.1f} {my + dy / n * sag:.1f} {x:.1f} {y:.1f}")
+        prev = (x, y)
+    return " ".join(d)
+SAIL_EDGE = scalloped(SAIL_TIPS, (704, 336)) + " L430 306"
+SAIL_D = SAIL_EDGE + " C520 296 610 300 704 336 Z"
 def sail_spines():
+    """one spine from the back up to each tip"""
     out = []
-    for i in range(13):
-        t = 0.04 + 0.9 * i / 12
-        if t < 0.55:
-            x, y = bez((704, 336), (684, 304), (644, 266), (596, 234), t / 0.55)
-        else:
-            x, y = bez((596, 234), (560, 210), (526, 194), (498, 190), (t - 0.55) / 0.45)
-        base_y = 300 + (x - 430) * 0.05 + max(0, x - 640) * 0.3
-        out.append(f"M{x - 4:.0f} {y + 6:.0f} L{x - 2:.0f} {base_y:.0f}")
-    for x, y in [(486, 196), (466, 210), (452, 236), (444, 262)]:
-        out.append(f"M{x} {y + 6} L{x - 4} {302}")
-    return line(" ".join(out), 0.2, 2)
+    for x, y in SAIL_TIPS:
+        base_y = 302 + max(0, x - 630) * 0.4
+        out.append(f"M{x:.0f} {y + 4:.0f} L{x + 2:.0f} {base_y:.0f}")
+    return line(" ".join(out), 0.22, 2.2)
 SAIL = (path(SAIL_D, SKIN) + path(SAIL_D, LOOK.accent, 0.35)
         + path("M698 330 C680 304 642 270 598 242 C564 220 530 206 504 202 C482 200 466 210 458 230 C452 248 448 266 446 284 "
                "C452 262 458 244 468 232 C478 222 492 218 508 218 C534 220 566 234 598 254 C640 280 676 310 698 330 Z", SAIL_BAND, 0.45)
@@ -159,20 +167,20 @@ HEAD = piv("head", f"{C}-head", 806, 240,
     + eye(828, 222, f"{C}-eyelid", 4.6)
     + path("M816 216 C822 208 836 206 846 212 C846 214 844 216 842 216 C834 212 824 214 820 220 Z", D, 0.45))
 
-NECK_D = ("M640 304 C680 290 716 264 748 238 C770 220 792 212 812 218 L822 262 C800 266 782 278 766 298 "
-          "C746 326 724 360 706 384 C690 360 664 330 640 304 Z")
+NECK_D = ("M640 304 C676 288 702 254 722 228 C742 204 782 198 812 218 L822 262 C794 258 774 266 760 286 "
+          "C742 314 726 354 706 384 C690 360 664 330 640 304 Z")
 NECK = piv("neck", f"{C}-neck", 676, 334, skin_part(
     LOOK, NECK_D,
-    belly="M822 262 C800 266 782 278 766 298 C746 326 724 360 706 384 L696 372 C714 348 734 318 752 294 C770 272 790 258 814 252 Z",
-    layers=path("M640 304 C680 290 716 264 748 238 C770 220 792 212 812 218 L806 228 C788 226 770 234 754 248 C724 274 690 300 650 314 Z", D, 0.22)
-           + stripes([(690, 286, 20, 11), (722, 262, 18, 10), (754, 238, 15, 9), (782, 222, 12, 8)], 0.28)
+    belly="M822 262 C794 258 774 266 760 286 C742 314 726 354 706 384 L696 372 C712 344 728 310 746 282 C764 260 788 250 814 252 Z",
+    layers=path("M640 304 C676 288 702 254 722 228 C742 204 782 198 812 218 L806 228 C786 218 760 222 742 240 C718 268 690 300 650 314 Z", D, 0.22)
+           + stripes([(680, 290, 18, 10), (704, 256, 16, 10), (730, 226, 14, 9), (770, 208, 12, 8)], 0.28)
            + dots([(650, 306), (760, 236), (812, 224), (760, 300), (712, 372)], 70, seed=35),
-    outline_d="M640 304 C680 290 716 264 748 238 C770 220 792 212 812 218 M822 262 C800 266 782 278 766 298 C746 326 724 360 706 384",
-    rim_d="M644 300 C682 286 716 260 748 236 C768 220 788 212 808 216")
+    outline_d="M640 304 C676 288 702 254 722 228 C742 204 782 198 812 218 M822 262 C794 258 774 266 760 286 C742 314 726 354 706 384",
+    rim_d="M644 300 C678 284 702 252 722 226 C742 202 780 196 808 214")
     + HEAD)
 
 # snout-to-tail midline in drawing units, used by the group poster to measure length along the S-curved neck
-MIDLINE = [(950, 266), (800, 236), (760, 236), (700, 290), (640, 320), (430, 320), (260, 316), (58, 334)]
+MIDLINE = [(950, 266), (800, 236), (750, 228), (700, 290), (640, 320), (430, 320), (260, 316), (58, 334)]
 
 SHADOW = '<ellipse cx="500" cy="514" rx="320" ry="12" fill="#000000" opacity="0.3"></ellipse>'
 ANIMAL = SHADOW + LEG_FAR + ARM_FAR + TAIL + BODY + LEG_NEAR + NECK + ARM_NEAR

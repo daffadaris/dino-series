@@ -10,14 +10,17 @@ from dinokit import SKIN, D, L, OL, CLAW, piv, path, stroke, line, rim, stripes,
 C = "tri"
 LOOK = K.Look(C, skin="#7A8450", belly="#DCCFA6", accent="#C27A48")
 HORN, BEAK = "#E6D9BC", "#4A3A30"
+# adult frill: short and solid, swept up and back, with low worn edge bones (epoccipitals)
+FRILL_TILT = "translate(706 306) rotate(-26) scale(0.74) translate(-706 -306)"
 
 # ------------------------------------------------------------------ legs
 HIND = "M360 270 C400 246 470 252 492 300 C510 340 500 390 472 410 L476 470 C478 492 470 506 456 508 L404 508 C392 506 388 494 392 482 L396 420 C370 400 350 360 350 320 C350 298 352 282 360 270 Z"
 HIND_FOOT = "M388 494 C400 486 456 486 474 494 C482 500 482 512 474 514 L394 514 C384 514 382 500 388 494 Z"
-HIND_NAIL = "M466 492 C478 492 486 498 486 506 C486 512 480 514 472 514 Z M448 496 C456 496 462 501 462 507 C462 512 457 514 451 514 Z"
+# hooves: three on each hand, four on each foot (three show on the near side)
+HIND_NAIL = "M466 492 C478 492 486 498 486 506 C486 512 480 514 472 514 Z M448 496 C456 496 462 501 462 507 C462 512 457 514 451 514 Z M430 498 C437 498 442 502 442 507 C442 512 438 514 432 514 Z"
 FRONT = "M620 300 C650 286 690 296 700 330 C708 360 690 390 666 402 L668 470 C670 492 662 506 648 508 L612 508 C600 506 598 494 602 484 L606 420 C598 400 600 360 606 336 C610 318 614 306 620 300 Z"
 FRONT_FOOT = "M598 494 C610 486 652 486 666 494 C674 500 674 512 666 514 L604 514 C594 514 592 500 598 494 Z"
-FRONT_NAIL = "M658 492 C670 492 678 498 678 506 C678 512 672 514 664 514 Z M640 496 C648 496 654 501 654 507 C654 512 649 514 643 514 Z"
+FRONT_NAIL = "M658 492 C670 492 678 498 678 506 C678 512 672 514 664 514 Z M640 496 C648 496 654 501 654 507 C654 512 649 514 643 514 Z M622 498 C629 498 634 502 634 507 C634 512 630 514 624 514 Z"
 
 def leg(gid, d, foot, nails, far=False, dx=0, wrinkles=""):
     t = f' transform="translate({dx} -2)"' if dx else ""
@@ -35,14 +38,15 @@ NEAR_FRONT = leg("foreleg-near", FRONT, FRONT_FOOT, FRONT_NAIL,
                  wrinkles="M608 430 C618 436 634 438 648 436 M610 444 C620 450 634 452 646 450")
 
 # ------------------------------------------------------------------ tail
-TAIL_D = "M350 252 C290 260 190 280 40 300 C32 302 32 310 40 311 C190 318 290 334 356 352 Z"
-TAIL_OPEN = "M350 252 C290 260 190 280 40 300 C32 302 32 310 40 311 C190 318 290 334 356 352"
+# a fairly short, thick tail carried low
+TAIL_D = "M350 252 C300 262 220 290 128 330 C116 336 118 350 132 348 C220 340 296 346 356 352 Z"
+TAIL_OPEN = "M350 252 C300 262 220 290 128 330 C116 336 118 350 132 348 C220 340 296 346 356 352"
 TAIL = piv("tail", f"{C}-tail", 345, 290, skin_part(
     LOOK, TAIL_D,
-    belly="M40 311 C190 318 290 334 356 352 L356 336 C290 320 190 306 46 306 Z",
-    layers=stripes([(88, 298, 7, 8), (148, 291, 11, 10), (208, 283, 15, 12), (266, 274, 19, 13), (318, 266, 23, 14)], 0.3)
-           + line("M350 300 C280 300 180 304 80 306", 0.12, 2.2),
-    fade=True, outline_d=TAIL_OPEN, rim_d="M350 252 C290 260 190 280 40 300"))
+    belly="M132 348 C220 340 296 346 356 352 L356 336 C296 330 220 326 140 340 Z",
+    layers=stripes([(176, 304, 10, 9), (226, 288, 15, 11), (276, 272, 19, 13), (322, 262, 23, 14)], 0.3)
+           + line("M350 300 C290 306 220 318 150 336", 0.12, 2.2),
+    fade=True, outline_d=TAIL_OPEN, rim_d="M350 252 C300 262 220 290 128 330"))
 
 # ------------------------------------------------------------------ body
 BODY_D = "M330 250 C360 228 400 214 440 212 C520 210 600 222 660 244 C690 254 712 266 726 286 C744 316 742 360 716 390 C682 424 620 434 540 432 C470 430 410 418 372 396 C344 378 326 340 320 300 C318 280 322 262 330 250 Z"
@@ -54,6 +58,9 @@ BODY = piv("body", f"{C}-body", 520, 410, skin_part(
     layers=path("M330 250 C360 228 400 214 440 212 C520 210 600 222 660 244 C690 254 712 266 726 286 L716 296 C700 276 680 266 656 260 C600 240 520 230 440 232 C400 234 360 246 336 266 Z", D, 0.26)
            + stripes([(376, 234, 36, 15), (426, 222, 46, 17), (476, 219, 50, 18), (526, 220, 50, 18), (576, 226, 48, 18), (626, 240, 42, 16), (672, 258, 32, 14)], 0.3)
            + spots(BODY_POLY, 22, 3, 6.5, 0.13, seed=8) + dots(BODY_POLY, 220, seed=9)
+           # feature scales: large, widely spaced, cone-tipped (Lane specimen)
+           + "".join(f'<path d="M{x-7} {y} l3.5 -6 h7 l3.5 6 l-3.5 6 h-7 Z" fill="#000" opacity="0.14"></path><circle cx="{x}" cy="{y-1}" r="2.2" fill="#FFF0D8" opacity="0.45"></circle>'
+                     for x, y in [(400, 270), (470, 252), (540, 256), (610, 270), (676, 296), (440, 320), (520, 312), (600, 326), (680, 350), (480, 372), (560, 378), (640, 388), (380, 350)])
            + line("M600 260 C612 304 612 350 598 398 M650 262 C662 300 662 346 650 390", 0.06, 2.4)
            + line("M560 412 C576 420 594 424 612 424 M572 424 C588 430 604 432 620 430", 0.16, 2),
     outline_d=BODY_OPEN, rim_d="M330 250 C360 228 400 214 440 212 C520 210 600 222 660 244 C690 254 712 266 726 286"))
@@ -78,14 +85,14 @@ def frill_bumps():
     for x, y in pts:
         ang = math.atan2(y - FRILL_CENTRE[1], x - FRILL_CENTRE[0]); ox, oy = math.cos(ang), math.sin(ang)
         tx, ty = -oy, ox
-        a = (x + tx * 6 - ox * 3, y + ty * 6 - oy * 3); b = (x - tx * 6 - ox * 3, y - ty * 6 - oy * 3); c = (x + ox * 10, y + oy * 10)
+        a = (x + tx * 6 - ox * 3, y + ty * 6 - oy * 3); b = (x - tx * 6 - ox * 3, y - ty * 6 - oy * 3); c = (x + ox * 6, y + oy * 6)
         out.append(f"M{a[0]:.1f} {a[1]:.1f} Q{c[0] + tx * 3:.1f} {c[1] + ty * 3:.1f} {c[0]:.1f} {c[1]:.1f} Q{c[0] - tx * 3:.1f} {c[1] - ty * 3:.1f} {b[0]:.1f} {b[1]:.1f} Z")
     d = " ".join(out)
     return path(d, SKIN) + path(d, D, 0.22) + stroke(d, 2.4)
 
 FRILL_INNER = "M684 290 C652 262 640 198 664 154 C690 114 750 116 776 158 C786 178 786 206 778 226 C764 260 730 284 708 294 Z"
 RIBS = " ".join(f"M714 292 L{x:.0f} {y:.0f}" for x, y in [K.bez(*FRILL_SEGS[1], t) for t in (0.12, 0.3, 0.5, 0.7, 0.88)] + [K.bez(*FRILL_SEGS[0], 0.7), K.bez(*FRILL_SEGS[2], 0.4)])
-FRILL = (frill_bumps() + path(FRILL_D, SKIN) + path(FRILL_D, D, 0.18) + path(FRILL_INNER, LOOK.accent)
+FRILL_RAW = (frill_bumps() + path(FRILL_D, SKIN) + path(FRILL_D, D, 0.18) + path(FRILL_INNER, LOOK.accent)
          + path(FRILL_INNER, LOOK.url("light")) + stroke(RIBS, 2.4, D, 0.16)
          + dots([(660, 160), (700, 120), (770, 140), (780, 220), (720, 290), (670, 260)], 60, 0.8, 1.6, 0.12, seed=12)
          + path(FRILL_D, LOOK.url("shade")) + rim("M646 136 C680 86 760 92 794 144", 3.2, 4, 0.55) + stroke(FRILL_D))
@@ -95,14 +102,18 @@ JAW_D = "M786 346 C834 352 892 352 938 344 C950 344 956 352 948 364 C922 386 868
 BEAK_D = "M926 302 C946 312 962 328 964 344 C964 356 954 362 942 360 L918 352 C930 338 932 318 926 302 Z"
 LBEAK_D = "M916 352 C934 348 948 348 952 356 C948 368 938 378 922 380 Z"
 NASAL_D = "M870 270 C872 252 882 236 892 226 C896 242 896 260 892 278 Z"
-HORN_NEAR = "M786 250 C800 210 840 164 902 132 C878 168 842 212 818 258 Z"
-HORN_FAR = "M770 246 C782 206 818 162 874 128 C852 164 822 208 800 254 Z"
+# adult brow horns: about a metre long, angled forward
+HORN_NEAR = "M786 250 C806 214 852 176 918 154 C890 184 848 222 818 258 Z"
+HORN_FAR = "M770 246 C788 210 830 172 892 150 C866 180 826 218 800 254 Z"
 JUGAL = "M744 346 C736 360 730 372 726 384 C742 378 754 366 762 352 Z"
 
 def horn(d, far=False):
     return path(d, HORN) + path(d, LOOK.url("ao")) + (path(d, D, 0.3) if far else "") + stroke(d, 2.6)
 
+FRILL = f'<g transform="{FRILL_TILT}">{FRILL_RAW}</g>'
 HEAD_INNER = (
+    # skull about a third of body length, held nose-down
+    '<g transform="translate(700 300) rotate(8) scale(0.84) translate(-700 -300)">' + 
     horn(HORN_FAR, far=True)
     + FRILL
     + skin_part(LOOK, JAW_D, belly="M796 380 C840 392 900 390 940 372 C930 366 900 376 842 378 C820 378 806 374 796 368 Z", tex=False)
@@ -120,7 +131,7 @@ HEAD_INNER = (
     + path(JUGAL, SKIN) + path(JUGAL, D, 0.18) + stroke(JUGAL, 2.4)
     + K.eye(772, 284, f"{C}-eyelid", 5.5)
     + path("M756 276 C764 266 782 264 794 270 C796 272 794 275 792 275 C782 271 768 272 760 280 C758 280 755 278 756 276 Z", D, 0.45)
-    + horn(HORN_NEAR)
+    + horn(HORN_NEAR) + "</g>"
 )
 HEAD = piv("head", f"{C}-head", 700, 300, HEAD_INNER)
 
@@ -183,7 +194,7 @@ SCENE = f'''<svg aria-hidden="true" viewBox="0 0 1080 900" width="1080" height="
 RIG = [
     ("Head and frill", "#head", HEAD, (604, 82, 372, 316)),
     ("Body", "#body", BODY, (312, 204, 434, 216)),
-    ("Tail", "#tail", TAIL, (24, 244, 340, 116)),
+    ("Tail", "#tail", TAIL, (104, 244, 264, 116)),
     ("Hind legs", "#leg-near, #leg-far", NEAR_HIND + f'<g transform="translate(150 0)">{FAR_HIND}</g>', (340, 238, 360, 282)),
     ("Front legs", "#foreleg-near, #foreleg-far", NEAR_FRONT + f'<g transform="translate(70 0)">{FAR_FRONT}</g>', (590, 280, 230, 240)),
 ]

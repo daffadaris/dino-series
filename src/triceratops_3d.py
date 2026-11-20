@@ -84,10 +84,10 @@ const rimG = new THREE.TorusGeometry(1.0, 0.07, 10, 64).rotateY(Math.PI / 2).sca
 { const p = rimG.attributes.position; for (let k = 0; k < p.count; k++) { const y = p.getY(k), z = p.getZ(k); p.setX(k, p.getX(k) + 0.12 * y * y + 0.62 * z * z); } rimG.computeVertexNormals(); }
 frill.add(mesh(rimG, skinMat, { kind: 'head' }));
 const bumps = batcher(skinMat);
-for (let k = 0; k < 22; k++) {
+for (let k = 0; k < 22; k++) {                                       // adult edge bones: low and worn down
   const a = (k / 22) * Math.PI * 2; if (Math.sin(a) < -0.55) continue;     // none where the frill meets the neck
   const y = Math.sin(a) * 0.95 * 1.04, z = Math.cos(a) * 1.12 * 1.04, x = 0.12 * y * y + 0.62 * z * z;
-  const b = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.16, 8).translate(0, 0.08, 0), skinMat);
+  const b = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.08, 8).translate(0, 0.04, 0), skinMat);
   b.position.set(x, y, z); b.quaternion.setFromUnitVectors(UP, new THREE.Vector3(0, Math.sin(a), Math.cos(a))); bumps.add(b);
 }
 bumps.flush(frill, { kind: 'head' });
@@ -134,8 +134,8 @@ function frontLeg(side, dx) {
 hindLeg(1, 0.1); hindLeg(-1, -0.3); frontLeg(1, 0.05); frontLeg(-1, -0.25);
 
 // tail: one continuous tapered mesh, bent each frame along a swaying centreline
-const TL = 3.9, RINGS = 48, RAD = 24;
-const tailR = u => 0.62 * Math.pow(1 - u, 1.1) + 0.03;
+const TL = 2.6, RINGS = 48, RAD = 24;                                // a fairly short, thick tail, as in other big horned dinosaurs
+const tailR = u => 0.62 * Math.pow(1 - u, 0.85) + 0.07;
 const tailGeo = new THREE.BufferGeometry();
 const tPos = [], tOff = [], tRing = [], tIdx = [];
 for (let i = 0; i <= RINGS; i++) {

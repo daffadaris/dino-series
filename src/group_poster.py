@@ -129,7 +129,7 @@ a{{color:{UMBER}}}a:hover{{color:#000}}
 <p style="position: absolute; left: 64px; top: 318px; margin: 0; padding: 6px 12px; border-radius: 8px; background: rgba(243, 223, 194, 0.9); font-size: 17px; font-weight: 500; color: {UMBER}">Tap any dinosaur to see its move</p>
 </div>
 <div style="box-sizing: border-box; height: 450px; padding: 52px 64px 48px; display: flex; flex-direction: column; gap: 36px; color: {BUFF}">
-<p style="margin: 0; font-size: 30px; line-height: 1.4; max-width: 900px">Shown side by side for size only. Stegosaurus lived about 155–150 million years ago, Patagotitan about 102 million, and T. rex and Triceratops 68–66 million.</p>
+<p style="margin: 0; font-size: 30px; line-height: 1.4; max-width: 900px">Shown side by side for size only. Stegosaurus lived about 152–145 million years ago, Patagotitan about 102 million, and T. rex and Triceratops 68–66 million.</p>
 <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px">
 {facts_html}
 </div>

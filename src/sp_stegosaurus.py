@@ -59,8 +59,9 @@ def plate_veins(specs):
     return line(" ".join(out), 0.22, 1.5)
 
 # plates along the back: (t on spine, height, width), far row slightly darker and offset
-NEAR_PLATES = [(0.08, 62, 46), (0.24, 92, 62), (0.42, 112, 72), (0.6, 96, 64), (0.78, 64, 48), (0.92, 36, 30)]
-FAR_PLATES = [(0.16, 80, 56), (0.33, 106, 70), (0.51, 108, 70), (0.69, 82, 56), (0.86, 48, 38)]
+# tallest plates over the hips and base of the tail, smaller toward the shoulders; S. stenops plates are broad
+NEAR_PLATES = [(0.08, 104, 78), (0.24, 114, 82), (0.42, 100, 74), (0.6, 78, 60), (0.78, 54, 44), (0.92, 34, 30)]
+FAR_PLATES = [(0.16, 112, 80), (0.33, 108, 78), (0.51, 90, 66), (0.69, 66, 52), (0.86, 42, 36)]
 def plate_specs(rows, dy):
     out = []
     for t, h, w in rows:
@@ -68,8 +69,8 @@ def plate_specs(rows, dy):
         out.append((round(x, 1), round(y + dy, 1), w, h, -8 - 6 * (1 - t)))
     return out
 near_specs, far_specs = plate_specs(NEAR_PLATES, 8), plate_specs(FAR_PLATES, 6)
-TAIL_NEAR = [(0.1, 54, 42), (0.3, 36, 30)]
-TAIL_FAR = [(0.2, 46, 36), (0.42, 26, 22)]
+TAIL_NEAR = [(0.1, 86, 64), (0.3, 56, 44), (0.5, 30, 26)]
+TAIL_FAR = [(0.2, 72, 54), (0.4, 42, 34)]
 def tail_plate_specs(rows, dy):
     out = []
     for t, h, w in rows:
@@ -97,8 +98,9 @@ def cone(bx, by, tx, ty, w, bend=0.18):
     c1 = ((lx + tx) / 2 + nx * ln * bend * 0.5, (by + ty) / 2 + ny * ln * bend * 0.5)
     c2 = ((rx + tx) / 2 + nx * ln * bend * 0.35, (by + ty) / 2 + ny * ln * bend * 0.35)
     return f"M{lx} {by+3} Q{c1[0]:.1f} {c1[1]:.1f} {tx} {ty} Q{c2[0]:.1f} {c2[1]:.1f} {rx} {by+3} Z"
-spikes_far = [cone(132, 207, 120, 124, 8), cone(92, 202, 76, 130, 7)]
-spikes_near = [cone(148, 210, 100, 140, 9), cone(108, 205, 58, 146, 8)]
+# the four spikes stuck out sideways and back, so from the side they point back and only a little up
+spikes_far = [cone(132, 206, 86, 150, 8, 0.12), cone(92, 202, 46, 150, 7, 0.12)]
+spikes_near = [cone(148, 210, 96, 160, 9, 0.12), cone(108, 205, 56, 160, 8, 0.12)]
 def spike_markup(ds, far=False):
     out = []
     for d in ds:
@@ -164,7 +166,11 @@ head_inner = (
     + eye(860, 366, f"{C}-eyelid", 4.8)
     + path("M846 360 C852 352 868 350 878 356 C878 358 876 360 874 360 C866 356 856 357 850 364 Z", D, 0.42)
 )
-HEAD = piv("head", f"{C}-head", 712, 322, head_inner)
+# small plates continue up the neck; bony ossicles stud the throat
+neck_plates = "".join(path(plate(x, y, w, h, -6), PLATE) + path(plate(x, y, w, h, -6), LOOK.url("shade")) + stroke(plate(x, y, w, h, -6), 2.2)
+                      for x, y, w, h in [(722, 296, 26, 30), (756, 308, 22, 24), (788, 326, 18, 18)])
+gular = "".join(f'<circle cx="{x}" cy="{y}" r="{r}" fill="#E6D9BC" stroke="#2A1C22" stroke-width="1.2"></circle>' for x, y, r in [(770, 396, 3.4), (790, 402, 3), (810, 405, 2.6), (782, 392, 2.4)])
+HEAD = piv("head", f"{C}-head", 712, 322, neck_plates + head_inner + gular)
 
 SHADOW = '<ellipse cx="520" cy="514" rx="300" ry="12" fill="#000000" opacity="0.3"></ellipse>'
 ANIMAL = (SHADOW + LEG_FAR + FORELEG_FAR + TAIL + BODY + LEG_NEAR + HEAD + FORELEG_NEAR)
@@ -254,7 +260,7 @@ SPEC = dict(
     action_label="Make the Stegosaurus swing its tail", action_verb="swing its tail", page_bg="#D9D4C4",
     scene=SCENE, title="Stegosaurus", title_px=190, binomial="Stegosaurus stenops", subtitle="the narrow-faced roof lizard",
     paragraph="A plant eater with two staggered rows of tall bony plates down its back and a spiked tail for defence, carrying its small head about a metre off the ground.",
-    facts=[("9 m", "longest individuals"), ("155–150", "million years ago"), ("4", "tail spikes")],
+    facts=[("9 m", "longest individuals"), ("152–145", "million years ago"), ("4", "tail spikes")],
     footer="Fossils come from the Morrison Formation of Colorado, Wyoming and Utah, with more found in Portugal.",
     hint="Tap the Stegosaurus to swing its tail", skin_swatches=["#5E7E7A", "#7A8450", "#9E6B7B", "#8A6A3E"],
     dino_top=262, rig_parts=RIG, rig_h=960,

@@ -6,6 +6,7 @@ An illustrated dinosaur series in one shared style: cel-shaded vector drawings w
 - [Project layout](#project-layout)
 - [Using the drawings](#using-the-drawings)
 - [Rebuilding](#rebuilding)
+- [Scientific accuracy](#scientific-accuracy)
 - [Roadmap](#roadmap)
 - [Sources](#sources)
 
@@ -17,8 +18,9 @@ An illustrated dinosaur series in one shared style: cel-shaded vector drawings w
 | *Triceratops horridus* | Horns-down charge | `svg/triceratops-animated.svg` | `gsap/triceratops-gsap.html` | `3d/triceratops-3d.html` |
 | *Stegosaurus stenops* | Spiked tail swing, plates flush red | `svg/stegosaurus-animated.svg` | `gsap/stegosaurus-gsap.html` | `3d/stegosaurus-3d.html` |
 | *Patagotitan mayorum* (titanosaur) | Neck raise and call | `svg/titanosaur-animated.svg` | `gsap/titanosaur-gsap.html` | `3d/titanosaur-3d.html` |
+| *Ankylosaurus magniventris* | Tail-club swing | `svg/ankylosaurus-animated.svg` | `gsap/ankylosaurus-gsap.html` | not yet |
 
-Each species also has a poster and a rig sheet in `boards/`, and `boards/Group.dc.html` shows all four together at their real lengths.
+Each species also has a poster and a rig sheet in `boards/`, and `boards/Group.dc.html` shows the first four together at their real lengths.
 
 ## Project layout
 
@@ -30,7 +32,7 @@ dino-series/
 ├── boards/                    posters and rig sheets (*.dc.html) and their canvas layout (canvas.json)
 ├── src/                       builders
 │   ├── dinokit.py             shared toolkit: drawing helpers, motion CSS, poster and rig builders
-│   ├── sp_*.py                one builder per species (Triceratops, Stegosaurus, titanosaur)
+│   ├── sp_*.py                one builder per species (Triceratops, Stegosaurus, titanosaur, Ankylosaurus)
 │   ├── trex_drawing.py        the definitive T. rex drawing
 │   ├── trex_svg.py            shading pass over it; writes svg/trex-animated.svg
 │   ├── trex_gsap.py, trex_poster.py, trex_rig.py
@@ -52,6 +54,7 @@ Every moving part is its own group with an id. Each group sits inside a wrapper 
 | Triceratops | `#act` `#body` `#tail` `#head` `#leg-near` `#leg-far` `#foreleg-near` `#foreleg-far` | `tri-` |
 | Stegosaurus | `#act` `#body` `#plates` `#tail` `#head` `#leg-near` `#leg-far` `#foreleg-near` `#foreleg-far` | `stg-` |
 | Titanosaur | `#act` `#body` `#tail` `#neck` `#head` `#jaw` `#leg-near` `#leg-far` `#foreleg-near` `#foreleg-far` | `tit-` |
+| Ankylosaurus | `#act` `#body` `#tail` `#head` `#leg-near` `#leg-far` `#foreleg-near` `#foreleg-far` | `ank-` |
 
 - The standalone SVGs loop on their own. Remove the `<prefix>anim` class from the root `<svg>` to stop the built-in animation and drive the groups yourself.
 - `#act` moves the whole animal, for example the Triceratops lunge.
@@ -72,6 +75,7 @@ python3 src/trex_rig.py          # boards/Rig.dc.html
 python3 src/sp_triceratops.py
 python3 src/sp_stegosaurus.py
 python3 src/sp_titanosaur.py
+python3 src/sp_ankylosaurus.py
 
 # Group poster to scale (measures each drawing in a browser)
 python3 src/group_poster.py
@@ -84,6 +88,16 @@ python3 src/triceratops_3d.py
 - Each animated SVG and its GSAP page carry the identical drawing, so rebuild them together.
 - The 3D pages load Three.js 0.160 from jsdelivr and need no build step. When testing offline, serve the folder locally so the module imports resolve.
 
+## Scientific accuracy
+
+The drawings follow published anatomy for general shape and proportion. Skin colour is unknown for all of these animals and is an artistic choice.
+
+| Species | What the drawing follows |
+|---|---|
+| Ankylosaurus | Short, keeled bony plates spaced apart in rows, with no large flank spikes; two half-rings of plates over the neck; short pyramid-shaped horns on the back corners and cheeks of the skull; nostrils on the side of the snout under a roofing scale; a low, flat tail club (about 60 cm long, 49 cm wide, 19 cm tall in AMNH 5214) on a stiff tail held off the ground. The club swung side to side, so the move shows the tail foreshortening as it swings away and whipping back |
+| Stegosaurus | Plates in two staggered rows, tallest over the hips and base of the tail, with small plates up the neck; four tail spikes pointing sideways and back rather than upright; bony studs on the throat; small, low head about a metre off the ground |
+| Triceratops | A short, thick tail; a short, solid frill swept back, with low edge bones as in adults; a skull about a third of the body length, held nose-down; brow horns about a metre long angled forward; three hooves on each hand; pebbly skin with widely spaced cone-tipped feature scales, as in the Lane specimen |
+
 ## Roadmap
 
 Each round reuses the rigs and toolkit built before it, so the order runs from the easiest additions to the biggest new techniques.
@@ -94,8 +108,9 @@ timeline
     section Done
         Series start : T. rex
         First set : Triceratops : Stegosaurus : Titanosaur : Group poster to scale
+        Round 1 started : Ankylosaurus
     section Next
-        Round 1, Hell Creek set : Ankylosaurus : Edmontosaurus : Pachycephalosaurus
+        Round 1, Hell Creek set : Edmontosaurus : Pachycephalosaurus
         Round 2, Morrison set : Allosaurus : Diplodocus
     section Later
         Round 3, new techniques : Spinosaurus : Parasaurolophus : Velociraptor : Therizinosaurus
@@ -113,4 +128,4 @@ timeline
 
 ## Sources
 
-Poster facts were checked in November 2026 against The Canadian Encyclopedia, National Geographic, the Natural History Museum's Dino Directory and the Western Australian Museum, among others. Lengths are estimates for large adults, and Patagotitan's 31–37 m range reflects revised estimates.
+Anatomy follows Arbour and Mallon (2017), *Unusual cranial and postcranial anatomy in the archetypal ankylosaur* Ankylosaurus magniventris, FACETS 2: 764–794, for the Ankylosaurus, and Gilmore (1914) and Maidment and others (2015), as summarised by the Natural History Museum and Wikipedia, for the Stegosaurus. The Triceratops follows the Natural History Museum, Britannica and Wikipedia descriptions, including the Lane specimen's skin. Poster facts were checked in November 2026 against The Canadian Encyclopedia, National Geographic, the Natural History Museum's Dino Directory and the Western Australian Museum, among others. Lengths are estimates for large adults, and Patagotitan's 31–37 m range reflects revised estimates.

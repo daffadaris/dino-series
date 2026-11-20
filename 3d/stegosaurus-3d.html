@@ -323,7 +323,7 @@ const spikeMat = toon(C.spike);
 for (const [u, side] of [[0.84, 1], [0.84, -1], [0.93, 1], [0.93, -1]]) {
   const geo = new THREE.ConeGeometry(0.07, 0.78, 12).translate(0, 0.39, 0);
   const s = mesh(geo, spikeMat, { outline: true });
-  const dir = new THREE.Vector3(-0.45, 0.55, side * 0.72).normalize();
+  const dir = new THREE.Vector3(-0.5, 0.3, side * 0.8).normalize();   // the spikes stuck out sideways and back
   ride(s, u, new THREE.Vector3(0, tailR(u) * 0.8, side * tailR(u) * 0.5), new THREE.Quaternion().setFromUnitVectors(UP, dir));
 }
 bendTail(0);

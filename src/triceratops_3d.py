@@ -42,17 +42,17 @@ assert "Triceratops" in head_part and "#7A8450" in head_part
 
 ANIMAL = r"""// ---------------------------------------------------------------- the animal
 const rex = new THREE.Group(); scene.add(rex);                    // whole animal (lunges on the charge)
-const hips = new THREE.Group(); hips.position.set(0, 2.26, 0); rex.add(hips);
+const hips = new THREE.Group(); hips.position.set(0, 2.5, 0); rex.add(hips);   // long, columnar hind legs
 const trunk = new THREE.Group(); hips.add(trunk);                 // breathes
 
 // barrel body
-const hipMass = mesh(ellipsoid(1.45, 1.15, 0.92), skinMat, { stripes: true }); hipMass.position.set(-0.6, 0.02, 0); trunk.add(hipMass);
-const belly = mesh(ellipsoid(2.3, 1.25, 1.04), skinMat, { stripes: true }); belly.position.set(0.5, -0.22, 0); trunk.add(belly);
-const chest = mesh(ellipsoid(1.2, 1.1, 0.92), skinMat, { stripes: true }); chest.position.set(1.95, -0.32, 0); chest.rotation.z = 0.12; trunk.add(chest);
-const neck = mesh(ellipsoid(0.75, 0.78, 0.7), skinMat, { stripes: true }); neck.position.set(2.65, -0.1, 0); trunk.add(neck);
+const hipMass = mesh(ellipsoid(1.5, 1.3, 0.95), skinMat, { stripes: true }); hipMass.position.set(-0.55, 0.16, 0); trunk.add(hipMass);   // back highest over the hips
+const belly = mesh(ellipsoid(2.3, 1.22, 1.06), skinMat, { stripes: true }); belly.position.set(0.45, -0.2, 0); trunk.add(belly);
+const chest = mesh(ellipsoid(1.15, 1.02, 0.94), skinMat, { stripes: true }); chest.position.set(1.85, -0.44, 0); chest.rotation.z = 0.2; trunk.add(chest);
+const neck = mesh(ellipsoid(0.8, 0.8, 0.74), skinMat, { stripes: true }); neck.position.set(2.5, -0.42, 0); trunk.add(neck);
 
 // head: skull, jaw and beak extruded from the same outlines as the 2D drawing
-const headPivot = new THREE.Group(); headPivot.position.set(2.6, 0.08, 0); trunk.add(headPivot);
+const headPivot = new THREE.Group(); headPivot.position.set(2.5, -0.16, 0); trunk.add(headPivot);   // head carried low
 const head = new THREE.Group(); headPivot.add(head);
 const HS = { s: 0.0094, ox: 700, oy: 300, x0: 0, x1: 2.5 };
 const SKULL = '__SKULL__', JAWP = '__JAW__', BEAK = '__BEAK__', LBEAK = '__LBEAK__';
@@ -78,7 +78,7 @@ function cone(base, dir, r, len, mat, opts) {
 // frill: a broad, slightly cupped shield tilted back, with a skin-coloured rim and bumps
 const frillG = new THREE.CylinderGeometry(1.0, 1.0, 0.09, 48, 1).rotateZ(Math.PI / 2).scale(1, 0.95, 1.12);
 { const p = frillG.attributes.position; for (let k = 0; k < p.count; k++) { const y = p.getY(k), z = p.getZ(k); p.setX(k, p.getX(k) + 0.12 * y * y + 0.62 * z * z); } frillG.computeVertexNormals(); }
-const frill = new THREE.Group(); frill.position.set(-0.05, 0.7, 0); frill.rotation.z = 0.85; frill.scale.setScalar(1.12); head.add(frill);
+const frill = new THREE.Group(); frill.position.set(-0.06, 0.34, 0); frill.rotation.z = 1.05; frill.scale.setScalar(1.02); head.add(frill);   // swept back over the neck
 frill.add(mesh(frillG, frillMat, {}));
 const rimG = new THREE.TorusGeometry(1.0, 0.07, 10, 64).rotateY(Math.PI / 2).scale(1, 0.95, 1.12);
 { const p = rimG.attributes.position; for (let k = 0; k < p.count; k++) { const y = p.getY(k), z = p.getZ(k); p.setX(k, p.getX(k) + 0.12 * y * y + 0.62 * z * z); } rimG.computeVertexNormals(); }
@@ -95,15 +95,15 @@ bumps.flush(frill, { kind: 'head' });
 // horns, eyes, cheek points
 const BROW = new THREE.Vector3(0.62, 0.42, 0);
 for (const side of [1, -1]) {
-  head.add(cone(new THREE.Vector3(0.78, 0.5, side * 0.28), new THREE.Vector3(0.8, 0.62, side * 0.1), 0.13, 1.25, hornMat));
-  const ex = headX(772), ey = headY(284), ez = side * (halfW(ex, 1.05) - 0.03);
+  head.add(cone(new THREE.Vector3(headX(824), headY(292), side * 0.26), new THREE.Vector3(0.66, 0.74, side * 0.08), 0.13, 1.35, hornMat));   // brow horns about a metre, angled forward
+  const ex = headX(818), ey = headY(316), ez = side * (halfW(ex, 1.05) - 0.03);
   const eye = new THREE.Group(); eye.position.set(ex, ey, ez); head.add(eye); eye.userData.isEye = true;
   eye.add(new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 10), toon(C.eye)));
   const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.033, 10, 8), toon('#15110D')); pupil.position.z = side * 0.04; eye.add(pupil);
   const brow = mesh(ellipsoid(0.18, 0.06, 0.08, 14, 8), skinMat, { kind: 'head', shadow: false }); brow.position.set(ex + 0.01, ey + 0.08, ez * 0.95); head.add(brow);
-  head.add(cone(new THREE.Vector3(0.42, -0.62, side * 0.44), new THREE.Vector3(-0.3, -0.8, side * 0.5), 0.08, 0.26, skinMat, { kind: 'head' }));
+  head.add(cone(new THREE.Vector3(headX(772), headY(392), side * 0.44), new THREE.Vector3(-0.3, -0.8, side * 0.5), 0.08, 0.26, skinMat, { kind: 'head' }));
 }
-head.add(cone(new THREE.Vector3(headX(884), headY(266), 0), new THREE.Vector3(0.35, 1, 0), 0.1, 0.38, hornMat));
+head.add(cone(new THREE.Vector3(headX(886), headY(300), 0), new THREE.Vector3(0.35, 1, 0), 0.1, 0.38, hornMat));
 const eyes = []; head.traverse(o => { if (o.userData.isEye) eyes.push(o); });
 
 // legs: thick hind pillars, shorter front legs; hoof-like nails
@@ -116,8 +116,8 @@ function hoofs(g, at, side) {
 function hindLeg(side, dx) {
   const g = new THREE.Group(); legGroups.push(g); g.position.set(dx, 0, side * 0.72); hips.add(g);
   const P = (x, y) => new THREE.Vector3(x, y, 0);
-  const thigh = mesh(ellipsoid(0.66, 1.0, 0.52), skinMat, { kind: 'leg' }); thigh.position.set(-0.5, -0.72, 0); thigh.rotation.z = -0.1; g.add(thigh);
-  const knee = P(-0.42, -1.42), ankle = P(-0.52, -2.0), foot = P(-0.42, -2.12);
+  const thigh = mesh(ellipsoid(0.66, 1.0, 0.52), skinMat, { kind: 'leg' }); thigh.position.set(-0.5, -0.8, 0); thigh.rotation.z = -0.1; g.add(thigh);
+  const knee = P(-0.4, -1.56), ankle = P(-0.5, -2.24), foot = P(-0.42, -2.36);
   g.add(limb(knee, ankle, 0.34, 0.27, { kind: 'leg' }), ball(knee, 0.34, { kind: 'leg' }));
   const f = mesh(ellipsoid(0.42, 0.13, 0.34, 20, 12), skinMat, { kind: 'leg' }); f.position.copy(foot); g.add(f);
   hoofs(g, foot, side);
@@ -125,8 +125,8 @@ function hindLeg(side, dx) {
 function frontLeg(side, dx) {
   const g = new THREE.Group(); legGroups.push(g); g.position.set(dx, 0, side * 0.74); hips.add(g);
   const P = (x, y, z = 0) => new THREE.Vector3(x, y, z);
-  const shoulder = P(1.95, -0.55), elbow = P(1.78, -1.32, side * 0.14), wrist = P(1.92, -1.98, side * 0.06), foot = P(1.98, -2.12);
-  const upper = mesh(ellipsoid(0.42, 0.62, 0.4), skinMat, { kind: 'leg' }); upper.position.set(1.9, -0.88, side * 0.05); upper.rotation.z = 0.2; g.add(upper);
+  const shoulder = P(1.95, -0.6), elbow = P(1.74, -1.42, side * 0.16), wrist = P(1.92, -2.22, side * 0.06), foot = P(1.98, -2.36);   // elbows flexed back and slightly out
+  const upper = mesh(ellipsoid(0.42, 0.62, 0.4), skinMat, { kind: 'leg' }); upper.position.set(1.88, -0.96, side * 0.06); upper.rotation.z = 0.2; g.add(upper);
   g.add(limb(elbow, wrist, 0.25, 0.2, { kind: 'leg' }), ball(elbow, 0.26, { kind: 'leg' }));
   const f = mesh(ellipsoid(0.36, 0.12, 0.3, 20, 12), skinMat, { kind: 'leg' }); f.position.copy(foot); g.add(f);
   hoofs(g, foot, side);

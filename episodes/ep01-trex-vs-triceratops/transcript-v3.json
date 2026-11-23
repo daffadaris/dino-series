@@ -1,0 +1,1073 @@
+{
+  "sourceFile": "raw-vo.wav",
+  "audioWav": "audio/voiceover.wav",
+  "audioMp3": "audio/voiceover.mp3",
+  "fps": 30,
+  "rawDurationSec": 80.6,
+  "durationSec": 49.227,
+  "durationInFrames": 1477,
+  "silencesRemovedCount": 48,
+  "wordCount": 147,
+  "wordsPerSecond": 2.99,
+  "alignmentMethod": "whisper.cpp (base.en)",
+  "isEstimated": false,
+  "trimConfig": {
+    "maxPauseSec": 0.15,
+    "keepGapSec": 0.06,
+    "silenceThreshold": "-38dB",
+    "highPassHz": 80,
+    "loudnormTargetLufs": -14,
+    "truePeakDb": -1.5
+  },
+  "beats": [
+    {
+      "id": "hook",
+      "label": "1. Paradox Hook (Daylight)",
+      "mood": "daylight",
+      "startSec": 0.02,
+      "startFrame": 1,
+      "endFrame": 1438,
+      "anchorWord": "T-Rex"
+    },
+    {
+      "id": "escalation",
+      "label": "2a. Escalation (Daylight)",
+      "mood": "daylight",
+      "startSec": 47.92,
+      "startFrame": 1438,
+      "endFrame": 1477,
+      "anchorWord": "Hell"
+    }
+  ],
+  "words": [
+    {
+      "word": "T. rex",
+      "start": 0.02,
+      "end": 0.45,
+      "startFrame": 1,
+      "endFrame": 14
+    },
+    {
+      "word": "versus",
+      "start": 0.45,
+      "end": 0.98,
+      "startFrame": 14,
+      "endFrame": 29
+    },
+    {
+      "word": "Triceratops?",
+      "start": 0.99,
+      "end": 2.4,
+      "startFrame": 30,
+      "endFrame": 72
+    },
+    {
+      "word": "Easy.",
+      "start": 2.4,
+      "end": 3.39,
+      "startFrame": 72,
+      "endFrame": 102
+    },
+    {
+      "word": "That's",
+      "start": 3.4,
+      "end": 3.71,
+      "startFrame": 102,
+      "endFrame": 111
+    },
+    {
+      "word": "just",
+      "start": 3.78,
+      "end": 3.95,
+      "startFrame": 113,
+      "endFrame": 119
+    },
+    {
+      "word": "lunch.",
+      "start": 3.95,
+      "end": 4.39,
+      "startFrame": 119,
+      "endFrame": 132
+    },
+    {
+      "word": "Is",
+      "start": 4.4,
+      "end": 4.66,
+      "startFrame": 132,
+      "endFrame": 140
+    },
+    {
+      "word": "it?",
+      "start": 4.75,
+      "end": 5.39,
+      "startFrame": 143,
+      "endFrame": 162
+    },
+    {
+      "word": "Look",
+      "start": 5.4,
+      "end": 5.69,
+      "startFrame": 162,
+      "endFrame": 171
+    },
+    {
+      "word": "at",
+      "start": 5.69,
+      "end": 5.85,
+      "startFrame": 171,
+      "endFrame": 176
+    },
+    {
+      "word": "this.",
+      "start": 5.85,
+      "end": 6.4,
+      "startFrame": 176,
+      "endFrame": 192
+    },
+    {
+      "word": "A",
+      "start": 6.4,
+      "end": 6.42,
+      "startFrame": 192,
+      "endFrame": 193
+    },
+    {
+      "word": "Triceratops",
+      "start": 6.47,
+      "end": 6.75,
+      "startFrame": 194,
+      "endFrame": 203
+    },
+    {
+      "word": "horn",
+      "start": 6.83,
+      "end": 6.92,
+      "startFrame": 205,
+      "endFrame": 208
+    },
+    {
+      "word": "with",
+      "start": 6.97,
+      "end": 7.09,
+      "startFrame": 209,
+      "endFrame": 213
+    },
+    {
+      "word": "T. rex",
+      "start": 7.09,
+      "end": 7.25,
+      "startFrame": 213,
+      "endFrame": 218
+    },
+    {
+      "word": "tooth",
+      "start": 7.25,
+      "end": 7.42,
+      "startFrame": 218,
+      "endFrame": 223
+    },
+    {
+      "word": "marks",
+      "start": 7.42,
+      "end": 7.53,
+      "startFrame": 223,
+      "endFrame": 226
+    },
+    {
+      "word": "and",
+      "start": 7.67,
+      "end": 7.81,
+      "startFrame": 230,
+      "endFrame": 234
+    },
+    {
+      "word": "the",
+      "start": 7.81,
+      "end": 7.98,
+      "startFrame": 234,
+      "endFrame": 239
+    },
+    {
+      "word": "bone",
+      "start": 7.98,
+      "end": 8.21,
+      "startFrame": 239,
+      "endFrame": 246
+    },
+    {
+      "word": "grew",
+      "start": 8.21,
+      "end": 8.44,
+      "startFrame": 246,
+      "endFrame": 253
+    },
+    {
+      "word": "back.",
+      "start": 8.44,
+      "end": 8.78,
+      "startFrame": 253,
+      "endFrame": 263
+    },
+    {
+      "word": "Healed.",
+      "start": 8.89,
+      "end": 9.36,
+      "startFrame": 267,
+      "endFrame": 281
+    },
+    {
+      "word": "This",
+      "start": 9.36,
+      "end": 9.75,
+      "startFrame": 281,
+      "endFrame": 293
+    },
+    {
+      "word": "Triceratops",
+      "start": 9.76,
+      "end": 10.86,
+      "startFrame": 293,
+      "endFrame": 326
+    },
+    {
+      "word": "survived.",
+      "start": 10.86,
+      "end": 12,
+      "startFrame": 326,
+      "endFrame": 360
+    },
+    {
+      "word": "Survived",
+      "start": 12,
+      "end": 12.46,
+      "startFrame": 360,
+      "endFrame": 374
+    },
+    {
+      "word": "a",
+      "start": 12.46,
+      "end": 12.51,
+      "startFrame": 374,
+      "endFrame": 375
+    },
+    {
+      "word": "T. rex?!",
+      "start": 12.51,
+      "end": 13,
+      "startFrame": 375,
+      "endFrame": 390
+    },
+    {
+      "word": "12",
+      "start": 13,
+      "end": 13.39,
+      "startFrame": 390,
+      "endFrame": 402
+    },
+    {
+      "word": "meters",
+      "start": 13.39,
+      "end": 13.77,
+      "startFrame": 402,
+      "endFrame": 413
+    },
+    {
+      "word": "and",
+      "start": 13.78,
+      "end": 13.98,
+      "startFrame": 413,
+      "endFrame": 419
+    },
+    {
+      "word": "the",
+      "start": 13.98,
+      "end": 14.18,
+      "startFrame": 419,
+      "endFrame": 425
+    },
+    {
+      "word": "strongest",
+      "start": 14.18,
+      "end": 14.77,
+      "startFrame": 425,
+      "endFrame": 443
+    },
+    {
+      "word": "bite",
+      "start": 14.77,
+      "end": 15.03,
+      "startFrame": 443,
+      "endFrame": 451
+    },
+    {
+      "word": "of",
+      "start": 15.03,
+      "end": 15.16,
+      "startFrame": 451,
+      "endFrame": 455
+    },
+    {
+      "word": "any",
+      "start": 15.16,
+      "end": 15.36,
+      "startFrame": 455,
+      "endFrame": 461
+    },
+    {
+      "word": "known",
+      "start": 15.36,
+      "end": 15.69,
+      "startFrame": 461,
+      "endFrame": 471
+    },
+    {
+      "word": "land",
+      "start": 15.69,
+      "end": 15.95,
+      "startFrame": 471,
+      "endFrame": 479
+    },
+    {
+      "word": "animal?",
+      "start": 15.95,
+      "end": 16.59,
+      "startFrame": 479,
+      "endFrame": 498
+    },
+    {
+      "word": "True.",
+      "start": 16.6,
+      "end": 17.53,
+      "startFrame": 498,
+      "endFrame": 526
+    },
+    {
+      "word": "But",
+      "start": 17.61,
+      "end": 17.73,
+      "startFrame": 528,
+      "endFrame": 532
+    },
+    {
+      "word": "Triceratops",
+      "start": 17.79,
+      "end": 18.39,
+      "startFrame": 534,
+      "endFrame": 552
+    },
+    {
+      "word": "was",
+      "start": 18.39,
+      "end": 18.55,
+      "startFrame": 552,
+      "endFrame": 557
+    },
+    {
+      "word": "no",
+      "start": 18.63,
+      "end": 18.67,
+      "startFrame": 559,
+      "endFrame": 560
+    },
+    {
+      "word": "snack,",
+      "start": 18.67,
+      "end": 19.07,
+      "startFrame": 560,
+      "endFrame": 572
+    },
+    {
+      "word": "9",
+      "start": 19.07,
+      "end": 19.2,
+      "startFrame": 572,
+      "endFrame": 576
+    },
+    {
+      "word": "meters",
+      "start": 19.29,
+      "end": 19.59,
+      "startFrame": 579,
+      "endFrame": 588
+    },
+    {
+      "word": "up",
+      "start": 19.66,
+      "end": 19.7,
+      "startFrame": 590,
+      "endFrame": 591
+    },
+    {
+      "word": "to",
+      "start": 19.7,
+      "end": 19.81,
+      "startFrame": 591,
+      "endFrame": 594
+    },
+    {
+      "word": "12",
+      "start": 19.81,
+      "end": 20.16,
+      "startFrame": 594,
+      "endFrame": 605
+    },
+    {
+      "word": "tons,",
+      "start": 20.16,
+      "end": 20.64,
+      "startFrame": 605,
+      "endFrame": 619
+    },
+    {
+      "word": "a",
+      "start": 20.64,
+      "end": 20.66,
+      "startFrame": 619,
+      "endFrame": 620
+    },
+    {
+      "word": "2.5",
+      "start": 20.73,
+      "end": 21.4,
+      "startFrame": 622,
+      "endFrame": 642
+    },
+    {
+      "word": "meter",
+      "start": 21.4,
+      "end": 21.79,
+      "startFrame": 642,
+      "endFrame": 654
+    },
+    {
+      "word": "skull",
+      "start": 21.79,
+      "end": 22.18,
+      "startFrame": 654,
+      "endFrame": 665
+    },
+    {
+      "word": "and",
+      "start": 22.18,
+      "end": 22.41,
+      "startFrame": 665,
+      "endFrame": 672
+    },
+    {
+      "word": "horns",
+      "start": 22.41,
+      "end": 22.76,
+      "startFrame": 672,
+      "endFrame": 683
+    },
+    {
+      "word": "a",
+      "start": 22.88,
+      "end": 22.88,
+      "startFrame": 686,
+      "endFrame": 686
+    },
+    {
+      "word": "meter",
+      "start": 22.89,
+      "end": 23.32,
+      "startFrame": 687,
+      "endFrame": 700
+    },
+    {
+      "word": "long.",
+      "start": 23.32,
+      "end": 24.32,
+      "startFrame": 700,
+      "endFrame": 730
+    },
+    {
+      "word": "So",
+      "start": 24.32,
+      "end": 24.42,
+      "startFrame": 730,
+      "endFrame": 733
+    },
+    {
+      "word": "sneak",
+      "start": 24.42,
+      "end": 24.68,
+      "startFrame": 733,
+      "endFrame": 740
+    },
+    {
+      "word": "around",
+      "start": 24.68,
+      "end": 24.99,
+      "startFrame": 740,
+      "endFrame": 750
+    },
+    {
+      "word": "and",
+      "start": 24.99,
+      "end": 25.15,
+      "startFrame": 750,
+      "endFrame": 755
+    },
+    {
+      "word": "bite",
+      "start": 25.15,
+      "end": 25.34,
+      "startFrame": 755,
+      "endFrame": 760
+    },
+    {
+      "word": "the",
+      "start": 25.43,
+      "end": 25.52,
+      "startFrame": 763,
+      "endFrame": 766
+    },
+    {
+      "word": "neck.",
+      "start": 25.52,
+      "end": 25.92,
+      "startFrame": 766,
+      "endFrame": 778
+    },
+    {
+      "word": "The",
+      "start": 25.92,
+      "end": 26.07,
+      "startFrame": 778,
+      "endFrame": 782
+    },
+    {
+      "word": "bite's",
+      "start": 26.07,
+      "end": 26.31,
+      "startFrame": 782,
+      "endFrame": 789
+    },
+    {
+      "word": "on",
+      "start": 26.31,
+      "end": 26.32,
+      "startFrame": 789,
+      "endFrame": 790
+    },
+    {
+      "word": "the",
+      "start": 26.46,
+      "end": 26.56,
+      "startFrame": 794,
+      "endFrame": 797
+    },
+    {
+      "word": "horn...",
+      "start": 26.56,
+      "end": 26.92,
+      "startFrame": 797,
+      "endFrame": 808
+    },
+    {
+      "word": "This",
+      "start": 26.92,
+      "end": 27.18,
+      "startFrame": 808,
+      "endFrame": 815
+    },
+    {
+      "word": "fight",
+      "start": 27.28,
+      "end": 27.43,
+      "startFrame": 818,
+      "endFrame": 823
+    },
+    {
+      "word": "was",
+      "start": 27.66,
+      "end": 27.73,
+      "startFrame": 830,
+      "endFrame": 832
+    },
+    {
+      "word": "face",
+      "start": 27.73,
+      "end": 27.99,
+      "startFrame": 832,
+      "endFrame": 840
+    },
+    {
+      "word": "to",
+      "start": 27.99,
+      "end": 28.12,
+      "startFrame": 840,
+      "endFrame": 844
+    },
+    {
+      "word": "face.",
+      "start": 28.13,
+      "end": 28.64,
+      "startFrame": 844,
+      "endFrame": 859
+    },
+    {
+      "word": "That",
+      "start": 28.64,
+      "end": 28.92,
+      "startFrame": 859,
+      "endFrame": 868
+    },
+    {
+      "word": "huge",
+      "start": 28.92,
+      "end": 29.17,
+      "startFrame": 868,
+      "endFrame": 875
+    },
+    {
+      "word": "head",
+      "start": 29.25,
+      "end": 29.4,
+      "startFrame": 878,
+      "endFrame": 882
+    },
+    {
+      "word": "swiveled",
+      "start": 29.51,
+      "end": 30.01,
+      "startFrame": 885,
+      "endFrame": 900
+    },
+    {
+      "word": "on",
+      "start": 30.02,
+      "end": 30.06,
+      "startFrame": 901,
+      "endFrame": 902
+    },
+    {
+      "word": "a",
+      "start": 30.18,
+      "end": 30.23,
+      "startFrame": 905,
+      "endFrame": 907
+    },
+    {
+      "word": "ball",
+      "start": 30.23,
+      "end": 30.51,
+      "startFrame": 907,
+      "endFrame": 915
+    },
+    {
+      "word": "and",
+      "start": 30.51,
+      "end": 30.72,
+      "startFrame": 915,
+      "endFrame": 922
+    },
+    {
+      "word": "socket",
+      "start": 30.72,
+      "end": 31.09,
+      "startFrame": 922,
+      "endFrame": 933
+    },
+    {
+      "word": "joint.",
+      "start": 31.15,
+      "end": 31.72,
+      "startFrame": 935,
+      "endFrame": 952
+    },
+    {
+      "word": "Okay.",
+      "start": 31.77,
+      "end": 32.72,
+      "startFrame": 953,
+      "endFrame": 982
+    },
+    {
+      "word": "So,",
+      "start": 32.72,
+      "end": 33.01,
+      "startFrame": 982,
+      "endFrame": 990
+    },
+    {
+      "word": "did",
+      "start": 33.04,
+      "end": 33.2,
+      "startFrame": 991,
+      "endFrame": 996
+    },
+    {
+      "word": "T. rex",
+      "start": 33.2,
+      "end": 33.61,
+      "startFrame": 996,
+      "endFrame": 1008
+    },
+    {
+      "word": "ever",
+      "start": 33.61,
+      "end": 33.94,
+      "startFrame": 1008,
+      "endFrame": 1018
+    },
+    {
+      "word": "win?!",
+      "start": 33.94,
+      "end": 34.47,
+      "startFrame": 1018,
+      "endFrame": 1034
+    },
+    {
+      "word": "Oh,",
+      "start": 34.59,
+      "end": 34.7,
+      "startFrame": 1038,
+      "endFrame": 1041
+    },
+    {
+      "word": "it",
+      "start": 34.7,
+      "end": 34.81,
+      "startFrame": 1041,
+      "endFrame": 1044
+    },
+    {
+      "word": "ate",
+      "start": 34.81,
+      "end": 34.86,
+      "startFrame": 1044,
+      "endFrame": 1046
+    },
+    {
+      "word": "plenty.",
+      "start": 34.98,
+      "end": 35.48,
+      "startFrame": 1049,
+      "endFrame": 1064
+    },
+    {
+      "word": "Other",
+      "start": 35.51,
+      "end": 35.72,
+      "startFrame": 1065,
+      "endFrame": 1072
+    },
+    {
+      "word": "skulls",
+      "start": 35.72,
+      "end": 35.94,
+      "startFrame": 1072,
+      "endFrame": 1078
+    },
+    {
+      "word": "have",
+      "start": 36.02,
+      "end": 36.18,
+      "startFrame": 1081,
+      "endFrame": 1085
+    },
+    {
+      "word": "bites",
+      "start": 36.24,
+      "end": 36.37,
+      "startFrame": 1087,
+      "endFrame": 1091
+    },
+    {
+      "word": "that",
+      "start": 36.45,
+      "end": 36.63,
+      "startFrame": 1094,
+      "endFrame": 1099
+    },
+    {
+      "word": "never",
+      "start": 36.63,
+      "end": 36.77,
+      "startFrame": 1099,
+      "endFrame": 1103
+    },
+    {
+      "word": "healed.",
+      "start": 36.89,
+      "end": 37.32,
+      "startFrame": 1107,
+      "endFrame": 1120
+    },
+    {
+      "word": "Even",
+      "start": 37.32,
+      "end": 37.51,
+      "startFrame": 1120,
+      "endFrame": 1125
+    },
+    {
+      "word": "on",
+      "start": 37.51,
+      "end": 37.59,
+      "startFrame": 1125,
+      "endFrame": 1128
+    },
+    {
+      "word": "the",
+      "start": 37.59,
+      "end": 37.72,
+      "startFrame": 1128,
+      "endFrame": 1132
+    },
+    {
+      "word": "neck",
+      "start": 37.84,
+      "end": 37.93,
+      "startFrame": 1135,
+      "endFrame": 1138
+    },
+    {
+      "word": "joint.",
+      "start": 37.93,
+      "end": 38.32,
+      "startFrame": 1138,
+      "endFrame": 1150
+    },
+    {
+      "word": "T. rex",
+      "start": 38.32,
+      "end": 38.6,
+      "startFrame": 1150,
+      "endFrame": 1158
+    },
+    {
+      "word": "gripped",
+      "start": 38.68,
+      "end": 39.17,
+      "startFrame": 1160,
+      "endFrame": 1175
+    },
+    {
+      "word": "the",
+      "start": 39.17,
+      "end": 39.34,
+      "startFrame": 1175,
+      "endFrame": 1180
+    },
+    {
+      "word": "frill,",
+      "start": 39.49,
+      "end": 39.77,
+      "startFrame": 1185,
+      "endFrame": 1193
+    },
+    {
+      "word": "pulled",
+      "start": 39.94,
+      "end": 40.23,
+      "startFrame": 1198,
+      "endFrame": 1207
+    },
+    {
+      "word": "and",
+      "start": 40.34,
+      "end": 40.51,
+      "startFrame": 1210,
+      "endFrame": 1215
+    },
+    {
+      "word": "popped",
+      "start": 40.51,
+      "end": 40.94,
+      "startFrame": 1215,
+      "endFrame": 1228
+    },
+    {
+      "word": "the",
+      "start": 40.94,
+      "end": 41.15,
+      "startFrame": 1228,
+      "endFrame": 1235
+    },
+    {
+      "word": "head",
+      "start": 41.15,
+      "end": 41.35,
+      "startFrame": 1235,
+      "endFrame": 1241
+    },
+    {
+      "word": "off",
+      "start": 41.38,
+      "end": 41.56,
+      "startFrame": 1241,
+      "endFrame": 1247
+    },
+    {
+      "word": "to",
+      "start": 41.78,
+      "end": 41.78,
+      "startFrame": 1253,
+      "endFrame": 1253
+    },
+    {
+      "word": "reach",
+      "start": 41.78,
+      "end": 42.12,
+      "startFrame": 1253,
+      "endFrame": 1264
+    },
+    {
+      "word": "the",
+      "start": 42.12,
+      "end": 42.23,
+      "startFrame": 1264,
+      "endFrame": 1267
+    },
+    {
+      "word": "neck",
+      "start": 42.43,
+      "end": 42.63,
+      "startFrame": 1273,
+      "endFrame": 1279
+    },
+    {
+      "word": "meat",
+      "start": 42.63,
+      "end": 42.91,
+      "startFrame": 1279,
+      "endFrame": 1287
+    },
+    {
+      "word": "like",
+      "start": 42.91,
+      "end": 43.28,
+      "startFrame": 1287,
+      "endFrame": 1298
+    },
+    {
+      "word": "a",
+      "start": 43.32,
+      "end": 43.32,
+      "startFrame": 1300,
+      "endFrame": 1300
+    },
+    {
+      "word": "jar",
+      "start": 43.34,
+      "end": 43.65,
+      "startFrame": 1300,
+      "endFrame": 1310
+    },
+    {
+      "word": "lid.",
+      "start": 43.65,
+      "end": 44.32,
+      "startFrame": 1310,
+      "endFrame": 1330
+    },
+    {
+      "word": "It",
+      "start": 44.32,
+      "end": 44.5,
+      "startFrame": 1330,
+      "endFrame": 1335
+    },
+    {
+      "word": "popped",
+      "start": 44.61,
+      "end": 45.27,
+      "startFrame": 1338,
+      "endFrame": 1358
+    },
+    {
+      "word": "the",
+      "start": 45.27,
+      "end": 45.38,
+      "startFrame": 1358,
+      "endFrame": 1361
+    },
+    {
+      "word": "head",
+      "start": 45.67,
+      "end": 46.11,
+      "startFrame": 1370,
+      "endFrame": 1383
+    },
+    {
+      "word": "OFF?!",
+      "start": 46.11,
+      "end": 46.84,
+      "startFrame": 1383,
+      "endFrame": 1405
+    },
+    {
+      "word": "Only",
+      "start": 46.84,
+      "end": 46.99,
+      "startFrame": 1405,
+      "endFrame": 1410
+    },
+    {
+      "word": "after",
+      "start": 47.07,
+      "end": 47.29,
+      "startFrame": 1412,
+      "endFrame": 1419
+    },
+    {
+      "word": "the",
+      "start": 47.29,
+      "end": 47.39,
+      "startFrame": 1419,
+      "endFrame": 1422
+    },
+    {
+      "word": "fight.",
+      "start": 47.5,
+      "end": 47.75,
+      "startFrame": 1425,
+      "endFrame": 1433
+    },
+    {
+      "word": "In",
+      "start": 47.85,
+      "end": 47.92,
+      "startFrame": 1436,
+      "endFrame": 1438
+    },
+    {
+      "word": "Hell",
+      "start": 47.92,
+      "end": 48,
+      "startFrame": 1438,
+      "endFrame": 1440
+    },
+    {
+      "word": "Creek,",
+      "start": 48.3,
+      "end": 48.38,
+      "startFrame": 1449,
+      "endFrame": 1451
+    },
+    {
+      "word": "dinner",
+      "start": 48.38,
+      "end": 48.58,
+      "startFrame": 1451,
+      "endFrame": 1457
+    },
+    {
+      "word": "fought",
+      "start": 48.67,
+      "end": 48.9,
+      "startFrame": 1460,
+      "endFrame": 1467
+    },
+    {
+      "word": "back.",
+      "start": 48.9,
+      "end": 49.17,
+      "startFrame": 1467,
+      "endFrame": 1475
+    }
+  ]
+}

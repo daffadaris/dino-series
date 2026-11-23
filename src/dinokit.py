@@ -116,6 +116,51 @@ def eye(cx, cy, cls, r=5.5):
             f'<circle cx="{cx+1.6}" cy="{cy-1.4}" r="1" fill="{L}"></circle>'
             + piv("", cls, cx, cy, lid))
 
+# ------------------------------------------------------------------ expressive face (big-head explainer style: host and styles.explainer)
+BLUSH, TEAR = "#E88A7A", "#7EC8E8"
+FACE_HIDDEN = ["brow", "tear", "sweat", "mouth-open", "mouth-grin", "mouth-frown", "mouth-flat"]
+
+def drop(x, y, s, cls):
+    """tear or sweat drop hanging from (x, y), hidden until an emotion shows it"""
+    d = f"M{x} {y} C{x-4*s:.1f} {y+6*s:.1f} {x-5*s:.1f} {y+9*s:.1f} {x} {y+10*s:.1f} C{x+5*s:.1f} {y+9*s:.1f} {x+4*s:.1f} {y+6*s:.1f} {x} {y} Z"
+    return f'<g class="{cls}">' + path(d, TEAR) + stroke(d, 2) + "</g>"
+
+def face_eye(c, x, y, r, skin, mirror=False):
+    """dot eye with a glint; a top-hinged lid (class <c>-eyelid) that closes into a happy arc; a hidden brow and tear.
+    mirror flips the brow's rotation so a front-facing pair frowns symmetrically."""
+    h = r + 3
+    eye = piv("", f"{c}-eye", x, y, f'<ellipse cx="{x}" cy="{y}" rx="{r*0.8:.1f}" ry="{r:.1f}" fill="{OL}"></ellipse>'
+                                    f'<circle cx="{x+r*0.25:.1f}" cy="{y-r*0.4:.1f}" r="{max(1.2, r*0.28):.1f}" fill="{L}"></circle>')
+    lid = piv("", f"{c}-eyelid", x, y - h, f'<ellipse cx="{x}" cy="{y}" rx="{r*0.8+2.5:.1f}" ry="{h:.1f}" fill="{skin}"></ellipse>'
+              + stroke(f"M{x-r-3:.1f} {y+2:.1f} Q{x} {y-r-3:.1f} {x+r+3:.1f} {y+2:.1f}", 3.4))
+    by = round(y - r * 2.3, 1)
+    brow = stroke(f"M{x-r*1.5:.1f} {by} L{x+r*1.5:.1f} {by}", 3.6)
+    brow = (f'<g transform="translate({x} {by}) scale(-1 1)"><g class="{c}-brow"><g transform="translate({-x} {-by})">{brow}</g></g></g>'
+            if mirror else piv("", f"{c}-brow", x, by, brow))
+    return eye + lid + brow + drop(x - r * 0.2, y + r + 3, r / 6, f"{c}-tear")
+
+def face_css(c):
+    return (f"<style>.{c}-eye,.{c}-brow{{transform-origin:0 0}}"
+            + ",".join(f".{c}-{k}" for k in FACE_HIDDEN) + "{opacity:0}</style>")
+
+# emotion poses as CSS on top of the face kit and the rig; {p} is the class prefix. Rules for parts a model lacks
+# (a jaw on the host, mouths on a dinosaur) match nothing.
+EMOTIONS = {
+    "blink": ".{p}-eyelid{{transform:scaleY(1)}}",
+    "mouth": ".{p}-jaw{{transform:rotate(12deg)}}.{p}-mouth-smile{{opacity:0}}.{p}-mouth-open{{opacity:1}}",
+    "happy": ".{p}-eyelid{{transform:scaleY(1)}}.{p}-blush{{opacity:.85}}.{p}-head{{transform:rotate(-3deg)}}.{p}-jaw{{transform:rotate(5deg)}}"
+             ".{p}-mouth-smile{{opacity:0}}.{p}-mouth-grin{{opacity:1}}",
+    "angry": ".{p}-brow{{opacity:1;transform:translateY(3px) rotate(20deg)}}.{p}-eye{{transform:scaleY(.75)}}.{p}-blush{{opacity:0}}"
+             ".{p}-flush{{opacity:.5}}.{p}-head{{transform:rotate(3deg)}}.{p}-jaw{{transform:rotate(4deg)}}.{p}-mouth-smile{{opacity:0}}.{p}-mouth-flat{{opacity:1}}",
+    "sad": ".{p}-brow{{opacity:1;transform:rotate(-18deg)}}.{p}-eye{{transform:translateY(2px) scale(.9)}}.{p}-tear{{opacity:1}}.{p}-blush{{opacity:0}}"
+           ".{p}-head{{transform:rotate(6deg)}}.{p}-mouth-smile{{opacity:0}}.{p}-mouth-frown{{opacity:1}}",
+    "surprised": ".{p}-brow{{opacity:1;transform:translateY(-6px)}}.{p}-eye{{transform:scale(1.3)}}.{p}-jaw{{transform:rotate(8deg)}}"
+                 ".{p}-head{{transform:rotate(-3deg)}}.{p}-mouth-smile{{opacity:0}}.{p}-mouth-open{{opacity:1}}",
+    "scared": ".{p}-brow{{opacity:1;transform:translateY(-4px) rotate(-12deg)}}.{p}-eye{{transform:scale(.7)}}.{p}-sweat{{opacity:1}}.{p}-blush{{opacity:0}}"
+              ".{p}-jaw{{transform:rotate(5deg)}}.{p}-head{{transform:rotate(-4deg)}}.{p}-mouth-smile{{opacity:0}}.{p}-mouth-frown{{opacity:1}}",
+    "smug": ".{p}-eyelid{{transform:scaleY(.5)}}.{p}-brow{{opacity:1;transform:translateY(-2px) rotate(-8deg)}}.{p}-head{{transform:rotate(-2deg)}}",
+}
+
 # ------------------------------------------------------------------ motion
 def keyframes(name, frames, loop=None):
     """frames: [(t 0..1, css)]; loop=(start, span) remaps into a longer idle cycle"""

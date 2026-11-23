@@ -24,11 +24,11 @@ Dark outlines only on outer edges, dark stripes over the back and tail, a pale b
 
 ## Style variants (svg/styles/)
 
-Ten 2D design styles of one species, built by `src/styles.py` on `src/stylekit.py`. Style choice and sources: `reports/Dinosaur SVG illustration styles.md` (local, untracked). They are separate files; the definitive drawings and the boxy-head baseline stay untouched.
+Eleven 2D design styles of one species, built by `src/styles.py` on `src/stylekit.py`. The big-head explainer style is the episode look (sprites come from it); the paleontologist host `src/char_paleontologist.py` is drawn in the same style. Emotions (face kit in `dinokit.face_eye`/`EMOTIONS`, body language in `sprites.BODY`) are sprite poses. Style choice and sources: `reports/Dinosaur SVG illustration styles.md` (local, untracked). They are separate files; the definitive drawings and the boxy-head baseline stay untouched.
 
 All rules below must hold. Several come from `ANIMATION_GUIDE.md`: the variants are meant to become cutout sprites in its 2D-in-3D pipeline.
 
-- **Distinct at a glance:** each style differs in shape language and technique (silhouette, line, how tone is made), never only in colour or filters; all ten must be told apart as thumbnails.
+- **Distinct at a glance:** each style differs in shape language and technique (silhouette, line, how tone is made), never only in colour or filters; all must be told apart as thumbnails.
 - **Rig intact:** keep every group id, class, pivot wrapper and the motion CSS; generate geometry inside each part's own group in original coordinates so texture moves with the part (no "shower door" patterns fixed to the page). Proportion changes (bigger head, shorter tail) go through the pivot wrappers, and a scaled head carries its jaw.
 - **Sprite-ready:** transparent background in the SVG (backgrounds live in the preview page), crisp alpha silhouette with nothing soft or glowing outside it (the guide cuts sprites at `alphaTest: 0.5`), and readable at phone size, exported at 2x (1600 px wide).
 - **No pure black:** ink is lifted charcoal (`#2A1C22` series outline or `#1d1e30` guide ink), never `#000000`.
@@ -44,6 +44,23 @@ Follow the principles from Stone Librande's GDC talk [One-Page Designs](https://
 - **Visuals over walls of text:** Prefer diagrams, spatial layouts, flowcharts and annotated visuals over long prose.
 - **Layered hierarchy like a poster:** Lead with an immediate visual hook for the big picture, with finer details and data readable on closer inspection.
 - **Use the constraint to design:** Treat the page limit as a filter to cut fluff, clarify relationships and catch structural problems early.
+
+## Episodes (video)
+
+Remotion 2D-in-3D shorts in `src/video/`, one folder per episode in `episodes/`. `ANIMATION_GUIDE.md` holds the pipeline; these preferences override it where they differ.
+
+- **Length 60–75 s** (1800–2250 frames at 30 fps). At least 60 s; cap 75 s.
+- **Unrushed pacing:** voice at 1.0x, natural pauses kept (`prep:voice --max-pause 0.5 --keep-gap 0.3`), about 2.5–3 words per second, about 1 s of picture before the first word.
+- **Show what you say:** every line has its speaker or the thing it names at the focal point, and every claim gets a visual (bite marks shown, a head pop popped). Nothing important off-frame or behind a caption.
+- **Camera:** glides within and between stations; cut only when changing location.
+- **Per episode:** lighting moods (Ep01: daylight to late afternoon, no night) and host format (two hosts, Skeptic = Puck and Paleontologist = Charon, or a single narrator).
+- **Science on screen:** say only what the sources say, with their hedges ("likely"); show post-mortem evidence as feeding, not as a fight result. Cite in the README.
+- **Voice:** Gemini TTS via `npm run gen:voice` (key in the repo-root `.env`, git-excluded; never print, commit or copy it). Whisper drops or mishears words; fix captions in `public/audio/transcript.json` by hand after every `prep:voice`.
+- **Approval flow:** stills of every new shot, then a half-res draft for the user, then the 1080x1920 master only after approval. Renders go to `out/` (git-ignored).
+
+## Git (this repo)
+
+Markdown is committed here (README, guides, `CLAUDE.md`, episode scripts), an exception to the global rule. `HANDOVER.md`, `.env` and `out/` stay local.
 
 ## Checking work
 

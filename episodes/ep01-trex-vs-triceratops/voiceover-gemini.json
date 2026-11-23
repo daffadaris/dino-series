@@ -1,0 +1,80 @@
+{
+  "model": "gemini-3.8-flash-tts",
+  "speakers": [
+    {
+      "speaker": "Skeptic",
+      "voice": "Puck"
+    },
+    {
+      "speaker": "Paleontologist",
+      "voice": "Charon"
+    }
+  ],
+  "turns": [
+    {
+      "speaker": "Skeptic",
+      "style": "cocky, relaxed, amused; unhurried opening, dismissive scoff before 'Easy'",
+      "text": "T. rex versus Triceratops? <pff> Easy. That's just lunch."
+    },
+    {
+      "speaker": "Paleontologist",
+      "style": "calm, dry, quietly intrigued; slows down to show the fossil",
+      "text": "Is it? <short pause> Look at this. A Triceratops horn... with T. rex tooth marks. And the bone grew back. It healed. This Triceratops survived."
+    },
+    {
+      "speaker": "Skeptic",
+      "style": "startled, rising incredulous pitch, energetic",
+      "text": "<gasp> Survived a T. rex?! Twelve meters, and the strongest bite of any known land animal?"
+    },
+    {
+      "speaker": "Paleontologist",
+      "style": "confident, brisk list delivery, each number landing with weight",
+      "text": "True. But Triceratops was no snack. Nine meters, up to twelve tons, a two-and-a-half-meter skull, and horns a meter long."
+    },
+    {
+      "speaker": "Skeptic",
+      "style": "dismissive, quick, sure of himself",
+      "text": "So? Sneak around and bite the neck."
+    },
+    {
+      "speaker": "Paleontologist",
+      "style": "lowered voice, intent, clear; slight pause for effect",
+      "text": "The bite's on the horn. <short pause> This fight was face to face. And that huge head swivelled on a ball-and-socket joint."
+    },
+    {
+      "speaker": "Skeptic",
+      "style": "surprised, quick, half-impressed realisation",
+      "text": "Wait, so those horns were for fighting T. rex?"
+    },
+    {
+      "speaker": "Paleontologist",
+      "style": "amused, knowing, unhurried",
+      "text": "And each other. <short pause> Lots of Triceratops frills have healed wounds, likely from locking horns with rivals."
+    },
+    {
+      "speaker": "Skeptic",
+      "style": "deflated, then genuinely curious",
+      "text": "Okay... so did T. rex ever win?"
+    },
+    {
+      "speaker": "Paleontologist",
+      "style": "matter-of-fact, a little grim",
+      "text": "Oh, it ate plenty. Other skulls have bites that never healed... even on the neck joint."
+    },
+    {
+      "speaker": "Paleontologist",
+      "style": "building tension, then dark deadpan humor on the jar lid",
+      "text": "T. rex gripped the frill, pulled... <short pause> and popped the head off to reach the neck meat. Like a jar lid."
+    },
+    {
+      "speaker": "Skeptic",
+      "style": "horrified, slow disbelief, voice cracking on OFF",
+      "text": "It popped... the head... OFF?!"
+    },
+    {
+      "speaker": "Paleontologist",
+      "style": "warm, dry, satisfied mic-drop close",
+      "text": "<chuckle> Only after the fight. In Hell Creek, dinner fought back."
+    }
+  ]
+}

@@ -32,9 +32,14 @@ dino-series/
 ├── gsap/                      GSAP page per species; click the dinosaur to play its move
 ├── 3d/                        Three.js model per species; drag to orbit, click to play the move
 ├── boards/                    posters and rig sheets (*.dc.html) and their canvas layout (canvas.json)
+├── episodes/                  per-episode script, beat sheet, scene ledger and raw voiceover
+├── public/                    Remotion assets: audio/ (voiceover, transcript, beds, sfx/) and sprites/ (poses, scenery cards)
+├── scripts/                   Node audio tools: gen-voice-gemini.mjs, prep-voice.mjs, gen-sfx.mjs
 ├── src/                       builders
 │   ├── dinokit.py             shared toolkit: drawing helpers, motion CSS, poster and rig builders
 │   ├── sp_*.py                one builder per species (Triceratops, Stegosaurus, titanosaur, Ankylosaurus, Spinosaurus)
+│   ├── sprites.py             transparent pose PNGs and scenery cards for the 2D-in-3D episodes
+│   ├── video/                 Remotion episode (TypeScript): choreography/, scene/, post/ (ink then DoF), ui/
 │   ├── trex_drawing.py        the definitive T. rex drawing
 │   ├── trex_svg.py            shading pass over it; writes svg/trex-animated.svg
 │   ├── trex_gsap.py, trex_poster.py, trex_rig.py
@@ -87,12 +92,16 @@ python3 src/sp_spinosaurus.py
 # Scenery kit: writes svg/scenery/ and boards/Scenery.dc.html (run before the posters)
 python3 src/scenery.py
 
-# Ten 2D design styles, each redrawn from the geometry with its own construction (blueprint, neon sign, pixel art,
-# Ben-Day pop art, low-poly, woodcut, stained glass, stippled plate, crayon, Bauhaus); same rig and motion.
-# Writes transparent svg/styles/<species>-<style>.svg, a preview page <species>-styles.html when all ten are built,
+# Eleven 2D design styles, each redrawn from the geometry with its own construction (blueprint, neon sign, pixel art,
+# Ben-Day pop art, low-poly, woodcut, stained glass, stippled plate, crayon, Bauhaus, big-head explainer); same rig and motion.
+# The explainer style (big head, dot eyes with a blink lid, brows, tear and sweat for emotions) is the episode look.
+# Writes transparent svg/styles/<species>-<style>.svg, a preview page <species>-styles.html when all are built,
 # and <style>.html (one style across species) when several species are given. Defaults: all styles, trex
 python3 src/styles.py [style ...] [species ...]
-python3 src/styles.py lowpoly trex triceratops stegosaurus titanosaur ankylosaurus spinosaurus
+python3 src/styles.py explainer trex triceratops stegosaurus titanosaur ankylosaurus spinosaurus pachycephalosaurus
+
+# Paleontologist host (same explainer style, emotion face kit): svg/paleontologist-animated.svg + gsap/paleontologist-gsap.html
+python3 src/char_paleontologist.py
 
 # Group poster to scale (measures each drawing in a browser)
 python3 src/group_poster.py
@@ -106,6 +115,27 @@ python3 src/ankylosaurus_3d.py
 # Spinosaurus 3D page, generated from the T. rex page
 python3 src/spinosaurus_3d.py
 ```
+
+### Episodes (2D-in-3D shorts, see ANIMATION_GUIDE.md)
+
+Needs Node 22 and Microsoft Edge or Chrome. `npm install` once.
+
+```sh
+python3 src/styles.py explainer trex triceratops pachycephalosaurus   # the drawings the sprites are cut from
+python3 src/char_paleontologist.py               # the host's drawing
+python3 src/sprites.py                           # public/sprites/<model>/<pose>.png (default, blink, mouth, happy, angry, sad,
+                                                 # surprised, scared, smug, walk, signature move) + public/sprites/scenery/*.png
+python3 src/props.py                             # fossil props (svg/props/, public/sprites/props/): healed horn, skull, neck bones
+npm run gen:voice -- --input episodes/<ep>/voiceover-gemini.json   # Gemini TTS take -> episodes/<ep>/raw-vo.wav (key from .env, never committed)
+npm run prep:voice -- --input episodes/<ep>/raw-vo.wav --script episodes/<ep>/voiceover.txt --max-pause 0.5 --keep-gap 0.3   # public/audio/ voiceover + transcript.json
+npm run gen:sfx                                  # seeded SFX (public/audio/sfx/) and day/night beds
+npx remotion studio                              # preview Ep01TrexVsTriceratops
+npx remotion render Ep01TrexVsTriceratops out/draft.mp4 --scale=0.5 --crf=23 --gl=angle
+npx remotion render Ep01TrexVsTriceratops out/episode-master.mp4 --codec=h264 --pixel-format=yuv420p --crf=17 --gl=angle --props='{"showSafeZones":false}'
+```
+
+- Every pose swap, badge, SFX hit and camera key in `src/video/choreography/ep01.ts` is looked up by word in `public/audio/transcript.json`, so re-running `prep:voice` re-times the whole episode.
+- The ink pass finds depth edges with a second difference of reciprocal depth, not the guide's first-order Sobel, which inked flat ground near the horizon as a dark band.
 
 - `trex_drawing.py` is the definitive T. rex drawing. `trex_svg.py` layers the shading and texture pass over it without changing its shapes, ids or pivots, and stops if any of them change.
 - Each animated SVG and its GSAP page carry the identical drawing, so rebuild them together.
@@ -122,6 +152,18 @@ The drawings follow published anatomy for general shape and proportion. Skin col
 | Triceratops | Proportions checked against mounted skeletons (Houston's "Lane", Los Angeles, London and the Smithsonian's 3D-scanned "Hatcher") and 3D life restorations: a deep, barrel-shaped trunk, highest over the hips; long, columnar hind legs (4 hooves) and shorter semi-erect forelegs with elbows flexed back and slightly outward (3 inner hooves); a short, thick tail sloping down from the hips off the ground; a broad saddle-shaped frill swept up and back at ~45° over the neck with worn adult edge bones; a wedge-shaped skull about a third of body length, broad across the muscular jugal cheeks and narrowing to a deep compressed snout and hooked keratin beak; ~1 m brow horns diverging slightly outward and curving forward; pebbly skin with widely spaced cone-tipped feature scales, as in the Lane specimen |
 | Titanosaur (*Patagotitan*) | Proportions follow published skeletal reconstructions and scale diagrams (used for general proportions, not traced): at 31 m long the back stands about 5 m high and the head about 12 m up, with a long neck raised at roughly 45 degrees, a deep, rounded torso, short pillar-like legs and a long, tapering tail. The earlier drawing's torso was about three times too deep |
 | Spinosaurus | Researched against Wikipedia, the Natural History Museum, Ibrahim and others (2020) and Sereno and others (2022), with skeletal reconstructions for proportions. Drawn as a 14 m biped standing with its weight over the hips (Sereno and others 2022); the Museum notes that posture is still debated. Short hind legs with long, flat-bottomed toes; robust arms with three fingers and an enlarged thumb claw; a long, low, crocodile-like skull with straight conical teeth, a notch near the jaw tip, nostrils set well back and a small crest in front of the eyes; an S-curved neck; a thin sail of neural spines up to about 1.65 m, peaking over the rear of the back (its exact outline is not known); and a deep, paddle-like tail from tall neural spines and long chevrons (Ibrahim and others 2020) |
+
+### Episode 01 facts
+
+| Claim | Source |
+|---|---|
+| A Triceratops brow horn with T. rex tooth marks whose bone healed, so it survived a head-on attack | Happ 2008 (in *Tyrannosaurus rex, the Tyrant King*); Florida Museum and Science News summaries |
+| Head pulled off to reach the neck muscles: frill pull marks and tooth marks on the occipital condyle, none healed (made after death) | Fowler and others 2012, a Society of Vertebrate Paleontology poster on 18 Hell Creek specimens, not peer reviewed; Nature and Live Science reports. Shown as feeding on a carcass, not as how T. rex won a fight |
+| T. rex 12 m, strongest bite of any known land animal (~35,000 N) | Natural History Museum; Gignac and Erickson 2017 (34,522 N) |
+| Many Triceratops frills (squamosals) carry healed lesions, likely from horn-locking fights with each other | Farke, Wolff and Tanke 2009, *PLoS ONE* 4(1): e4252 (squamosal lesions far more common than in *Centrosaurus*; the authors note not every lesion need be a wound) |
+| Triceratops 8–9 m, 6–12 t, skull up to about 2.5 m, brow horns about 1 m | Wikipedia and Britannica (Britannica gives "nearly 3 m" for the largest skulls; the episode uses the lower figure) |
+
+The fossil props in `src/props.py` are original drawings from general anatomy: a horn core with two healed pits, a skull with a solid frill edged with epoccipitals and a ball-shaped occipital condyle, and the fused front neck vertebrae whose socket takes it.
 
 ### Scenery
 

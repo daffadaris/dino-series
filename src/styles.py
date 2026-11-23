@@ -1,4 +1,4 @@
-"""Ten 2D design styles of a species drawing, each with its own construction (shape language, line, how tone
+"""2D design styles of a species drawing, each with its own construction (shape language, line, how tone
 is made), not a recolour. Same group ids, classes, pivots and motion CSS as svg/<species>-animated.svg.
 Choice and recipes: reports/Dinosaur SVG illustration styles.md. SVGs are transparent cutouts; backdrops live
 in the preview pages. Usage: python3 src/styles.py [style ...] [species ...]  (defaults: all styles, trex);
@@ -6,16 +6,17 @@ several species also write svg/styles/<style>.html, one style across those speci
 """
 import colorsys, math, pathlib, random, re, sys
 import stylekit as K
+import dinokit as D
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "svg" / "styles"
 INK, OL = "#1D1E30", "#2A1C22"          # lifted charcoal, never #000000
 PUPIL = "#15110D"                        # dinokit.eye pupil fill: marks the eye in every species
 LENGTH_M = {"trex": 12, "triceratops": 8.5, "stegosaurus": 6.5, "titanosaur": 31, "ankylosaurus": 7,
-            "spinosaurus": 14}           # README "Scientific accuracy" (checked adult lengths)
+            "spinosaurus": 14, "pachycephalosaurus": 3.0}  # README "Scientific accuracy" (checked adult lengths)
 NAMES = {"trex": "Tyrannosaurus rex", "triceratops": "Triceratops horridus", "stegosaurus": "Stegosaurus stenops",
          "titanosaur": "Patagotitan mayorum", "ankylosaurus": "Ankylosaurus magniventris",
-         "spinosaurus": "Spinosaurus aegyptiacus"}
+         "spinosaurus": "Spinosaurus aegyptiacus", "pachycephalosaurus": "Pachycephalosaurus wyomingensis"}
 
 
 def rng(*key):
@@ -524,6 +525,64 @@ def bauhaus(sp):
     return render, None, ""
 
 
+# ------------------------------------------------------------------ 11. big-head explainer (matches src/char_paleontologist.py)
+def explainer(sp):
+    src = (ROOT / "svg" / f"{sp}-animated.svg").read_text(encoding="utf-8")
+    c = re.search(r'class="([\w]+)-eyelid"', src)[1]
+    eyes = [(float(x) - 0.4, float(y), 2 * float(r)) for x, y, r in re.findall(rf'<circle cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)" fill="{PUPIL}"', src)]
+    found, skin = {}, {}
+
+    def eye_of(polys):
+        """the eye whose ring, iris, pupil, glint or lid these shapes are"""
+        for ex, ey, r in eyes:
+            if polys and all(math.hypot(*(a - b for a, b in zip(K.centroid(p), (ex, ey)))) < r + 3
+                             and max(K.bbox(p)[2] - K.bbox(p)[0], K.bbox(p)[3] - K.bbox(p)[1]) < 2 * r + 10 for p in polys):
+                return ex, ey, r
+
+    def soft(p, closed=True):
+        return K.d_poly(K.chaikin(K.resample(p, 5, closed), 2, closed), closed) if K.perimeter(p, closed) > 40 else K.d_poly(p, closed)
+
+    def render(l):
+        polys = l.polys()
+        e = eye_of(polys)
+        if e: found[l.part] = e; return ""
+        if l.kind == "skip":   # keep the soft shade and light gradients, drop scale texture, AO and fades
+            if any(k in l.fill for k in ("-shade)", "-light)")):
+                return "".join(path(soft(p), l.fill, extra=f' opacity="{l.op * 0.8:.2f}"') for p in polys)
+        if l.kind in ("base", "limb"):
+            col = K.mix(l.fill, "#FFF6E8", 0.12)
+            big = max((area(p) for p in polys), default=0)
+            if big > skin.get(l.part, (0, ""))[0]: skin[l.part] = (big, col)   # lid colour: the part's largest fill
+            return "".join(path(soft(p), col) for p in polys)
+        if l.kind == "tone" and l.op >= 0.25:
+            return "".join(path(soft(p), OL, extra=f' opacity="{l.op * 0.7:.2f}"') for p in polys)
+        if l.kind == "line" and l.op >= 0.6 and K.lum(l.stroke) < 0.3:
+            w = min(3.6, max(1.6, l.sw * 1.15))
+            return "".join(path(soft(p, c), stroke=OL, w=w) for p, c in l.shapes if len(p) > 1)
+
+    def after(gid, leaves, pivot):
+        if gid not in found: return ""
+        x, y, r = found[gid]; r = round(max(5.0, r * 1.1), 1); x, y = round(x, 1), round(y, 1)
+        return (f'<g class="{c}-blush" opacity="0.45"><ellipse cx="{x + r * 0.4:.1f}" cy="{y + r * 2.2:.1f}" rx="{r * 1.3:.1f}" ry="{r * 0.8:.1f}" fill="{D.BLUSH}"/></g>'
+                + D.face_eye(c, x, y, r, skin[gid][1]) + D.drop(round(x - r * 3, 1), round(y - r * 2.4, 1), r / 5, f"{c}-sweat"))
+
+    return render, after, D.face_css(c)
+
+
+def bighead(svg, k=1.3, fit=0.88):
+    """enlarge the head through its pivot wrapper (it carries the jaw; multiplies any scale already there), then shrink
+    the whole drawing about the ground line (y 514) so the bigger head stays inside the frame"""
+    def f(m):
+        return f'<g transform="translate({m[1]} {m[2]}) scale({float(m[3] or 1) * k:g})"><g id="head"'
+    out, n = re.subn(r'<g transform="translate\((-?[\d.]+) (-?[\d.]+)\)(?: scale\(([\d.]+)\))?"><g id="head"', f, svg, count=1)
+    assert n == 1, "head pivot wrapper not found"
+    head, rest = out.split("</defs>\n", 1); body, tail = rest.rsplit("\n</svg>", 1)
+    return f'{head}</defs>\n<g transform="translate(40 514) scale({fit}) translate(0 -514)">{body}</g>\n</svg>{tail}'
+
+
+explainer.post = bighead
+
+
 # ------------------------------------------------------------------ registry, backdrops, gallery
 # key: (label, signature trait, builder, tile CSS background, backdrop svg)
 STYLES = {
@@ -538,6 +597,7 @@ STYLES = {
     "stipple": ("Stippled paleo plate", "dot density, no outline, scientific plate", stipple, "#F4ECD8", "plate"),
     "crayon": ("Children's crayon", "wobbly wax lines, scribble fill", crayon, "#FFFFFF", "garden"),
     "bauhaus": ("Bauhaus", "circles, bars and triangles in primaries", bauhaus, "#F3EEE3", ""),
+    "explainer": ("Big-head explainer", "big round head, closed happy eyes, soft flat fills", explainer, "#E9E1CF", ""),
 }
 
 
@@ -606,11 +666,11 @@ def gallery(sp, W, H, span):
         for i, (n, (label, trait, _, bg, kind)) in enumerate(STYLES.items(), 1))
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{NAMES[sp]}: ten styles</title>
+<title>{NAMES[sp]}: {len(STYLES)} styles</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@900&amp;family=Public+Sans:wght@400;600&amp;display=swap">
 <style>{PAGE_CSS}</style></head><body>
-<h1>One {NAMES[sp].split()[0]}, ten styles</h1>
+<h1>One {NAMES[sp].split()[0]}, {len(STYLES)} styles</h1>
 <p>Each version changes how the drawing is built: line, edge, texture and shape. Groups, pivots and idle motion are the same as svg/{sp}-animated.svg. The thumbnail and greyscale views check that every style can still be told apart.</p>
 <nav><button data-c="thumbs" aria-pressed="false">Thumbnails</button><button data-c="grey" aria-pressed="false">Greyscale</button></nav>
 <main>
@@ -658,6 +718,7 @@ def main(args):
             label, _, build, _, _ = STYLES[name]
             render, after, defs = build(sp)
             out = K.restyle_svg(src, render, head_extra=defs, after=after)
+            if hasattr(build, "post"): out = build.post(out)
             out = re.sub(r'aria-label="([^"]*)"', rf'aria-label="\1, {label} style"', out, count=1)
             assert set(re.findall(r'<g id="([\w-]+)"', out)) == ids, name   # rig kept
             assert "#000000" not in out.split("</defs>", 1)[1], name          # no pure black in the drawing

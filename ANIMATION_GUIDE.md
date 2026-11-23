@@ -8,11 +8,11 @@ A practical, repo-ready blueprint for building high-retention **2D-in-3D stylize
 
 This pipeline combines two core pillars:
 1. **Visuals:** Flat, expressive 2D comic illustrations placed inside a real, lit 3D Three.js world—wrapped in a custom **Ink-Outline-Before-DoF** post-processing shader with lifted blacks and continuous gliding camera movement.
-2. **Storytelling:** A tight, zero-dead-air **Paradox-to-Payoff** script delivered at ~3.8–4.0 words per second, where the 3D world's lighting shifts dynamically on the story's pivot beat.
+2. **Storytelling:** A **Paradox-to-Payoff** script with natural pauses (about 2.5–3 words per second, 60–75 s), where the 3D world's lighting shifts dynamically on the story's pivot beat.
 
 ```mermaid
 flowchart LR
-    A["Script + Tight VO (~4 wps)"] --> B["Beat Sheet & Word Timestamps"]
+    A["Script + VO, natural pauses (~2.5–3 wps)"] --> B["Beat Sheet & Word Timestamps"]
     C["2D Rigged SVGs / Pose PNGs"] --> D["Three.js 3D World + Lit Cutouts"]
     E["3D Terrain, Water & Scenery Props"] --> D
     B --> D
@@ -60,7 +60,7 @@ flowchart LR
 project-root/
 ├── public/
 │   ├── audio/
-│   │   ├── voiceover.mp3          # Trimmed for zero dead air (~4 words/sec)
+│   │   ├── voiceover.mp3          # Long gaps trimmed, natural pauses kept (~2.5–3 words/sec)
 │   │   ├── transcript.json        # Word-level start/end timestamps (Whisper / Gentle)
 │   │   ├── bed-tension.mp3        # Subtle low-end drone/ambient bed (-24 dB)
 │   │   └── sfx/                   # Bone crunch, water splash, whooshes, camera swish
@@ -74,7 +74,7 @@ project-root/
 │   ├── scene/
 │   │   ├── Environment.tsx        # 3D terrain, water plane, rocks, trees, ferns
 │   │   ├── CutoutActor.tsx        # Lit 2D sprite plane + silhouette shadow depth material
-│   │   ├── LightingRig.tsx        # Story-driven Daylight -> Night Blue -> Sunset lerps
+│   │   ├── LightingRig.tsx        # Story-driven mood lerps (moods picked per episode)
 │   │   └── ProceduralTextures.ts  # Offscreen HTML5 Canvas painterly rock/bark/ground maps
 │   ├── shaders/
 │   │   ├── InkOutlineShader.ts    # Pass 1: Sobel Depth/Luma edges + lifted blacks
@@ -116,6 +116,8 @@ Config.setConcurrency(4);
 
 Before touching code, lock the script and voiceover. Every visual beat, sprite swap, camera move, and lighting shift is driven by exact VO frame numbers.
 
+Series length is **60–75 s**; scale the beat timings below proportionally. The lighting column is one option: each episode picks its moods (section 5).
+
 | Beat | Timing (60s) | Frames (30fps) | Purpose | Lighting Mood | Camera Energy |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **1. Paradox Hook** | `0:00–0:05` | `0–150` | State a surprising contradiction that stops the scroll in the first 2 seconds. | Warm, bright **Daylight** | Immediate gentle push-in on hero cutout |
@@ -136,18 +138,17 @@ Before touching code, lock the script and voiceover. Every visual beat, sprite s
 
 ### Audio & Pacing Rules
 
-* **Target Pace:** ~3.8 to 4.0 words per second (~230–245 words for a 60-second video). Read slightly faster than conversational speed, with crisp consonant enunciation.
-* **Zero Dead Air:** Strip out every breath and pause longer than `150ms` before animating.
-  * *Quick FFmpeg silence trimmer:*
-    ```bash
-    ffmpeg -i raw-vo.wav \
-      -af "silenceremove=stop_periods=-1:stop_duration=0.14:stop_threshold=-38dB,loudnorm=I=-14:TP=-1.5:LRA=7" \
-      public/audio/voiceover.mp3
-    ```
+* **Length:** 60–75 s per episode (at least 60 s for monetised shorts; the cap keeps it tight).
+* **Target Pace:** about 2.5–3 words per second at 1.0x tempo (roughly 160–210 words for 60–75 s). Do not speed the voice up; a rushed start was the main complaint on Ep01's earlier drafts.
+* **Keep Natural Pauses:** keep pauses up to `0.5 s` (they carry the `...` and `<short pause>` beats) and cut longer gaps down to `0.3 s`. This replaces the earlier 150 ms "zero dead air" rule.
+  ```bash
+  npm run prep:voice -- --input episodes/<ep>/raw-vo.wav --script episodes/<ep>/voiceover.txt --max-pause 0.5 --keep-gap 0.3
+  ```
+* **Lead-in:** about 1 s of picture before the first word, so the opening is not rushed.
 * **Mix Hierarchy (Target Integrated Loudness: `-14 LUFS`):**
   * **Voiceover:** `-14 LUFS` (high-pass at `80 Hz`, gentle 3:1 compression, `-1.5 dBTP` limiter).
   * **Foley / Punch SFX:** `-10 dB` to `-6 dB` peak, placed **1–2 frames ahead** of visual pose swaps or stat badge pops (human ears perceive audio as synced when it leads crisp animation by ~30–50ms).
-  * **Ambient Tension Bed:** `-26 dB` to `-22 dB` (sidechain-ducked `-4 dB` underneath VO; swap texture subtly at the *"You see..."* Night Blue pivot).
+  * **Ambient Tension Bed:** `-26 dB` to `-22 dB` (sidechain-ducked `-4 dB` underneath VO; if the episode has a lighting pivot, swap texture subtly there).
 * **Auto-Generating Beat Timestamps:** Run Whisper with `--word_timestamps True` on the trimmed `voiceover.mp3` to produce `public/audio/transcript.json`. Use those exact word seconds (`Math.round(word.start * fps)`) to drive both captions and camera/pose cues—never eyeball timestamps manually.
 * **Loopable Ending (Optional):** Write the final sentence so it flows grammatically into the opening hook (e.g., *"...which is the exact reason why—"* → *"Spinosaurus was longer than T. rex..."*) and glide the final 23 frames back to frame `0`'s exact camera transform.
 
@@ -641,6 +642,8 @@ export const DepthOfFieldShader = {
 
 ## 5. Story-Driven Lighting Shifts
 
+**Moods are picked per episode** to fit the story: night and sunset are options, not a required arc. Ep01 uses daylight warming to late afternoon (`lateAfternoon` in `src/video/scene/LightingRig.tsx`); the repo's rig currently holds only `daylight` and `lateAfternoon`, so an episode that needs night or sunset adds those moods back from the table below.
+
 Instead of static lighting, smoothly interpolate (`lerp`) your sky dome gradient, exponential fog, directional key light, hemisphere shadow color, rim light, and shader ink color between story beats.
 
 | Mood | Story Beat | Key Light | Shadow / Hemi Ground | Rim Light | Sky Top → Horizon | Fog (`FogExp2`) | Ink Color |
@@ -759,9 +762,9 @@ export function evaluateLightingAtFrame(
 
 ---
 
-## 6. Continuous Camera Choreography (Zero Hard Cuts)
+## 6. Camera Choreography (Glides, Few Cuts)
 
-Never hard-cut between scenes. Arrange all story beats as physical stations inside one contiguous 3D environment so the camera glides seamlessly past rocks, trees, and foreground foliage from beat to beat.
+Prefer gliding moves: arrange story beats as physical stations inside one contiguous 3D environment so the camera glides past rocks, trees, and foreground foliage from beat to beat. Cut only when changing location. Whatever the move, every line needs its speaker or the thing it names at the focal point, and every claim needs a visual (if the line says bite marks, show the bite marks).
 
 ### Spatial Staging Map (Top-Down 3D World)
 
@@ -951,7 +954,7 @@ export const RemotionRoot: React.FC = () => {
     <Composition
       id="DinoExplainerVertical"
       component={EpisodeComposition}
-      durationInFrames={1800} // 60s @ 30fps
+      durationInFrames={1800} // 60s @ 30fps (series target: 60–75 s)
       fps={30}
       width={1080}
       height={1920}
@@ -1051,12 +1054,12 @@ npx remotion render DinoExplainerVertical out/episode-master.mp4 \
 ### Pre-Production & Audio
 - [ ] **Script:** Written in **Paradox → Escalation + Gag → *"You see..."* Pivot → Ironic Payoff** format (~230–245 words for 60s).
 - [ ] **Scientific Facts Verified:** Lengths, anatomy, and habitats checked against published sources (consistent with `dino-series` standards).
-- [ ] **Voiceover Mastered:** Trimmed for zero dead air (`<150ms` gaps), normalized to `-14 LUFS`, saved as CBR MP3/WAV, and word-level `transcript.json` generated.
+- [ ] **Voiceover Mastered:** Long gaps trimmed with natural pauses kept (`--max-pause 0.5 --keep-gap 0.3`), normalized to `-14 LUFS`, saved as CBR MP3/WAV, and word-level `transcript.json` generated.
 - [ ] **SFX & Bed Spotted:** Ambient bed ducked `-24 dB`; Foley hits placed 1–2 frames ahead of visual impacts.
 
 ### Assets & 3D World
 - [ ] **2D Sprites:** 3–5 pose/expression transparent PNGs per character with lifted-charcoal outlines (`#1d1e30` / `#2A1C22`) and `customDepthMaterial` silhouette shadows verified.
-- [ ] **3D Staging:** Terrain, painterly props, scrolling water, and foreground foliage arranged along one continuous camera path (zero hard cuts).
+- [ ] **3D Staging:** Terrain, painterly props, scrolling water, and foreground foliage arranged along one continuous camera path (glides; cut only when changing location).
 - [ ] **Micro-Life Active:** Deterministic breathing, foliage sway, water UV scroll, and dust motes running from `elapsed = frame / fps`.
 
 ### Shaders, Lighting & Camera

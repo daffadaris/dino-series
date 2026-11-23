@@ -18,7 +18,7 @@ An illustrated dinosaur series in one shared style: cel-shaded vector drawings w
 | *Triceratops horridus* | Horns-down charge | `svg/triceratops-animated.svg` | `gsap/triceratops-gsap.html` | `3d/triceratops-3d.html` |
 | *Stegosaurus stenops* | Spiked tail swing, plates flush red | `svg/stegosaurus-animated.svg` | `gsap/stegosaurus-gsap.html` | `3d/stegosaurus-3d.html` |
 | *Patagotitan mayorum* (titanosaur) | Neck raise and call | `svg/titanosaur-animated.svg` | `gsap/titanosaur-gsap.html` | `3d/titanosaur-3d.html` |
-| *Ankylosaurus magniventris* | Tail-club swing | `svg/ankylosaurus-animated.svg` | `gsap/ankylosaurus-gsap.html` | not yet |
+| *Ankylosaurus magniventris* | Tail-club swing | `svg/ankylosaurus-animated.svg` | `gsap/ankylosaurus-gsap.html` | `3d/ankylosaurus-3d.html` |
 | *Spinosaurus aegyptiacus* | Strike at a fish | `svg/spinosaurus-animated.svg` | `gsap/spinosaurus-gsap.html` | not yet |
 
 Each species also has a poster and a rig sheet in `boards/`, and `boards/Group.dc.html` shows all six together at their real lengths.
@@ -38,7 +38,8 @@ dino-series/
 │   ├── trex_svg.py            shading pass over it; writes svg/trex-animated.svg
 │   ├── trex_gsap.py, trex_poster.py, trex_rig.py
 │   ├── group_poster.py        every species to scale
-│   └── triceratops_3d.py      Triceratops 3D page, generated from the T. rex engine
+│   ├── triceratops_3d.py      Triceratops 3D page, generated from the T. rex engine
+│   └── ankylosaurus_3d.py     Ankylosaurus 3D page, generated from the same engine
 ├── baseline/trex-boxy-head/   saved T. rex baseline: head shapes, ids and pivots
 ├── shots/                     local screenshots (not tracked)
 ├── CLAUDE.md                  project rules for Claude Code
@@ -85,6 +86,9 @@ python3 src/group_poster.py
 
 # Triceratops 3D page, generated from the T. rex engine
 python3 src/triceratops_3d.py
+
+# Ankylosaurus 3D page, generated from the same engine
+python3 src/ankylosaurus_3d.py
 ```
 
 - `trex_drawing.py` is the definitive T. rex drawing. `trex_svg.py` layers the shading and texture pass over it without changing its shapes, ids or pivots, and stops if any of them change.

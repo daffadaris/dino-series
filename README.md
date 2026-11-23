@@ -31,7 +31,6 @@ dino-series/
 ├── svg/                       animated SVG, one per species; svg/scenery/ holds the scenery pieces and sets, svg/styles/ the ten style variants
 ├── gsap/                      GSAP page per species; click the dinosaur to play its move
 ├── 3d/                        Three.js model per species; drag to orbit, click to play the move
-│                              and a soft clay chibi version of each (*-chibi.html), sculpted from blended spheres
 ├── boards/                    posters and rig sheets (*.dc.html) and their canvas layout (canvas.json)
 ├── src/                       builders
 │   ├── dinokit.py             shared toolkit: drawing helpers, motion CSS, poster and rig builders
@@ -40,7 +39,6 @@ dino-series/
 │   ├── trex_svg.py            shading pass over it; writes svg/trex-animated.svg
 │   ├── trex_gsap.py, trex_poster.py, trex_rig.py
 │   ├── group_poster.py        every species to scale
-│   ├── chibi_3d.py            the six chibi 3D pages: shared clay, lights and controls; a sculpt and a move per species
 │   ├── scenery.py             scenery kit: plants and ground by habitat, and the four poster backgrounds
 │   ├── triceratops_3d.py      Triceratops 3D page, generated from the T. rex engine
 │   ├── ankylosaurus_3d.py     Ankylosaurus 3D page, generated from the same engine
@@ -95,9 +93,6 @@ python3 src/scenery.py
 # and <style>.html (one style across species) when several species are given. Defaults: all styles, trex
 python3 src/styles.py [style ...] [species ...]
 python3 src/styles.py lowpoly trex triceratops stegosaurus titanosaur ankylosaurus spinosaurus
-
-# Chibi 3D models (soft clay style): writes 3d/<species>-chibi.html
-python3 src/chibi_3d.py
 
 # Group poster to scale (measures each drawing in a browser)
 python3 src/group_poster.py

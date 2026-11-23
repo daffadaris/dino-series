@@ -1,0 +1,70 @@
+{
+  "model": "gemini-3.8-flash-tts",
+  "mode": "multi-speaker",
+  "speakers": [
+    { "speaker": "Skeptic", "voice": "Puck" },
+    { "speaker": "Paleontologist", "voice": "Charon" }
+  ],
+  "turns": [
+    {
+      "speaker": "Skeptic",
+      "style": "cocky, upbeat, fast-paced YouTube Shorts banter with sarcastic punch",
+      "text": "Wait... T. rex versus Triceratops? <pff> That's not a fight — that's lunch."
+    },
+    {
+      "speaker": "Paleontologist",
+      "style": "warm, amused, deadpan delivery with crisp pause and emphasis on HEALED",
+      "text": "Yeah... <short pause> you'd think so. Except we found a Triceratops horn with T. rex bite marks — and the bone HEALED."
+    },
+    {
+      "speaker": "Skeptic",
+      "style": "startled, energetic, rising incredulous pitch, brisk pace",
+      "text": "<gasp> Wait, what?! It survived a twelve-meter T. rex?! That thing packed thirty-five thousand newtons of bone-crushing bite force!"
+    },
+    {
+      "speaker": "Paleontologist",
+      "style": "confident, authoritative, brisk storytelling pace shifting to dry amusement after the pause",
+      "text": "True. Sixty-six million years ago in Hell Creek, T. rex had the strongest land bite ever. <short pause> Problem is... Triceratops wasn't some panicked salad bar."
+    },
+    {
+      "speaker": "Skeptic",
+      "style": "curious, leaning in, snappy conversational question",
+      "text": "Okay, how big are we talking?"
+    },
+    {
+      "speaker": "Paleontologist",
+      "style": "impressed, punchy buildup dropping into deadpan dry comedic timing on the last sentence",
+      "text": "Nearly nine meters long, up to twelve tons — and a third of its ENTIRE body was just skull. Solid bony frill, one-meter brow horns. <chuckle> Basically an angry tank... <short pause> with steak knives taped to the bumper."
+    },
+    {
+      "speaker": "Skeptic",
+      "style": "dismissive, animated, fast retort",
+      "text": "Still! Just circle around and bite its neck!"
+    },
+    {
+      "speaker": "Paleontologist",
+      "style": "lowered voice, conspiratorial and intense, crisp clear articulation, dramatic intrigue",
+      "text": "You see... <short pause> that's the trap. In 2008, fossils proved these two brawled face-to-face. Triceratops's skull sat on a giant ball-and-socket neck joint — so it pivoted that three-meter shield fast enough to keep two horns aimed straight at T. rex's face."
+    },
+    {
+      "speaker": "Skeptic",
+      "style": "wide-eyed realization turning urgent and genuinely curious",
+      "text": "So charging straight in meant getting stabbed first... <short pause> okay, then how did T. rex EVER win?!"
+    },
+    {
+      "speaker": "Paleontologist",
+      "style": "ominous and serious, shifting into dark dry humor on the jar-lid reveal",
+      "text": "Unhealed tooth scores deep on the neck joint tell the grim story. <short pause> To reach the massive neck muscles past that shield, T. rex grabbed the frill... <snicker> and literally popped the head off like a jar lid."
+    },
+    {
+      "speaker": "Skeptic",
+      "style": "shocked, incredulous, sharp high-energy reaction",
+      "text": "Popped it OFF?!"
+    },
+    {
+      "speaker": "Paleontologist",
+      "style": "calm, dry, punchy final mic-drop delivery with crisp pause before Hard",
+      "text": "In Hell Creek... <short pause> dinner fought back. Hard."
+    }
+  ]
+}

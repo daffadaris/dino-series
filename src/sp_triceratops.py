@@ -32,19 +32,20 @@ def open_top(d):
     first_end = " ".join(rest.split(" ")[4:6])
     return "M" + first_end + " C" + rest.split(" C", 1)[1].rstrip(" Z")
 
-def leg(gid, d, foot, nails, far=False, dx=0, wrinkles=""):
+def leg(gid, d, foot, nails, px, py, far=False, dx=0, wrinkles=""):
     t = f' transform="translate({dx} -2)"' if dx else ""
     body = skin_part(LOOK, d, ao=True, far=far, tex=not far, outline_d=open_top(d),
                      layers=(line(wrinkles, 0.2, 2) if wrinkles else ""))
     ft = skin_part(LOOK, foot, ao=True, far=far, tex=False)
     nl = path(nails, CLAW) + stroke(nails, 2)
-    return f'<g id="{gid}"{t}>{body}{ft}{nl}</g>'
+    inner = f'<g{t}>{body}{ft}{nl}</g>' if t else f'{body}{ft}{nl}'
+    return piv(gid, f"{C}-{gid}", px, py, inner)
 
-FAR_HIND = leg("leg-far", HIND, HIND_FOOT, HIND_NAIL, far=True, dx=44)
-FAR_FRONT = leg("foreleg-far", FRONT, FRONT_FOOT, FRONT_NAIL, far=True, dx=40)
-NEAR_HIND = leg("leg-near", HIND, HIND_FOOT, HIND_NAIL,
+FAR_HIND = leg("leg-far", HIND, HIND_FOOT, HIND_NAIL, 469, 288, far=True, dx=44)
+FAR_FRONT = leg("foreleg-far", FRONT, FRONT_FOOT, FRONT_NAIL, 688, 324, far=True, dx=40)
+NEAR_HIND = leg("leg-near", HIND, HIND_FOOT, HIND_NAIL, 425, 290,
                 wrinkles="M420 448 C434 454 452 456 470 452 M420 462 C434 468 452 470 470 466 M360 296 C372 282 390 272 408 270 M478 380 C488 388 496 388 500 382")
-NEAR_FRONT = leg("foreleg-near", FRONT, FRONT_FOOT, FRONT_NAIL,
+NEAR_FRONT = leg("foreleg-near", FRONT, FRONT_FOOT, FRONT_NAIL, 648, 326,
                  wrinkles="M614 446 C626 452 642 454 662 450 M616 460 C628 466 644 468 664 464 M588 400 C604 410 632 412 662 404")
 
 # ------------------------------------------------------------------ tail
@@ -102,8 +103,13 @@ def frill_bumps():
 
 FRILL_INNER = "M770 366 C734 342 690 306 672 266 C660 238 664 212 686 206 C716 198 754 220 780 250 C792 264 800 280 806 296 Z"
 RIBS = " ".join(f"M796 336 L{x:.0f} {y:.0f}" for x, y in [K.bez(*FRILL_SEGS[0], t) for t in (0.5, 0.85)] + [K.bez(*FRILL_SEGS[1], t) for t in (0.3, 0.8)] + [K.bez(*FRILL_SEGS[2], t) for t in (0.3, 0.7)])
-FRILL = (frill_bumps() + path(FRILL_D, SKIN) + path(FRILL_D, D, 0.12) + path(FRILL_INNER, LOOK.accent, 0.45)
-         + path(FRILL_INNER, LOOK.url("light")) + stroke(RIBS, 2.2, D, 0.14)
+FRILL_VEINS = ("M744 274 Q716 250 688 238 M716 250 Q704 232 696 218 "
+               "M752 298 Q720 286 690 278 M724 288 Q712 300 700 308 "
+               "M766 254 Q748 232 732 214 M748 232 Q760 226 772 228")
+EPOC_RIMS = "M646 215 Q650 212 655 215 M660 191 Q665 188 670 192 M686 181 Q691 179 696 184 M714 182 Q719 181 723 188 M743 192 Q748 193 750 200"
+FRILL = (frill_bumps() + stroke(EPOC_RIMS, 2.0, "#FFE4C0", 0.65)
+         + path(FRILL_D, SKIN) + path(FRILL_D, D, 0.12) + path(FRILL_INNER, LOOK.accent, 0.45)
+         + path(FRILL_INNER, LOOK.url("light")) + stroke(RIBS, 2.2, D, 0.14) + stroke(FRILL_VEINS, 1.5, OL, 0.17)
          + dots([(670, 250), (690, 200), (780, 236), (800, 300), (770, 370), (700, 310)], 60, 0.8, 1.6, 0.12, seed=12)
          + path(FRILL_D, LOOK.url("shade")) + rim("M656 268 C640 232 646 198 676 188 C712 176 760 200 792 236", 3.2, 4, 0.55) + stroke(FRILL_D))
 
@@ -114,20 +120,26 @@ BEAK_D = "M908 330 C932 340 952 362 956 386 C956 400 946 406 934 402 L914 394 C9
 LBEAK_D = "M910 394 C928 392 940 394 942 400 C936 414 924 422 910 424 Z"
 NASAL_D = "M872 300 C876 282 886 266 898 256 C902 272 902 290 896 308 Z"     # short nasal horn above the nostril
 NOSTRIL_D = "M884 330 C896 324 910 330 912 342 C906 350 892 350 884 342 Z"
-# adult brow horns: about a metre long, angled forward and up
-HORN_NEAR = "M808 290 C822 246 852 204 904 176 C886 214 860 256 840 298 Z"
-HORN_FAR = "M792 284 C804 240 832 196 880 168 C864 206 842 250 822 292 Z"
+# adult brow horns: about a metre long, sweeping up and gently curving forward toward the tip
+HORN_NEAR = "M806 290 C816 244 846 196 914 172 C906 184 878 214 858 250 C848 268 842 284 838 298 Z"
+HORN_FAR = "M790 284 C800 238 828 188 892 164 C884 176 856 206 838 242 C828 260 822 276 818 292 Z"
 JUGAL = "M772 386 C766 402 760 416 756 430 C770 422 780 410 788 396 Z"         # cheek (epijugal) point
 
-def horn(d, far=False):
-    return path(d, HORN) + path(d, LOOK.url("ao")) + (path(d, D, 0.3) if far else "") + stroke(d, 2.6)
+def horn(d, far=False, rings="", hl=""):
+    return (path(d, HORN) + path(d, LOOK.url("ao")) + (path(d, D, 0.3) if far else "")
+            + (stroke(hl, 2.4, "#FFF6E6", 0.65) if hl else "")
+            + (stroke(rings, 1.6, OL, 0.25) if rings else "")
+            + stroke(d, 2.6))
+
+JAW = piv("jaw", f"{C}-jaw", 804, 404,
+          skin_part(LOOK, JAW_D, belly="M806 424 C846 436 896 432 928 412 C918 408 892 420 846 422 C826 422 814 420 806 414 Z", tex=False)
+          + path(LBEAK_D, BEAK) + stroke(LBEAK_D, 2.4))
 
 HEAD_INNER = (
     skin_part(LOOK, NECK_D, belly="M704 404 C730 420 752 424 772 420 L774 404 C752 410 730 404 712 392 Z", outline_d="M704 404 C730 420 752 424 772 420")
     + horn(HORN_FAR, far=True)
     + FRILL
-    + skin_part(LOOK, JAW_D, belly="M806 424 C846 436 896 432 928 412 C918 408 892 420 846 422 C826 422 814 420 806 414 Z", tex=False)
-    + path(LBEAK_D, BEAK) + stroke(LBEAK_D, 2.4)
+    + JAW
     + skin_part(LOOK, SKULL_D,
                 layers=path("M778 298 C800 278 836 272 866 284 C892 296 914 316 930 340 L922 346 C906 324 886 306 862 296 C834 286 802 290 784 306 Z", D, 0.22)
                        + path(NOSTRIL_D, D, 0.5)
@@ -136,11 +148,13 @@ HEAD_INNER = (
                        + dots([(780, 300), (860, 284), (930, 344), (900, 392), (790, 392)], 70, 0.8, 1.5, 0.12, seed=13),
                 light=True, rim_d="M778 298 C800 278 836 272 866 284 C892 296 914 316 930 340")
     + path(BEAK_D, BEAK) + path(BEAK_D, LOOK.url("shade")) + stroke(BEAK_D, 2.6)
-    + horn(NASAL_D)
+    + horn(NASAL_D, rings="M875 296 Q886 294 895 299 M878 287 Q887 286 896 290")
     + path(JUGAL, SKIN) + path(JUGAL, D, 0.18) + stroke(JUGAL, 2.4)
     + K.eye(818, 316, f"{C}-eyelid", 5)
     + path("M802 308 C810 298 828 296 840 302 C842 304 840 307 838 307 C828 303 814 304 806 312 C804 312 801 310 802 308 Z", D, 0.45)
-    + horn(HORN_NEAR)
+    + horn(HORN_NEAR,
+           rings="M810 282 Q825 278 838 288 M814 268 Q829 266 842 275 M820 254 Q834 253 847 262",
+           hl="M810 286 C820 246 846 204 902 179")
 )
 HEAD = piv("head", f"{C}-head", 706, 340, HEAD_INNER)
 
@@ -150,23 +164,47 @@ FRAG = piv("act", f"{C}-act", 520, 514, INNER)
 
 # ------------------------------------------------------------------ motion
 ACTION = {
-    "act": [(0, "translateX(0)"), (0.18, "translateX(-10px)"), (0.42, "translateX(26px)"), (0.7, "translateX(26px)"), (1, "translateX(0)")],
-    "head": [(0, "rotate(0)"), (0.18, "rotate(-6deg)"), (0.42, "rotate(12deg)"), (0.7, "rotate(12deg)"), (0.82, "rotate(9deg)"), (1, "rotate(0)")],
+    "act": [(0, "translate(0px, 0px)"), (0.2, "translate(-8px, 2px)"), (0.44, "translate(22px, 5px)"), (0.68, "translate(24px, 4px)"), (1, "translate(0px, 0px)")],
+    "body": [(0, "rotate(0deg) scale(1, 1)"), (0.2, "rotate(-2.2deg) scale(0.99, 1.015)"), (0.44, "rotate(2.8deg) scale(1.015, 0.99)"), (0.68, "rotate(2.2deg) scale(1.01, 0.995)"), (1, "rotate(0deg) scale(1, 1)")],
+    "head": [(0, "rotate(0deg)"), (0.2, "rotate(-8deg)"), (0.44, "rotate(15deg)"), (0.6, "rotate(12deg)"), (0.72, "rotate(14deg)"), (1, "rotate(0deg)")],
+    "jaw": [(0, "rotate(0deg)"), (0.18, "rotate(10deg)"), (0.34, "rotate(2deg)"), (0.46, "rotate(0deg)"), (1, "rotate(0deg)")],
+    "tail": [(0, "rotate(0deg)"), (0.2, "rotate(-4deg)"), (0.44, "rotate(7deg)"), (0.7, "rotate(5deg)"), (1, "rotate(0deg)")],
+    "foreleg-near": [(0, "rotate(0deg)"), (0.2, "rotate(7deg)"), (0.44, "rotate(-13deg)"), (0.68, "rotate(-11deg)"), (1, "rotate(0deg)")],
+    "foreleg-far": [(0, "rotate(0deg)"), (0.2, "rotate(-5deg)"), (0.44, "rotate(11deg)"), (0.68, "rotate(9deg)"), (1, "rotate(0deg)")],
+    "leg-near": [(0, "rotate(0deg)"), (0.2, "rotate(6deg)"), (0.44, "rotate(13deg)"), (0.68, "rotate(10deg)"), (1, "rotate(0deg)")],
+    "leg-far": [(0, "rotate(0deg)"), (0.2, "rotate(-4deg)"), (0.44, "rotate(-11deg)"), (0.68, "rotate(-9deg)"), (1, "rotate(0deg)")],
 }
-GSAP = """      .to(parts.act, { x: -10, duration: 0.28, ease: 'power2.out' }, 0)
-      .to(parts.head, { rotation: -6, duration: 0.28, ease: 'power2.out' }, 0)
-      .to(parts.act, { x: 26, duration: 0.4, ease: 'power3.in' }, 0.28)
-      .to(parts.head, { rotation: 12, duration: 0.4, ease: 'back.out(2)' }, 0.28)
-      .to(parts.head, { rotation: 9, duration: 0.2, ease: 'sine.inOut' }, 1.1)
-      .to(parts.act, { x: 0, duration: 0.5, ease: 'power2.inOut' }, 1.12)
-      .to(parts.head, { rotation: 0, duration: 0.4, ease: 'power2.inOut' }, 1.3)"""
+GSAP = """      .to(parts.act, { x: -8, y: 2, duration: 0.32, ease: 'power2.out' }, 0)
+      .to(parts.body, { rotation: -2.2, scaleX: 0.99, scaleY: 1.015, duration: 0.32, ease: 'power2.out' }, 0)
+      .to(parts.head, { rotation: -8, duration: 0.32, ease: 'power2.out' }, 0)
+      .to(parts.jaw, { rotation: 10, duration: 0.28, ease: 'power2.out' }, 0)
+      .to(parts.tail, { rotation: -4, duration: 0.32, ease: 'power2.out' }, 0)
+      .to(parts.foreleg_near, { rotation: 7, duration: 0.32, ease: 'power2.out' }, 0)
+      .to(parts.foreleg_far, { rotation: -5, duration: 0.32, ease: 'power2.out' }, 0)
+      .to(parts.leg_near, { rotation: 6, duration: 0.32, ease: 'power2.out' }, 0)
+      .to(parts.leg_far, { rotation: -4, duration: 0.32, ease: 'power2.out' }, 0)
+      .to(parts.act, { x: 22, y: 5, duration: 0.38, ease: 'power3.in' }, 0.32)
+      .to(parts.body, { rotation: 2.8, scaleX: 1.015, scaleY: 0.99, duration: 0.38, ease: 'power3.in' }, 0.32)
+      .to(parts.head, { rotation: 15, duration: 0.38, ease: 'back.out(2)' }, 0.32)
+      .to(parts.jaw, { rotation: 0, duration: 0.26, ease: 'power2.in' }, 0.32)
+      .to(parts.tail, { rotation: 7, duration: 0.38, ease: 'power2.out' }, 0.32)
+      .to(parts.foreleg_near, { rotation: -13, duration: 0.38, ease: 'power3.in' }, 0.32)
+      .to(parts.foreleg_far, { rotation: 11, duration: 0.38, ease: 'power3.in' }, 0.32)
+      .to(parts.leg_near, { rotation: 13, duration: 0.38, ease: 'power3.in' }, 0.32)
+      .to(parts.leg_far, { rotation: -11, duration: 0.38, ease: 'power3.in' }, 0.32)
+      .to(parts.head, { rotation: 12, duration: 0.22, ease: 'sine.inOut' }, 0.95)
+      .to(parts.act, { x: 0, y: 0, duration: 0.48, ease: 'power2.inOut' }, 1.1)
+      .to(parts.body, { rotation: 0, scaleX: 1, scaleY: 1, duration: 0.48, ease: 'power2.inOut' }, 1.1)
+      .to(parts.head, { rotation: 0, duration: 0.42, ease: 'power2.inOut' }, 1.18)
+      .to(parts.tail, { rotation: 0, duration: 0.48, ease: 'power2.inOut' }, 1.1)
+      .to([parts.foreleg_near, parts.foreleg_far, parts.leg_near, parts.leg_far], { rotation: 0, duration: 0.48, ease: 'power2.inOut' }, 1.1)"""
 
 # ------------------------------------------------------------------ poster scene: Hell Creek floodplain (src/scenery.py)
 SCENE = scenery.set_hell_creek()
 
 # ------------------------------------------------------------------ rig parts
 RIG = [
-    ("Head and frill", "#head", HEAD, (630, 160, 340, 290)),
+    ("Head and frill", "#head, #jaw", HEAD, (630, 160, 340, 290)),
     ("Body", "#body", BODY, (290, 196, 446, 250)),
     ("Tail", "#tail", TAIL, (126, 206, 240, 176)),
     ("Hind legs", "#leg-near, #leg-far", NEAR_HIND + f'<g transform="translate(150 0)">{FAR_HIND}</g>', (336, 218, 364, 302)),
@@ -176,7 +214,7 @@ RIG = [
 SPEC = dict(
     code=C, slug="triceratops", board="Triceratops", name="Triceratops", short="Triceratops", look=LOOK,
     viewbox=(1000, 560), frag=FRAG,
-    ids=["act", "body", "tail", "head", "leg-near", "leg-far", "foreleg-near", "foreleg-far"],
+    ids=["act", "body", "tail", "head", "jaw", "leg-near", "leg-far", "foreleg-near", "foreleg-far"],
     action=ACTION, dur=1.6, gsap=GSAP,
     action_label="Make the Triceratops charge", action_verb="make it charge", page_bg="#CFD9C4",
     scene=SCENE, title="Triceratops", title_px=190, binomial="Triceratops horridus", subtitle="the three-horned face",

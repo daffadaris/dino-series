@@ -5,7 +5,18 @@ ROOT = _os.path.dirname(HERE)                          # repository root
 gradient shading, scale texture, rim light). Each species module builds parts with these
 helpers; write_all() emits the standalone SVG, GSAP page, poster board and rig board."""
 import json, math, pathlib, random, re
-from matplotlib.path import Path as MPath
+try:
+    from matplotlib.path import Path as MPath
+except ImportError:
+    class MPath:
+        def __init__(self, poly): self._p = list(poly)
+        def contains_point(self, pt):
+            x, y = pt; inside = False; p = self._p; n = len(p)
+            for i in range(n):
+                x1, y1 = p[i]; x2, y2 = p[(i + 1) % n]
+                if (y1 > y) != (y2 > y) and x < (x2 - x1) * (y - y1) / (y2 - y1) + x1:
+                    inside = not inside
+            return inside
 
 OL, D, L = "#2A1C22", "#000000", "#FFFFFF"
 CLAW, EYE, IVORY = "#3A2A2C", "#E0B04A", "#EFE6D0"
@@ -117,7 +128,8 @@ def keyframes(name, frames, loop=None):
 def motion_css(code, idle_parts, action, dur):
     """idle_parts: classes that breathe/sway; action: {part_class: [(t, css)]}"""
     c = code
-    css = [f".{c}-{p}{{transform-origin:0 0}}" for p in ("act", "body", "tail", "head", "jaw", "neck", "flush")]
+    parts = list(dict.fromkeys(["act", "body", "tail", "head", "jaw", "neck", "flush", *action.keys()]))
+    css = [f".{c}-{p}{{transform-origin:0 0}}" for p in parts]
     css.append(f".{c}-eyelid{{transform-origin:0 0;transform:scaleY(0)}}")
     css.append(f".{c}-flush{{opacity:0}}")
     css += [f".{c}-anim .{c}-body{{animation:{c}-breath 3.4s ease-in-out infinite}}",
@@ -298,19 +310,24 @@ def rig_board(sp, frag, S=0.8):
     vb_w, vb_h = sp["viewbox"]
     sk = lambda m: m.replace(SKIN, "{{skin}}")
     # a ring marks the joint each part pivots around
-    def pivots(ids):
+    def pivots(ids, markup):
         out = []
         for gid in re.findall(r"#([\w-]+)", ids):
-            m = re.search(rf'<g transform="translate\(([-\d.]+) ([-\d.]+)\)"><g id="{gid}"', frag)
-            if m:
-                px, py = m.groups()
-                out.append(f'<circle cx="{px}" cy="{py}" r="7" fill="none" stroke="#F2C14E" stroke-width="2.5"></circle>'
-                           f'<circle cx="{px}" cy="{py}" r="2.5" fill="#F2C14E"></circle>')
+            m = re.search(rf'(?:<g transform="translate\(([-\d.]+) ([-\d.]+)\)">)?<g transform="translate\(([-\d.]+) ([-\d.]+)\)"><g id="{gid}"', markup)
+            if not m:
+                m2 = re.search(rf'<g transform="translate\(([-\d.]+) ([-\d.]+)\)"><g id="{gid}"', frag)
+                if m2: ox, oy, px, py = 0.0, 0.0, float(m2.group(1)), float(m2.group(2))
+                else: continue
+            else:
+                ox = float(m.group(1) or 0); oy = float(m.group(2) or 0)
+                px = float(m.group(3)); py = float(m.group(4))
+            out.append(f'<circle cx="{px+ox:g}" cy="{py+oy:g}" r="7" fill="none" stroke="#F2C14E" stroke-width="2.5"></circle>'
+                       f'<circle cx="{px+ox:g}" cy="{py+oy:g}" r="2.5" fill="#F2C14E"></circle>')
         return "".join(out)
     def part_svg(markup, vb, label, ids):
         x, y, w, h = vb
         return (f'<svg role="img" aria-label="{label}" viewBox="{x} {y} {w} {h}" width="{w*S:.0f}" height="{h*S:.0f}" style="display: block">'
-                f'{sk(markup)}{pivots(ids)}</svg>')
+                f'{sk(markup)}{pivots(ids, markup)}</svg>')
     items = "".join(f'''<div style="display: flex; flex-direction: column; gap: 14px; align-items: flex-start">{part_svg(m, vb, n, ids)}<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 17px; font-weight: 600; color: #ECE6E8">{n}</span><span style="font-size: 14px; color: #B9B3B6">{ids}</span></div></div>''' for n, ids, m, vb in sp["rig_parts"])
     big_h = 560 * vb_h / vb_w * 1000 / 560
     html = f'''<!doctype html>
@@ -369,10 +386,16 @@ def preview(html, name, skin):
 
 def shoot(name, w, h, out=None):
     """screenshot a preview or file into shots/"""
-    import subprocess
+    import shutil, subprocess
+    chrome = (shutil.which("google-chrome") or shutil.which("chrome")
+              or next((p for p in (
+                  _os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
+                  r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+                  r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+              ) if _os.path.exists(p)), "google-chrome"))
     src = OUT / "shots" / f"{name}.html" if not name.endswith(".svg") else OUT / "svg" / name
     out = out or (OUT / "shots" / f"{pathlib.Path(name).stem}.png")
-    subprocess.run(["google-chrome", "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars", f"--window-size={w},{h}",
-                    "--virtual-time-budget=3000", "--default-background-color=C9D6DAFF", f"--screenshot={out}", f"file://{src}"],
+    subprocess.run([chrome, "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars", f"--window-size={w},{h}",
+                    "--virtual-time-budget=3000", "--default-background-color=C9D6DAFF", f"--screenshot={out}", src.as_uri()],
                    capture_output=True)
     return out

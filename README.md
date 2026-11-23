@@ -30,6 +30,7 @@ dino-series/
 ├── svg/                       animated SVG, one per species; svg/scenery/ holds the scenery pieces and sets
 ├── gsap/                      GSAP page per species; click the dinosaur to play its move
 ├── 3d/                        Three.js model per species; drag to orbit, click to play the move
+│                              (triceratops-chibi.html is a soft clay, toy-style take, sculpted from blended spheres)
 ├── boards/                    posters and rig sheets (*.dc.html) and their canvas layout (canvas.json)
 ├── src/                       builders
 │   ├── dinokit.py             shared toolkit: drawing helpers, motion CSS, poster and rig builders

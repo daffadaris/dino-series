@@ -1,65 +1,16 @@
 import os as _os
 HERE = _os.path.dirname(_os.path.abspath(__file__))  # src/
 ROOT = _os.path.dirname(HERE)                          # repository root
-import pathlib, importlib.util
+import pathlib, importlib.util, sys
+sys.path.insert(0, HERE)
+import scenery
 spec = importlib.util.spec_from_file_location("dino", HERE + "/trex_svg.py")
 dino = importlib.util.module_from_spec(spec); spec.loader.exec_module(dino)
 
-SKY, FAR, SAND, OCHRE, BUFF, RUST, UMBER, LABEL = "#C9D6DA", "#A7B2B9", "#D6AB72", "#C08A55", "#E5C895", "#B5763F", "#2B1E16", "#CDB894"
+BUFF, UMBER, LABEL = "#E5C895", "#2B1E16", "#CDB894"
 
-def band(y, h, color, phase=0):
-    w = [y - 6 + phase, y + 6 - phase, y - 3, y + 4]
-    return (f'<path d="M0 {y} C270 {w[0]} 540 {w[1]} 810 {w[2]} C930 {w[3]} 1010 {y} 1080 {y - 2} '
-            f'L1080 {y + h} C810 {y + h + 4} 540 {y + h - 5} 270 {y + h + 3} C160 {y + h + 6} 70 {y + h} 0 {y + h + 2} Z" fill="{color}"></path>')
-
-def fern(x, y, sc, color, flip=False):
-    fl = -1 if flip else 1
-    fronds = "".join(
-        f'<path d="M0 0 C{fl*a*0.35:.0f} {-l*0.45:.0f} {fl*a*0.8:.0f} {-l*0.8:.0f} {fl*a:.0f} {-l:.0f} C{fl*a*0.75:.0f} {-l*0.72:.0f} {fl*a*0.3:.0f} {-l*0.35:.0f} 0 0 Z"></path>'
-        for a, l in [(-70, 120), (-40, 150), (-10, 165), (25, 150), (60, 118), (90, 80), (-95, 75)])
-    return f'<g transform="translate({x} {y}) scale({sc})" fill="{color}">{fronds}</g>'
-
-SCENE = f'''<svg aria-hidden="true" viewBox="0 0 1080 900" width="1080" height="900" style="position: absolute; top: 0; left: 0; display: block">
-<defs>
-<linearGradient id="sc-sky" x1="0" y1="0" x2="0" y2="1">
-<stop offset="0" stop-color="#AFC4CF"></stop>
-<stop offset="0.55" stop-color="#D5D3CC"></stop>
-<stop offset="0.75" stop-color="#EBCFA8"></stop>
-</linearGradient>
-<radialGradient id="sc-sun" cx="0.5" cy="0.5" r="0.5">
-<stop offset="0" stop-color="#FFF4DC" stop-opacity="0.95"></stop>
-<stop offset="0.25" stop-color="#FFE2B0" stop-opacity="0.55"></stop>
-<stop offset="1" stop-color="#FFE2B0" stop-opacity="0"></stop>
-</radialGradient>
-<linearGradient id="sc-haze" x1="0" y1="0" x2="0" y2="1">
-<stop offset="0" stop-color="#F3DFC2" stop-opacity="0"></stop>
-<stop offset="0.6" stop-color="#F3DFC2" stop-opacity="0.55"></stop>
-<stop offset="1" stop-color="#F3DFC2" stop-opacity="0"></stop>
-</linearGradient>
-<linearGradient id="sc-ground" x1="0" y1="0" x2="0" y2="1">
-<stop offset="0" stop-color="#000000" stop-opacity="0"></stop>
-<stop offset="1" stop-color="#3B2414" stop-opacity="0.35"></stop>
-</linearGradient>
-<radialGradient id="sc-shadow" cx="0.5" cy="0.5" r="0.5">
-<stop offset="0" stop-color="#3B2414" stop-opacity="0.38"></stop>
-<stop offset="1" stop-color="#3B2414" stop-opacity="0"></stop>
-</radialGradient>
-</defs>
-<rect x="0" y="0" width="1080" height="900" fill="url(#sc-sky)"></rect>
-<circle cx="880" cy="600" r="330" fill="url(#sc-sun)"></circle>
-<path d="M0 640 L60 640 L88 612 L190 608 L210 640 L340 640 L372 600 L520 596 L546 640 L700 640 L724 620 L820 616 L842 640 L1080 640 L1080 900 L0 900 Z" fill="#CDBFB6"></path>
-<path d="M0 668 L120 668 L150 626 L300 620 L326 668 L560 668 L600 618 L770 612 L800 668 L1080 668 L1080 900 L0 900 Z" fill="#B7A39A"></path>
-<path d="M150 626 L300 620 L302 630 L152 636 Z M600 618 L770 612 L772 624 L602 630 Z M156 646 L318 640 L320 646 L158 652 Z M606 640 L784 634 L786 640 L608 646 Z" fill="#A08C84"></path>
-<rect x="0" y="560" width="1080" height="160" fill="url(#sc-haze)"></rect>
-<path d="M0 724 C120 704 200 716 300 710 C420 702 520 720 640 712 C760 704 880 718 1080 708 L1080 900 L0 900 Z" fill="{SAND}"></path>
-{band(748, 16, OCHRE)}
-{band(786, 22, BUFF, 2)}
-{band(830, 14, RUST, -2)}
-{band(868, 40, OCHRE, 1)}
-<rect x="0" y="704" width="1080" height="196" fill="url(#sc-ground)"></rect>
-<ellipse cx="400" cy="824" rx="380" ry="26" fill="url(#sc-shadow)"></ellipse>
-{fern(40, 900, 1.1, "#4A3A2C")}{fern(130, 905, 0.8, "#5B4636", True)}{fern(1010, 905, 1.2, "#4A3A2C", True)}{fern(930, 910, 0.75, "#5B4636")}
-</svg>'''
+# poster scene: Hell Creek floodplain (src/scenery.py)
+SCENE = scenery.set_hell_creek()
 
 DINO = f'''<button type="button" class="tr-btn" aria-label="Make the T. rex roar" onClick="{{{{roar}}}}" style="position: absolute; top: 262px; left: 0; width: 1080px; height: 605px; padding: 0; margin: 0; border: 0; background: none; cursor: pointer; display: block">
 <svg class="{{{{animClass}}}}" aria-hidden="true" viewBox="0 0 1000 560" width="1080" height="605" style="display: block">

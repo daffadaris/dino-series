@@ -6,6 +6,7 @@ run as a script to write the SVG, GSAP page, poster board and rig board."""
 import sys
 sys.path.insert(0, HERE)
 import dinokit as K
+import scenery
 from dinokit import SKIN, D, L, OL, CLAW, path, stroke, line, rim, stripes, spots, dots, skin_part, piv, bez
 
 C = "tit"
@@ -140,58 +141,8 @@ GSAP = """      .to(parts.neck, { rotation: -12, duration: 0.65, ease: 'power2.o
       .to(parts.jaw, { rotation: 0, duration: 0.25, ease: 'power2.in' }, 1.55)
       .to([parts.neck, parts.head, parts.tail], { rotation: 0, duration: 0.6, ease: 'power2.inOut' }, 1.6)"""
 
-# ------------------------------------------------------------------ poster scene: Patagonian conifer forest, misty morning
-def conifer(x, base, h, w, tiers=7):
-    """tall narrow conifer: a jagged spindle crown on a thin trunk"""
-    pts_l, pts_r = [], []
-    top = base - h
-    for i in range(tiers + 1):
-        t = i / tiers
-        y = top + t * h * 0.82
-        half = w * 0.5 * (0.15 + 0.85 * (t ** 0.8)) * (1.0 if i % 2 else 0.72)
-        pts_l.append((x - half, y)); pts_r.append((x + half, y + h * 0.04))
-    crown = f"M{x} {top} " + " ".join(f"L{a:.0f} {b:.0f}" for a, b in pts_r) + " " + " ".join(f"L{a:.0f} {b:.0f}" for a, b in reversed(pts_l)) + " Z"
-    trunk = f"M{x-w*0.05:.0f} {base - h*0.2:.0f} L{x+w*0.05:.0f} {base - h*0.2:.0f} L{x+w*0.06:.0f} {base} L{x-w*0.06:.0f} {base} Z"
-    return crown + " " + trunk
-
-def fern(x, y, sc, color, flip=False):
-    fl = -1 if flip else 1
-    fronds = "".join(
-        f'<path d="M0 0 C{fl*a*0.35:.0f} {-l*0.45:.0f} {fl*a*0.8:.0f} {-l*0.8:.0f} {fl*a:.0f} {-l:.0f} C{fl*a*0.75:.0f} {-l*0.72:.0f} {fl*a*0.3:.0f} {-l*0.35:.0f} 0 0 Z"></path>'
-        for a, l in [(-70, 120), (-40, 150), (-10, 165), (25, 150), (60, 118), (90, 80), (-95, 75)])
-    return f'<g transform="translate({x} {y}) scale({sc})" fill="{color}">{fronds}</g>'
-
-def band(y, h, color, phase=0):
-    return (f'<path d="M0 {y} C270 {y-6+phase} 540 {y+6-phase} 810 {y-3} C930 {y+4} 1010 {y} 1080 {y-2} '
-            f'L1080 {y+h} C810 {y+h+4} 540 {y+h-5} 270 {y+h+3} C160 {y+h+6} 70 {y+h} 0 {y+h+2} Z" fill="{color}"></path>')
-
-far_trees = "".join(path(conifer(x, 724, h, w), "#AEB8BC") for x, h, w in
-                    [(20, 300, 60), (90, 360, 70), (170, 280, 56), (250, 340, 66), (330, 300, 58), (420, 380, 72), (510, 290, 56),
-                     (600, 350, 66), (690, 300, 60), (770, 370, 70), (860, 320, 62), (950, 360, 68), (1040, 300, 60)])
-mid_trees = "".join(path(conifer(x, 734, h, w, 9), "#96A4A6") for x, h, w in
-                    [(40, 470, 92), (190, 420, 84), (330, 500, 96), (740, 460, 90), (900, 520, 100), (1050, 440, 86)])
-SCENE = f'''<svg aria-hidden="true" viewBox="0 0 1080 900" width="1080" height="900" style="position: absolute; top: 0; left: 0; display: block">
-<defs>
-<linearGradient id="tit-sc-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A9B9C6"></stop><stop offset="0.8" stop-color="#E1E4DE"></stop></linearGradient>
-<radialGradient id="tit-sc-sun" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FBF5E6" stop-opacity="0.9"></stop><stop offset="0.3" stop-color="#F3EBD6" stop-opacity="0.45"></stop><stop offset="1" stop-color="#F3EBD6" stop-opacity="0"></stop></radialGradient>
-<linearGradient id="tit-sc-haze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EEF0EA" stop-opacity="0"></stop><stop offset="0.65" stop-color="#EEF0EA" stop-opacity="0.7"></stop><stop offset="1" stop-color="#EEF0EA" stop-opacity="0.1"></stop></linearGradient>
-<linearGradient id="tit-sc-ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000000" stop-opacity="0"></stop><stop offset="1" stop-color="#1F2A18" stop-opacity="0.38"></stop></linearGradient>
-<radialGradient id="tit-sc-shadow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#1F2A18" stop-opacity="0.4"></stop><stop offset="1" stop-color="#1F2A18" stop-opacity="0"></stop></radialGradient>
-</defs>
-<rect x="0" y="0" width="1080" height="900" fill="url(#tit-sc-sky)"></rect>
-<circle cx="880" cy="430" r="340" fill="url(#tit-sc-sun)"></circle>
-{far_trees}
-<rect x="0" y="420" width="1080" height="320" fill="url(#tit-sc-haze)"></rect>
-{mid_trees}
-<rect x="0" y="560" width="1080" height="190" fill="url(#tit-sc-haze)" opacity="0.8"></rect>
-<path d="M0 722 C200 712 400 726 600 718 C800 710 950 722 1080 716 L1080 900 L0 900 Z" fill="#8E9A6C"></path>
-{band(766, 18, "#7F8C5E")}
-{band(804, 22, "#A1AB7A", 2)}
-{band(850, 50, "#7F8C5E", -1)}
-<rect x="0" y="716" width="1080" height="184" fill="url(#tit-sc-ground)"></rect>
-<ellipse cx="560" cy="836" rx="380" ry="24" fill="url(#tit-sc-shadow)"></ellipse>
-{fern(40, 905, 1.05, "#3E4E36")}{fern(140, 910, 0.75, "#4A5C3F", True)}{fern(1020, 910, 0.95, "#3E4E36", True)}
-</svg>'''
+# ------------------------------------------------------------------ poster scene: Cerro Barcino floodplain (src/scenery.py)
+SCENE = scenery.set_cerro_barcino()
 
 SPEC = dict(
     code=C, slug="titanosaur", board="Titanosaur", name="Titanosaur", short="titanosaur", look=LOOK,

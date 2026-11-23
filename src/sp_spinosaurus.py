@@ -10,6 +10,7 @@ paddle-like tail built from tall neural spines and long chevrons (Ibrahim et al.
 import sys, math
 sys.path.insert(0, HERE)
 import dinokit as K
+import scenery
 from dinokit import SKIN, D, OL, path, stroke, line, rim, piv, skin_part, stripes, spots, dots, eye
 
 C = "spn"
@@ -206,36 +207,8 @@ GSAP = """      .to(parts.neck, { rotation: -6, duration: 0.3, ease: 'power2.out
       .to([parts.neck, parts.head, parts.tail], { rotation: 0, duration: 0.6, ease: 'power2.inOut' }, 1.0)
       .to(parts.act, { x: 0, duration: 0.6, ease: 'power2.inOut' }, 1.0)"""
 
-# ------------------------------------------------------------------ poster scene: Kem Kem river margin, tidal flats and mangroves
-def mangrove(x, base, h, sc, color):
-    roots = "".join(f'<path d="M{x + dx * sc:.0f} {base} C{x + dx * sc * 0.6:.0f} {base - 24 * sc:.0f} {x + dx * 0.2 * sc:.0f} {base - 40 * sc:.0f} {x} {base - 46 * sc:.0f}" fill="none" stroke="{color}" stroke-width="{4 * sc:.1f}"></path>'
-                    for dx in (-40, -24, -8, 10, 26, 42))
-    crown = "".join(f'<ellipse cx="{x + dx * sc:.0f}" cy="{base - h + dy * sc:.0f}" rx="{r * sc:.0f}" ry="{r * 0.6 * sc:.0f}" fill="{color}"></ellipse>'
-                    for dx, dy, r in [(-40, 26, 44), (34, 22, 46), (0, 0, 54), (-8, 34, 40)])
-    return f'{roots}<path d="M{x - 5 * sc:.0f} {base - 44 * sc:.0f} L{x - 3 * sc:.0f} {base - h + 20 * sc:.0f} L{x + 3 * sc:.0f} {base - h + 20 * sc:.0f} L{x + 5 * sc:.0f} {base - 44 * sc:.0f} Z" fill="{color}"></path>{crown}'
-
-SCENE = f'''<svg aria-hidden="true" viewBox="0 0 1080 900" width="1080" height="900" style="position: absolute; top: 0; left: 0; display: block">
-<defs>
-<linearGradient id="spn-sc-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFCFD3"></stop><stop offset="0.55" stop-color="#E9DCC0"></stop><stop offset="0.78" stop-color="#F2CF98"></stop></linearGradient>
-<radialGradient id="spn-sc-sun" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFF2D2" stop-opacity="0.95"></stop><stop offset="0.3" stop-color="#FFD596" stop-opacity="0.45"></stop><stop offset="1" stop-color="#FFD596" stop-opacity="0"></stop></radialGradient>
-<linearGradient id="spn-sc-haze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4E0BE" stop-opacity="0"></stop><stop offset="0.6" stop-color="#F4E0BE" stop-opacity="0.55"></stop><stop offset="1" stop-color="#F4E0BE" stop-opacity="0"></stop></linearGradient>
-<linearGradient id="spn-sc-water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C8D6D2"></stop><stop offset="1" stop-color="#8FAAA6"></stop></linearGradient>
-<linearGradient id="spn-sc-ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000000" stop-opacity="0"></stop><stop offset="1" stop-color="#2E2414" stop-opacity="0.36"></stop></linearGradient>
-<radialGradient id="spn-sc-shadow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#2E2414" stop-opacity="0.4"></stop><stop offset="1" stop-color="#2E2414" stop-opacity="0"></stop></radialGradient>
-</defs>
-<rect x="0" y="0" width="1080" height="900" fill="url(#spn-sc-sky)"></rect>
-<circle cx="200" cy="600" r="320" fill="url(#spn-sc-sun)"></circle>
-<g opacity="0.65">{mangrove(80, 676, 150, 0.9, "#7D8A6A")}{mangrove(190, 680, 120, 0.7, "#7D8A6A")}{mangrove(900, 678, 170, 1.0, "#7D8A6A")}{mangrove(1010, 682, 130, 0.8, "#7D8A6A")}</g>
-<rect x="0" y="640" width="1080" height="60" fill="#B7B79A" opacity="0.6"></rect>
-<rect x="0" y="590" width="1080" height="150" fill="url(#spn-sc-haze)"></rect>
-<path d="M0 696 C220 688 460 700 700 692 C860 686 980 692 1080 688 L1080 900 L0 900 Z" fill="url(#spn-sc-water)"></path>
-<path d="M60 720 L220 718 M420 730 L640 726 M820 716 L980 714 M140 770 L320 766 M600 780 L760 776" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.45"></path>
-<path d="M0 792 C200 776 420 786 640 780 C820 776 960 784 1080 778 L1080 900 L0 900 Z" fill="#C9AE78"></path>
-<path d="M0 836 C270 830 540 840 810 834 C930 832 1010 836 1080 834 L1080 852 C810 856 540 848 270 854 C160 856 70 852 0 854 Z" fill="#B59766"></path>
-<rect x="0" y="780" width="1080" height="120" fill="url(#spn-sc-ground)"></rect>
-<ellipse cx="560" cy="836" rx="380" ry="22" fill="url(#spn-sc-shadow)"></ellipse>
-<path d="M760 742 C772 734 790 734 800 742 C790 750 772 750 760 742 Z M800 742 L812 734 L812 750 Z" fill="#5E6F6C" opacity="0.5"></path>
-</svg>'''
+# ------------------------------------------------------------------ poster scene: Bahariya tidal coast (src/scenery.py)
+SCENE = scenery.set_bahariya()
 
 # ------------------------------------------------------------------ rig sheet parts (viewBox crops in drawing units)
 RIG = [

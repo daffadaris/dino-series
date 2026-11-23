@@ -27,7 +27,7 @@ Each species also has a poster and a rig sheet in `boards/`, and `boards/Group.d
 
 ```text
 dino-series/
-├── svg/                       animated SVG, one per species
+├── svg/                       animated SVG, one per species; svg/scenery/ holds the scenery pieces and sets
 ├── gsap/                      GSAP page per species; click the dinosaur to play its move
 ├── 3d/                        Three.js model per species; drag to orbit, click to play the move
 ├── boards/                    posters and rig sheets (*.dc.html) and their canvas layout (canvas.json)
@@ -38,6 +38,7 @@ dino-series/
 │   ├── trex_svg.py            shading pass over it; writes svg/trex-animated.svg
 │   ├── trex_gsap.py, trex_poster.py, trex_rig.py
 │   ├── group_poster.py        every species to scale
+│   ├── scenery.py             scenery kit: plants and ground by habitat, and the four poster backgrounds
 │   ├── triceratops_3d.py      Triceratops 3D page, generated from the T. rex engine
 │   ├── ankylosaurus_3d.py     Ankylosaurus 3D page, generated from the same engine
 │   └── spinosaurus_3d.py      Spinosaurus 3D page, generated from the T. rex page
@@ -82,6 +83,9 @@ python3 src/sp_titanosaur.py
 python3 src/sp_ankylosaurus.py
 python3 src/sp_spinosaurus.py
 
+# Scenery kit: writes svg/scenery/ and boards/Scenery.dc.html (run before the posters)
+python3 src/scenery.py
+
 # Group poster to scale (measures each drawing in a browser)
 python3 src/group_poster.py
 
@@ -111,6 +115,17 @@ The drawings follow published anatomy for general shape and proportion. Skin col
 
 | Titanosaur (*Patagotitan*) | Proportions follow published skeletal reconstructions and scale diagrams (used for general proportions, not traced): at 31 m long the back stands about 5 m high and the head about 12 m up, with a long neck raised at roughly 45 degrees, a deep, rounded torso, short pillar-like legs and a long, tapering tail. The earlier drawing's torso was about three times too deep |
 | Spinosaurus | Researched against Wikipedia, the Natural History Museum, Ibrahim and others (2020) and Sereno and others (2022), with skeletal reconstructions for proportions. Drawn as a 14 m biped standing with its weight over the hips (Sereno and others 2022); the Museum notes that posture is still debated. Short hind legs with long, flat-bottomed toes; robust arms with three fingers and an enlarged thumb claw; a long, low, crocodile-like skull with straight conical teeth, a notch near the jaw tip, nostrils set well back and a small crest in front of the eyes; an S-curved neck; a thin sail of neural spines up to about 1.65 m, peaking over the rear of the back (its exact outline is not known); and a deep, paddle-like tail from tall neural spines and long chevrons (Ibrahim and others 2020) |
+
+### Scenery
+
+Each poster's background comes from `src/scenery.py`, and its plants come from the fossil flora of the animal's rock formation:
+
+| Set | Posters | Plants |
+|---|---|---|
+| Hell Creek | T. rex, Triceratops, Ankylosaurus | broadleaf flowering trees (about 90% of the flora), fan palms back from the river, ferns by the water, a rare dawn redwood |
+| Morrison | Stegosaurus | araucarian conifers, cycads, ginkgo, tree ferns and horsetails; no flowering plants or grass |
+| Bahariya | Spinosaurus | tidal channels and mud banks fringed by the fern *Weichselia*, which dominated that mangrove coast |
+| Cerro Barcino | Titanosaur | open, drier floodplain with low flowering shrubs after *Patagoflora* and scattered conifers |
 
 ### Lengths on the group poster
 

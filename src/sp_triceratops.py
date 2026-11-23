@@ -5,6 +5,7 @@ ROOT = _os.path.dirname(HERE)                          # repository root
 import sys, math
 sys.path.insert(0, HERE)
 import dinokit as K
+import scenery
 from dinokit import SKIN, D, L, OL, CLAW, piv, path, stroke, line, rim, stripes, spots, dots, skin_part
 
 C = "tri"
@@ -160,43 +161,8 @@ GSAP = """      .to(parts.act, { x: -10, duration: 0.28, ease: 'power2.out' }, 0
       .to(parts.act, { x: 0, duration: 0.5, ease: 'power2.inOut' }, 1.12)
       .to(parts.head, { rotation: 0, duration: 0.4, ease: 'power2.inOut' }, 1.3)"""
 
-# ------------------------------------------------------------------ poster scene
-def fern(x, y, sc, color, flip=False):
-    fl = -1 if flip else 1
-    fronds = "".join(
-        f'<path d="M0 0 C{fl*a*0.35:.0f} {-l*0.45:.0f} {fl*a*0.8:.0f} {-l*0.8:.0f} {fl*a:.0f} {-l:.0f} C{fl*a*0.75:.0f} {-l*0.72:.0f} {fl*a*0.3:.0f} {-l*0.35:.0f} 0 0 Z"></path>'
-        for a, l in [(-70, 120), (-40, 150), (-10, 165), (25, 150), (60, 118), (90, 80), (-95, 75)])
-    return f'<g transform="translate({x} {y}) scale({sc})" fill="{color}">{fronds}</g>'
-
-def band(y, h, color, phase=0):
-    return (f'<path d="M0 {y} C270 {y-6+phase} 540 {y+6-phase} 810 {y-3} C930 {y+4} 1010 {y} 1080 {y-2} '
-            f'L1080 {y+h} C810 {y+h+4} 540 {y+h-5} 270 {y+h+3} C160 {y+h+6} 70 {y+h} 0 {y+h+2} Z" fill="{color}"></path>')
-
-SCENE = f'''<svg aria-hidden="true" viewBox="0 0 1080 900" width="1080" height="900" style="position: absolute; top: 0; left: 0; display: block">
-<defs>
-<linearGradient id="tri-sc-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A8C6CF"></stop><stop offset="0.5" stop-color="#D4DCCB"></stop><stop offset="0.76" stop-color="#EED9B0"></stop></linearGradient>
-<radialGradient id="tri-sc-sun" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFF2D6" stop-opacity="0.95"></stop><stop offset="0.28" stop-color="#FFDFA8" stop-opacity="0.5"></stop><stop offset="1" stop-color="#FFDFA8" stop-opacity="0"></stop></radialGradient>
-<linearGradient id="tri-sc-haze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F1E3C4" stop-opacity="0"></stop><stop offset="0.6" stop-color="#F1E3C4" stop-opacity="0.5"></stop><stop offset="1" stop-color="#F1E3C4" stop-opacity="0"></stop></linearGradient>
-<linearGradient id="tri-sc-ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000000" stop-opacity="0"></stop><stop offset="1" stop-color="#1F2A12" stop-opacity="0.38"></stop></linearGradient>
-<linearGradient id="tri-sc-river" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B9D2D6"></stop><stop offset="1" stop-color="#8FB3BC"></stop></linearGradient>
-<radialGradient id="tri-sc-shadow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#1F2A12" stop-opacity="0.4"></stop><stop offset="1" stop-color="#1F2A12" stop-opacity="0"></stop></radialGradient>
-</defs>
-<rect x="0" y="0" width="1080" height="900" fill="url(#tri-sc-sky)"></rect>
-<circle cx="170" cy="610" r="340" fill="url(#tri-sc-sun)"></circle>
-<path d="M0 648 C110 610 230 616 330 640 C430 600 560 604 660 634 C760 606 900 600 1080 628 L1080 900 L0 900 Z" fill="#A9B596"></path>
-<path d="M0 684 C140 650 260 656 380 676 C500 646 640 650 760 674 C860 652 980 650 1080 664 L1080 900 L0 900 Z" fill="#93A27A"></path>
-<rect x="0" y="580" width="1080" height="150" fill="url(#tri-sc-haze)"></rect>
-<path d="M0 712 C200 700 420 716 640 706 C820 698 960 708 1080 702 L1080 900 L0 900 Z" fill="#9AA864"></path>
-<path d="M0 734 C220 724 440 742 660 732 C840 724 980 734 1080 728 L1080 756 C960 762 820 752 660 760 C440 770 220 750 0 760 Z" fill="url(#tri-sc-river)"></path>
-<path d="M120 742 L260 740 M520 748 L700 744 M860 738 L980 736" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.5"></path>
-{band(772, 20, "#8C9A58")}
-{band(806, 24, "#A7B26E", 2)}
-{band(846, 18, "#8C9A58", -2)}
-{band(872, 40, "#7F8D4E", 1)}
-<rect x="0" y="704" width="1080" height="196" fill="url(#tri-sc-ground)"></rect>
-<ellipse cx="560" cy="826" rx="360" ry="24" fill="url(#tri-sc-shadow)"></ellipse>
-{fern(40, 900, 1.1, "#33452B")}{fern(140, 905, 0.8, "#43573A", True)}{fern(1020, 905, 1.05, "#33452B", True)}{fern(940, 910, 0.7, "#43573A")}
-</svg>'''
+# ------------------------------------------------------------------ poster scene: Hell Creek floodplain (src/scenery.py)
+SCENE = scenery.set_hell_creek()
 
 # ------------------------------------------------------------------ rig parts
 RIG = [

@@ -5,6 +5,7 @@ ROOT = _os.path.dirname(HERE)                          # repository root
 import sys
 sys.path.insert(0, HERE)
 import dinokit as K
+import scenery
 from dinokit import SKIN, D, OL, path, stroke, line, rim, piv, skin_part, stripes, spots, dots, spike, eye
 
 def plate(x, y, w, h, lean=-8):
@@ -211,52 +212,8 @@ GSAP = """      .call(() => gsap.getTweensOf(parts.tail).forEach(t => { if (t.pa
       .to(document.querySelectorAll('.stg-flush'), { opacity: 0, duration: 0.6 }, 1.0)
       .call(() => gsap.getTweensOf(parts.tail).forEach(t => { if (t.parent !== act) t.resume(); }))"""
 
-# ------------------------------------------------------------------ poster scene: Morrison plain, hazy noon
-def conifer(x, base, h, sc=1.0, color="#6F7A5A"):
-    """araucaria-like: tall bare trunk, layered flat crowns near the top"""
-    tw = 6 * sc
-    crowns = "".join(
-        f'<ellipse cx="{x + (k % 2) * 6 - 3}" cy="{base - h + 24 * sc + k * 22 * sc:.0f}" rx="{(34 + k * 9) * sc:.0f}" ry="{8 * sc:.0f}"></ellipse>'
-        for k in range(4))
-    return (f'<g fill="{color}"><path d="M{x-tw} {base} L{x-tw*0.4:.1f} {base-h} L{x+tw*0.4:.1f} {base-h} L{x+tw} {base} Z"></path>{crowns}'
-            f'<ellipse cx="{x}" cy="{base - h + 8 * sc:.0f}" rx="{20 * sc:.0f}" ry="{9 * sc:.0f}"></ellipse></g>')
-
-def cycad(x, y, sc, color, flip=False):
-    fl = -1 if flip else 1
-    fronds = "".join(
-        f'<path d="M0 0 C{fl*a*0.4:.0f} {-l*0.5:.0f} {fl*a*0.85:.0f} {-l*0.85:.0f} {fl*a:.0f} {-l:.0f} C{fl*a*0.8:.0f} {-l*0.74:.0f} {fl*a*0.35:.0f} {-l*0.36:.0f} 0 0 Z"></path>'
-        for a, l in [(-120, 70), (-90, 110), (-50, 140), (-10, 150), (30, 140), (70, 112), (110, 76)])
-    trunk = f'<path d="M-14 0 L-10 -40 L10 -40 L14 0 Z"></path>'
-    return f'<g transform="translate({x} {y}) scale({sc})" fill="{color}">{trunk}<g transform="translate(0 -36)">{fronds}</g></g>'
-
-def band(y, h, color, phase=0):
-    w = [y - 6 + phase, y + 6 - phase, y - 3, y + 4]
-    return (f'<path d="M0 {y} C270 {w[0]} 540 {w[1]} 810 {w[2]} C930 {w[3]} 1010 {y} 1080 {y - 2} '
-            f'L1080 {y + h} C810 {y + h + 4} 540 {y + h - 5} 270 {y + h + 3} C160 {y + h + 6} 70 {y + h} 0 {y + h + 2} Z" fill="{color}"></path>')
-
-SCENE = f'''<svg aria-hidden="true" viewBox="0 0 1080 900" width="1080" height="900" style="position: absolute; top: 0; left: 0; display: block">
-<defs>
-<linearGradient id="stg-sc-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B9CFD8"></stop><stop offset="0.72" stop-color="#EDE3CC"></stop></linearGradient>
-<radialGradient id="stg-sc-sun" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFF8E6" stop-opacity="0.75"></stop><stop offset="0.3" stop-color="#FFF1D2" stop-opacity="0.35"></stop><stop offset="1" stop-color="#FFF1D2" stop-opacity="0"></stop></radialGradient>
-<linearGradient id="stg-sc-haze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F2E8D2" stop-opacity="0"></stop><stop offset="0.6" stop-color="#F2E8D2" stop-opacity="0.6"></stop><stop offset="1" stop-color="#F2E8D2" stop-opacity="0"></stop></linearGradient>
-<linearGradient id="stg-sc-ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000000" stop-opacity="0"></stop><stop offset="1" stop-color="#3B2414" stop-opacity="0.34"></stop></linearGradient>
-<radialGradient id="stg-sc-shadow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#3B2414" stop-opacity="0.34"></stop><stop offset="1" stop-color="#3B2414" stop-opacity="0"></stop></radialGradient>
-</defs>
-<rect x="0" y="0" width="1080" height="900" fill="url(#stg-sc-sky)"></rect>
-<circle cx="800" cy="250" r="300" fill="url(#stg-sc-sun)"></circle>
-<path d="M0 648 L70 648 L96 612 L250 606 L272 648 L470 648 L498 600 L700 594 L726 648 L860 648 L884 618 L1000 614 L1022 648 L1080 648 L1080 900 L0 900 Z" fill="#CBB9A0"></path>
-<path d="M96 612 L250 606 L252 616 L98 622 Z M498 600 L700 594 L702 606 L500 612 Z M884 618 L1000 614 L1002 622 L886 626 Z" fill="#BCA88E"></path>
-<g opacity="0.78">{conifer(118, 700, 250, 1.0)}{conifer(196, 704, 200, 0.8)}{conifer(930, 702, 270, 1.05)}{conifer(1010, 706, 210, 0.85)}</g>
-<rect x="0" y="560" width="1080" height="170" fill="url(#stg-sc-haze)"></rect>
-<path d="M0 722 C120 704 220 714 320 708 C440 700 540 718 660 710 C780 702 880 716 1080 706 L1080 900 L0 900 Z" fill="#CDAE72"></path>
-{band(748, 16, "#BF9C5E")}
-{band(786, 22, "#D9BE86", 2)}
-{band(830, 14, "#B58A4E", -2)}
-{band(868, 40, "#BF9C5E", 1)}
-<rect x="0" y="702" width="1080" height="198" fill="url(#stg-sc-ground)"></rect>
-<ellipse cx="560" cy="822" rx="380" ry="24" fill="url(#stg-sc-shadow)"></ellipse>
-{cycad(52, 905, 1.0, "#4F5638")}{cycad(150, 912, 0.7, "#5C6442", True)}{cycad(1030, 908, 1.05, "#4F5638", True)}
-</svg>'''
+# ------------------------------------------------------------------ poster scene: Morrison floodplain (src/scenery.py)
+SCENE = scenery.set_morrison()
 
 # ------------------------------------------------------------------ rig sheet parts (viewBox crops in drawing units)
 RIG = [

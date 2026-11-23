@@ -8,8 +8,8 @@ scale, and a low, flat tail club (AMNH 5214: about 60 cm long, 49 cm wide, 19 cm
 import sys, math
 sys.path.insert(0, HERE)
 import dinokit as K
+import scenery
 from dinokit import SKIN, D, OL, path, stroke, line, piv, skin_part, stripes, spots, dots, eye
-from sp_triceratops import fern, band
 C = "ank"
 LOOK = K.Look(C, skin="#8C6F48", belly="#DED0AA", accent="#CDB98E")
 BONE, NAIL, BEAK = "#BFA674", "#3A2A2C", "#4A3A30"
@@ -167,40 +167,8 @@ GSAP = """      .to(parts.tail, { rotation: 3, scaleX: 0.78, duration: 0.4, ease
       .to(parts.tail, { rotation: 0, scaleX: 1, duration: 0.8, ease: 'elastic.out(1, 0.5)' }, 0.82)
       .to(parts.head, { rotation: 0, duration: 0.5, ease: 'power2.inOut' }, 1.0)"""
 
-# ------------------------------------------------------------------ poster scene: Hell Creek floodplain, late afternoon
-def broadleaf(x, base, h, sc, color):
-    """early flowering tree: short trunk, rounded clustered crown"""
-    crown = "".join(f'<ellipse cx="{x + dx * sc:.0f}" cy="{base - h + dy * sc:.0f}" rx="{r * sc:.0f}" ry="{r * 0.8 * sc:.0f}"></ellipse>'
-                    for dx, dy, r in [(-34, 20, 40), (30, 16, 44), (0, -8, 48), (-10, 36, 36), (40, 40, 30)])
-    return f'<g fill="{color}"><path d="M{x-6*sc:.0f} {base} L{x-3*sc:.0f} {base-h+30*sc:.0f} L{x+3*sc:.0f} {base-h+30*sc:.0f} L{x+6*sc:.0f} {base} Z"></path>{crown}</g>'
-
-def conifer(x, base, h, sc, color):
-    return f'<path d="M{x} {base-h} L{x+28*sc:.0f} {base-h*0.45:.0f} L{x+16*sc:.0f} {base-h*0.45:.0f} L{x+36*sc:.0f} {base} L{x-36*sc:.0f} {base} L{x-16*sc:.0f} {base-h*0.45:.0f} L{x-28*sc:.0f} {base-h*0.45:.0f} Z" fill="{color}"></path>'
-
-SCENE = f'''<svg aria-hidden="true" viewBox="0 0 1080 900" width="1080" height="900" style="position: absolute; top: 0; left: 0; display: block">
-<defs>
-<linearGradient id="ank-sc-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C2CDD0"></stop><stop offset="0.55" stop-color="#E6D6B8"></stop><stop offset="0.78" stop-color="#F0CFA0"></stop></linearGradient>
-<radialGradient id="ank-sc-sun" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFF1D4" stop-opacity="0.9"></stop><stop offset="0.3" stop-color="#FFD9A0" stop-opacity="0.45"></stop><stop offset="1" stop-color="#FFD9A0" stop-opacity="0"></stop></radialGradient>
-<linearGradient id="ank-sc-haze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F2DFC0" stop-opacity="0"></stop><stop offset="0.6" stop-color="#F2DFC0" stop-opacity="0.55"></stop><stop offset="1" stop-color="#F2DFC0" stop-opacity="0"></stop></linearGradient>
-<linearGradient id="ank-sc-ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000000" stop-opacity="0"></stop><stop offset="1" stop-color="#2E2414" stop-opacity="0.38"></stop></linearGradient>
-<linearGradient id="ank-sc-pool" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C9D4CF"></stop><stop offset="1" stop-color="#9FB2AE"></stop></linearGradient>
-<radialGradient id="ank-sc-shadow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#2E2414" stop-opacity="0.4"></stop><stop offset="1" stop-color="#2E2414" stop-opacity="0"></stop></radialGradient>
-</defs>
-<rect x="0" y="0" width="1080" height="900" fill="url(#ank-sc-sky)"></rect>
-<circle cx="880" cy="560" r="320" fill="url(#ank-sc-sun)"></circle>
-<g opacity="0.7">{conifer(70, 690, 230, 1.0, "#7E8A70")}{conifer(150, 694, 180, 0.8, "#7E8A70")}{broadleaf(260, 690, 150, 1.0, "#8A9670")}{broadleaf(980, 688, 170, 1.1, "#8A9670")}{conifer(880, 692, 200, 0.9, "#7E8A70")}</g>
-<path d="M0 664 C160 640 300 648 440 660 C580 640 720 646 860 662 C960 650 1020 652 1080 658 L1080 900 L0 900 Z" fill="#A9A57E"></path>
-<rect x="0" y="580" width="1080" height="160" fill="url(#ank-sc-haze)"></rect>
-<path d="M0 712 C200 700 420 716 640 706 C820 698 960 708 1080 702 L1080 900 L0 900 Z" fill="#A69A62"></path>
-<path d="M640 736 C740 728 880 730 1000 738 C960 750 820 756 700 752 C660 750 636 744 640 736 Z" fill="url(#ank-sc-pool)"></path>
-{band(772, 20, "#93884F")}
-{band(806, 24, "#B0A36A", 2)}
-{band(846, 18, "#93884F", -2)}
-{band(872, 40, "#857A46", 1)}
-<rect x="0" y="704" width="1080" height="196" fill="url(#ank-sc-ground)"></rect>
-<ellipse cx="560" cy="826" rx="380" ry="24" fill="url(#ank-sc-shadow)"></ellipse>
-{fern(40, 900, 1.1, "#3C4A2C")}{fern(140, 905, 0.8, "#4C5C3A", True)}{fern(1020, 905, 1.05, "#3C4A2C", True)}{fern(940, 910, 0.7, "#4C5C3A")}
-</svg>'''
+# ------------------------------------------------------------------ poster scene: Hell Creek floodplain (src/scenery.py)
+SCENE = scenery.set_hell_creek()
 
 # ------------------------------------------------------------------ rig sheet parts (viewBox crops in drawing units)
 RIG = [

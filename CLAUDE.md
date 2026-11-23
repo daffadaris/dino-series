@@ -22,6 +22,29 @@ An illustrated dinosaur series (T. rex, Triceratops, Stegosaurus, titanosaur) as
 
 Dark outlines only on outer edges, dark stripes over the back and tail, a pale belly, gradient shading, scale texture and a warm rim light. Posters share one layout: Big Shoulders Display title, Public Sans text, a scene with depth, and an umber info band with three facts. Facts on posters must come from checked sources.
 
+## Style variants (svg/styles/)
+
+Ten 2D design styles of one species, built by `src/styles.py` on `src/stylekit.py`. Style choice and sources: `reports/Dinosaur SVG illustration styles.md` (local, untracked). They are separate files; the definitive drawings and the boxy-head baseline stay untouched.
+
+All rules below must hold. Several come from `ANIMATION_GUIDE.md`: the variants are meant to become cutout sprites in its 2D-in-3D pipeline.
+
+- **Distinct at a glance:** each style differs in shape language and technique (silhouette, line, how tone is made), never only in colour or filters; all ten must be told apart as thumbnails.
+- **Rig intact:** keep every group id, class, pivot wrapper and the motion CSS; generate geometry inside each part's own group in original coordinates so texture moves with the part (no "shower door" patterns fixed to the page). Proportion changes (bigger head, shorter tail) go through the pivot wrappers, and a scaled head carries its jaw.
+- **Sprite-ready:** transparent background in the SVG (backgrounds live in the preview page), crisp alpha silhouette with nothing soft or glowing outside it (the guide cuts sprites at `alphaTest: 0.5`), and readable at phone size, exported at 2x (1600 px wide).
+- **No pure black:** ink is lifted charcoal (`#2A1C22` series outline or `#1d1e30` guide ink), never `#000000`.
+- **Deterministic:** seed every random choice by species and part id, so rebuilds and the SVG/GSAP copies stay identical (the guide's Remotion renders need pure functions of the frame).
+- **Survive the ink pass:** the guide's Sobel luma outline pass adds lines on contrast edges, so keep texture marks (dots, hatching, pixels) at 3 px or more at export size; avoid sub-pixel speckle that would flicker.
+- **Geometry, not filters:** build marks as real shapes in Python; avoid `feTurbulence`/`feDisplacementMap` on animated parts (repaints every frame, slow on mobile).
+
+## One-page design philosophy
+
+Follow the principles from Stone Librande's GDC talk [One-Page Designs](https://www.youtube.com/watch?v=E9_wLks1kAg) when designing boards, posters, rig sheets and documentation:
+
+- **One complete page, nothing hidden:** Fit each system, sheet or design concept onto a single self-contained page/board instead of sprawling multi-page docs that go unread and stale.
+- **Visuals over walls of text:** Prefer diagrams, spatial layouts, flowcharts and annotated visuals over long prose.
+- **Layered hierarchy like a poster:** Lead with an immediate visual hook for the big picture, with finer details and data readable on closer inspection.
+- **Use the constraint to design:** Treat the page limit as a filter to cut fluff, clarify relationships and catch structural problems early.
+
 ## Checking work
 
 Render to PNG with headless Chrome or Playwright and look at the result before calling something done. The 3D pages need a local server for module imports when testing offline.

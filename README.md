@@ -7,6 +7,7 @@ An illustrated dinosaur series in one shared style: cel-shaded vector drawings w
 - [Using the drawings](#using-the-drawings)
 - [Rebuilding](#rebuilding)
 - [Scientific accuracy](#scientific-accuracy)
+- [Design philosophy](#design-philosophy)
 - [Roadmap](#roadmap)
 - [Sources](#sources)
 
@@ -27,7 +28,7 @@ Each species also has a poster and a rig sheet in `boards/`, and `boards/Group.d
 
 ```text
 dino-series/
-├── svg/                       animated SVG, one per species; svg/scenery/ holds the scenery pieces and sets
+├── svg/                       animated SVG, one per species; svg/scenery/ holds the scenery pieces and sets, svg/styles/ the ten style variants
 ├── gsap/                      GSAP page per species; click the dinosaur to play its move
 ├── 3d/                        Three.js model per species; drag to orbit, click to play the move
 ├── boards/                    posters and rig sheets (*.dc.html) and their canvas layout (canvas.json)
@@ -55,7 +56,7 @@ Every moving part is its own group with an id. Each group sits inside a wrapper 
 | Species | Group ids | Class prefix |
 |---|---|---|
 | T. rex | `#tail` `#body` `#head` `#jaw` `#leg-near` `#leg-far` `#arm-near` `#arm-far` | `tr-` |
-| Triceratops | `#act` `#body` `#tail` `#head` `#leg-near` `#leg-far` `#foreleg-near` `#foreleg-far` | `tri-` |
+| Triceratops | `#act` `#body` `#tail` `#head` `#jaw` `#leg-near` `#leg-far` `#foreleg-near` `#foreleg-far` | `tri-` |
 | Stegosaurus | `#act` `#body` `#plates` `#tail` `#head` `#leg-near` `#leg-far` `#foreleg-near` `#foreleg-far` | `stg-` |
 | Titanosaur | `#act` `#body` `#tail` `#neck` `#head` `#jaw` `#leg-near` `#leg-far` `#foreleg-near` `#foreleg-far` | `tit-` |
 | Ankylosaurus | `#act` `#body` `#tail` `#head` `#leg-near` `#leg-far` `#foreleg-near` `#foreleg-far` | `ank-` |
@@ -86,6 +87,13 @@ python3 src/sp_spinosaurus.py
 # Scenery kit: writes svg/scenery/ and boards/Scenery.dc.html (run before the posters)
 python3 src/scenery.py
 
+# Ten 2D design styles, each redrawn from the geometry with its own construction (blueprint, neon sign, pixel art,
+# Ben-Day pop art, low-poly, woodcut, stained glass, stippled plate, crayon, Bauhaus); same rig and motion.
+# Writes transparent svg/styles/<species>-<style>.svg, a preview page <species>-styles.html when all ten are built,
+# and <style>.html (one style across species) when several species are given. Defaults: all styles, trex
+python3 src/styles.py [style ...] [species ...]
+python3 src/styles.py lowpoly trex triceratops stegosaurus titanosaur ankylosaurus spinosaurus
+
 # Group poster to scale (measures each drawing in a browser)
 python3 src/group_poster.py
 
@@ -111,8 +119,7 @@ The drawings follow published anatomy for general shape and proportion. Skin col
 |---|---|
 | Ankylosaurus | Short, keeled bony plates spaced apart in rows, with no large flank spikes; two half-rings of plates over the neck; short pyramid-shaped horns on the back corners and cheeks of the skull; nostrils on the side of the snout under a roofing scale; a low, flat tail club (about 60 cm long, 49 cm wide, 19 cm tall in AMNH 5214) on a stiff tail held off the ground. The club swung side to side, so the move shows the tail foreshortening as it swings away and whipping back |
 | Stegosaurus | Proportions and plate shapes checked against mounted skeletons, chiefly *S. stenops* "Sophie" at the Natural History Museum: long, nearly straight hind legs and short, stout forelegs; broad, round-topped plates in two staggered rows, tallest over the hips and base of the tail, running down the tail and up the neck; four tail spikes pointing sideways and back rather than upright; bony studs on the throat; small, low head about a metre off the ground |
-| Triceratops | Proportions checked against mounted skeletons (Houston's "Lane", Los Angeles and London): a deep, barrel-shaped trunk, highest over the hips; long, columnar hind legs and shorter forelegs with the elbows flexed back; a short, thick tail sloping down from the hips; a solid frill swept up and back over the neck, with low edge bones as in adults; a deep face with a hooked beak and a skull about a third of the body length, carried low; brow horns about a metre long angled forward; three hooves on each hand; pebbly skin with widely spaced cone-tipped feature scales, as in the Lane specimen |
-
+| Triceratops | Proportions checked against mounted skeletons (Houston's "Lane", Los Angeles, London and the Smithsonian's 3D-scanned "Hatcher") and 3D life restorations: a deep, barrel-shaped trunk, highest over the hips; long, columnar hind legs (4 hooves) and shorter semi-erect forelegs with elbows flexed back and slightly outward (3 inner hooves); a short, thick tail sloping down from the hips off the ground; a broad saddle-shaped frill swept up and back at ~45° over the neck with worn adult edge bones; a wedge-shaped skull about a third of body length, broad across the muscular jugal cheeks and narrowing to a deep compressed snout and hooked keratin beak; ~1 m brow horns diverging slightly outward and curving forward; pebbly skin with widely spaced cone-tipped feature scales, as in the Lane specimen |
 | Titanosaur (*Patagotitan*) | Proportions follow published skeletal reconstructions and scale diagrams (used for general proportions, not traced): at 31 m long the back stands about 5 m high and the head about 12 m up, with a long neck raised at roughly 45 degrees, a deep, rounded torso, short pillar-like legs and a long, tapering tail. The earlier drawing's torso was about three times too deep |
 | Spinosaurus | Researched against Wikipedia, the Natural History Museum, Ibrahim and others (2020) and Sereno and others (2022), with skeletal reconstructions for proportions. Drawn as a 14 m biped standing with its weight over the hips (Sereno and others 2022); the Museum notes that posture is still debated. Short hind legs with long, flat-bottomed toes; robust arms with three fingers and an enlarged thumb claw; a long, low, crocodile-like skull with straight conical teeth, a notch near the jaw tip, nostrils set well back and a small crest in front of the eyes; an S-curved neck; a thin sail of neural spines up to about 1.65 m, peaking over the rear of the back (its exact outline is not known); and a deep, paddle-like tail from tall neural spines and long chevrons (Ibrahim and others 2020) |
 
@@ -132,6 +139,16 @@ Each poster's background comes from `src/scenery.py`, and its plants come from t
 The poster measures each drawing along its snout-to-tail midline where the species gives one (the titanosaur and Spinosaurus, whose raised necks make the straight-line span much shorter than the animal), and across its nose-to-tail span otherwise. Each animal is shown frozen at the height of its move; tapping one plays the move.
 
 T. rex 12 m (Natural History Museum; the most complete skeleton is 12.3–12.4 m). Triceratops 8–9 m, drawn at 8.5 m. *Stegosaurus stenops* about 6.5 m; the often-quoted 9 m belongs to the larger *S. ungulatus*. Patagotitan about 31 m: the 37 m estimate of 2017 was later revised down (Paul 2019, 2024). Ankylosaurus 6–8 m, drawn at 7 m. Spinosaurus about 14 m (Sereno and others 2022).
+
+## Design philosophy
+
+This project's posters, rig sheets and documentation take inspiration from Stone Librande's GDC talk [**One-Page Designs** (*One Page Design Philosophy*)](https://www.youtube.com/watch?v=E9_wLks1kAg).
+
+- **Why traditional design docs fail:** Multi-hundred-page design bibles and sprawling wikis are expensive to maintain, quickly fall out of sync with the actual work, and rarely get read past the first page.
+- **Strict one-page constraint:** Fit an entire concept, system or sheet onto a single page with nothing hidden behind extra pages or tabs. Forced brevity fights scope creep and surfaces what actually matters.
+- **Visuals over walls of text:** Communicate with spatial layouts, diagrams, flowcharts, wireframes and illustrations rather than dense paragraphs. Drawing on Edward Tufte's information-design principles, the page itself acts as a thinking tool—laying a system out visually exposes gaps and structural flaws immediately.
+- **Poster-like layered information:** Treat each page like a wall poster with a clear central hook that conveys the core idea at a glance, surrounded by deeper layers of detail for anyone looking closer.
+- **Living artifacts for alignment:** Concise, visual single-page sheets (illustrated in the talk with examples from *Spore*, *The Simpsons Game*, *Diablo III* and *SimCity*) are easy to share, mark up and keep in sync across disciplines.
 
 ## Roadmap
 

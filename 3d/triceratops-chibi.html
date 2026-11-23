@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chibi Triceratops</title>
+<meta name="description" content="A soft, clay-style chibi Triceratops in 3D. Drag to orbit, scroll or pinch to zoom, click it to make it charge.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=Public+Sans:wght@400;600&display=swap">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js" crossorigin>
+<style>
+  :root { --bg0: #2B3140; --bg1: #151922; --ink: #EEF0F4; --muted: #A9B0BE; --btn: #EEF0F4; --btn-ink: #151922; }
+  html, body { margin: 0; height: 100%; }
+  body { background: radial-gradient(120% 90% at 50% 38%, var(--bg0) 0%, var(--bg1) 70%); color: var(--ink); font-family: 'Public Sans', system-ui, sans-serif; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  .panel { position: absolute; top: 20px; left: max(20px, env(safe-area-inset-left, 0px)); max-width: 340px; pointer-events: none; }
+  h1 { margin: 0; font-family: 'Big Shoulders Display', 'Arial Narrow', sans-serif; font-weight: 800; font-size: 46px; line-height: 0.9; }
+  p { margin: 8px 0 0; font-size: 14px; line-height: 1.45; color: var(--muted); }
+  .bar { position: absolute; bottom: max(20px, env(safe-area-inset-bottom, 0px)); left: max(20px, env(safe-area-inset-left, 0px)); display: flex; gap: 8px; flex-wrap: wrap; }
+  button { font: 600 14px/1 'Public Sans', system-ui, sans-serif; border-radius: 999px; padding: 11px 16px; cursor: pointer; border: 1px solid rgba(255,255,255,0.25); background: transparent; color: var(--ink); }
+  button.primary, button[aria-pressed="true"] { background: var(--btn); color: var(--btn-ink); border-color: var(--btn); }
+  button:focus-visible { outline: 3px solid #F2A7C3; outline-offset: 2px; }
+  #status { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 15px; pointer-events: none; }
+</style>
+</head>
+<body>
+<canvas id="c" aria-label="3D chibi Triceratops. Drag to orbit, scroll to zoom."></canvas>
+<div class="panel">
+  <h1>Chibi Triceratops</h1>
+  <p>Drag to turn it all the way around, scroll or pinch to zoom, and tap it to make it charge.</p>
+</div>
+<div class="bar">
+  <button type="button" class="primary" id="roar">Charge</button>
+  <button type="button" id="spin" aria-pressed="false">Spin 360°</button>
+  <button type="button" id="reset">Reset view</button>
+</div>
+<div id="status">Sculpting the model…</div>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { MarchingCubes } from 'three/addons/objects/MarchingCubes.js';
+
+// ---------------------------------------------------------------- look: soft clay under studio light
+// Triceratops horridus, chibi: the big head, solid frill, two long brow horns, short nose horn, beak and cheek points, with hoofed toes.
+const C = {
+  clay: '#B3CDA8', accent: '#D9C8B2',
+  horn: '#F3E7D2', nail: '#E9DBC2', eye: '#1B1720', blush: '#F2A7C3',
+  hemiSky: '#D8E2FF', hemiGround: '#7A2A55', rim: '#FFC2DA'
+};
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
+const HOME = { pos: new THREE.Vector3(5.6, 2.9, 6.4), target: new THREE.Vector3(0.3, 1.15, 0) };
+camera.position.copy(HOME.pos);
+const controls = new OrbitControls(camera, canvas);
+controls.target.copy(HOME.target); controls.enableDamping = true; controls.minDistance = 3.5; controls.maxDistance = 24;
+controls.maxPolarAngle = Math.PI * 0.49; controls.autoRotateSpeed = 2.0;
+
+// lights: cool key from above-front, magenta bounce from below, warm-pink rim from behind
+scene.add(new THREE.HemisphereLight(C.hemiSky, C.hemiGround, 1.35));
+const key = new THREE.DirectionalLight('#FFFFFF', 2.4); key.position.set(4, 8, 5); key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048); key.shadow.radius = 8; key.shadow.bias = -0.0004;
+Object.assign(key.shadow.camera, { left: -5, right: 5, top: 5, bottom: -5, near: 1, far: 30 }); scene.add(key);
+const rim = new THREE.DirectionalLight(C.rim, 1.6); rim.position.set(-5, 3, -4); scene.add(rim);
+const fill = new THREE.DirectionalLight('#BFD0FF', 0.5); fill.position.set(-3, 2, 6); scene.add(fill);
+
+// floor: only the shadow shows, plus a soft contact shadow under the animal
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40).rotateX(-Math.PI / 2), new THREE.ShadowMaterial({ opacity: 0.42 }));
+floor.receiveShadow = true; scene.add(floor);
+{
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d');
+  const grd = g.createRadialGradient(64, 64, 0, 64, 64, 64); grd.addColorStop(0, 'rgba(0,0,0,0.55)'); grd.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = grd; g.fillRect(0, 0, 128, 128);
+  const blob = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 2.6).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false }));
+  blob.position.set(0.2, 0.005, 0); scene.add(blob);
+}
+
+// clay material: soft, slightly sheeny, with a faint hand-worked surface from 3D noise on the normal
+function clay(color, rough = 0.62) {
+  const m = new THREE.MeshPhysicalMaterial({ color, roughness: rough, sheen: 0.35, sheenColor: new THREE.Color('#FFE3EF'), sheenRoughness: 0.8 });
+  m.onBeforeCompile = s => {
+    s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP;')
+      .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvWP = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    s.fragmentShader = s.fragmentShader.replace('#include <common>', `#include <common>
+varying vec3 vWP;
+float h3(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+float vn(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(h3(i), h3(i + vec3(1,0,0)), f.x), mix(h3(i + vec3(0,1,0)), h3(i + vec3(1,1,0)), f.x), f.y),
+             mix(mix(h3(i + vec3(0,0,1)), h3(i + vec3(1,0,1)), f.x), mix(h3(i + vec3(0,1,1)), h3(i + vec3(1,1,1)), f.x), f.y), f.z); }`)
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+{ vec3 q = vWP * 7.0; vec3 d = vec3(vn(q) - 0.5, vn(q + 11.3) - 0.5, vn(q + 23.7) - 0.5) + 0.5 * vec3(vn(q * 2.7) - 0.5, vn(q * 2.7 + 5.1) - 0.5, vn(q * 2.7 + 9.4) - 0.5);
+  normal = normalize(normal + 0.16 * d); }`);
+  };
+  return m;
+}
+const clayMat = clay(C.clay, 0.82), hornMat = clay(C.horn, 0.7), nailMat = clay(C.nail, 0.7);
+
+// ---------------------------------------------------------------- sculpting with blended spheres (metaballs)
+// Each sculpt is a MarchingCubes field inside a cube of side SIZE centred on CENTRE; spheres added with ball() melt together.
+const ISO = 40, SUB = 80;   // a tight falloff: parts keep their size and melt together only where they meet
+function sculpt(centre, size, res) {
+  const mc = new MarchingCubes(res, clayMat, false, false, 200000);
+  mc.isolation = ISO; mc.position.copy(centre); mc.scale.setScalar(size / 2); mc.castShadow = true; mc.receiveShadow = true;
+  mc.reset();
+  const U = (v, c) => (v - c) / size + 0.5;
+  mc.ball = (x, y, z, r, carve = false) => mc.addBall(U(x, centre.x), U(y, centre.y), U(z, centre.z), (carve ? -1 : 1) * (ISO + SUB) * (r / size) ** 2, SUB);
+  mc.capsule = (a, b, ra, rb, n = 5) => { for (let i = 0; i <= n; i++) { const t = i / n; mc.ball(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, ra + (rb - ra) * t); } };
+  return mc;
+}
+const UP = new THREE.Vector3(0, 1, 0);
+function cone(parent, base, dir, r, len, mat, seg = 20) {
+  const g = new THREE.ConeGeometry(r, len, seg, 4).translate(0, len / 2, 0);
+  const p = g.attributes.position;                       // soft, slightly rounded horn tips
+  for (let k = 0; k < p.count; k++) { const y = p.getY(k) / len; const s = 1 - 0.35 * y * y; p.setX(k, p.getX(k) * (0.75 + 0.25 * s)); p.setZ(k, p.getZ(k) * (0.75 + 0.25 * s)); }
+  g.computeVertexNormals();
+  const m = new THREE.Mesh(g, mat); m.castShadow = true;
+  m.position.copy(base); m.quaternion.setFromUnitVectors(UP, dir.clone().normalize()); parent.add(m); return m;
+}
+
+
+const dino = new THREE.Group(); scene.add(dino);           // the whole animal (hops on its move)
+const squash = new THREE.Group(); dino.add(squash);         // squash and stretch
+const accentMat = clay(C.accent, 0.7);
+const eyes = [];
+// glossy eye with a catchlight, looking out to the side and a little forward; optional blush below it
+function addEye(parent, p, r = 0.13, s = 1, blush = true, fwd = 0.9) {
+  const eye = new THREE.Group(); eye.position.set(p[0], p[1], s * p[2]); parent.add(eye);
+  eye.add(new THREE.Mesh(new THREE.SphereGeometry(r, 24, 16).scale(0.85, 1.15, 0.6), new THREE.MeshPhysicalMaterial({ color: C.eye, roughness: 0.15, clearcoat: 1 })));
+  const glint = new THREE.Mesh(new THREE.SphereGeometry(r * 0.22, 12, 8), new THREE.MeshBasicMaterial({ color: '#FFFFFF' })); glint.position.set(r * 0.3, r * 0.45, s * r * 0.45); eye.add(glint);
+  parent.updateMatrixWorld(true);
+  eye.lookAt(eye.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(fwd, 0, s)));
+  eyes.push(eye);
+  if (blush) {
+    const b = new THREE.Mesh(new THREE.CircleGeometry(r * 0.8, 24), new THREE.MeshBasicMaterial({ color: C.blush, transparent: true, opacity: 0.45, depthWrite: false }));
+    b.position.set(p[0] + r * 0.4, p[1] - r * 2.0, s * (p[2] + r * 0.6)); b.lookAt(b.position.clone().add(new THREE.Vector3(0.5, -0.1, s))); parent.add(b);
+  }
+}
+const mouthMat = new THREE.MeshStandardMaterial({ color: '#4A2E35', roughness: 0.8 });
+function smile(parent, pts, r = 0.016) {          // mirrored smile line lying on the face
+  for (const s of [1, -1]) parent.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(([x, y, z]) => new THREE.Vector3(x, y, s * z))), 24, r, 8, false), mouthMat));
+}
+function nails(parent, x, z, n, r = 0.075, reach = 0.2, y = 0.07) {   // a fan of toenails at the front of a foot
+  for (let i = 0; i < n; i++) {
+    const a = (i - (n - 1) / 2) * 0.5, m = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 10).scale(1, 0.75, 0.9), nailMat);
+    m.position.set(x + reach * Math.cos(a), y, z + reach * Math.sin(a)); m.castShadow = true; parent.add(m);
+  }
+}
+// a soft, rounded flat plate (rounded top, bevelled edges) standing on its base
+function plateGeo(w, h, t = 0.08) {
+  const s = new THREE.Shape(); s.moveTo(-w / 2, 0);
+  s.bezierCurveTo(-w * 0.62, h * 0.45, -w * 0.32, h, 0, h); s.bezierCurveTo(w * 0.32, h, w * 0.62, h * 0.45, w / 2, 0); s.lineTo(-w / 2, 0);
+  return new THREE.ExtrudeGeometry(s, { depth: t, bevelEnabled: true, bevelThickness: t * 0.5, bevelSize: t * 0.5, bevelSegments: 4, curveSegments: 18 }).translate(0, 0, -t / 2);
+}
+function pivot(parent, x, y, z = 0) {             // a joint at (x, y, z) whose children keep world coordinates
+  const p = new THREE.Group(); p.position.set(x, y, z); parent.add(p);
+  const inner = new THREE.Group(); inner.position.set(-x, -y, -z); p.add(inner);
+  return [p, inner];
+}
+
+const beakMat = clay('#8E7B70', 0.6);
+function addPlate(parent, x, y, h, w, row, mat = accentMat, lean = -0.12, t = 0.08) {
+  const m = new THREE.Mesh(plateGeo(w, h, t), mat); m.position.set(x, y, row * 0.07); m.rotation.z = lean; m.castShadow = true; parent.add(m); return m;
+}
+function limb(parent, a, b, r, mat = clayMat) {   // a soft capsule from a to b
+  const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A);
+  const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, d.length(), 8, 16), mat); m.position.copy(A).addScaledVector(d, 0.5);
+  m.quaternion.setFromUnitVectors(UP, d.normalize()); m.castShadow = true; parent.add(m); return m;
+}
+const ball = (parent, p, r, mat = clayMat, sc = [1, 1, 1]) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 16).scale(...sc), mat); m.position.set(...p); m.castShadow = true; parent.add(m); return m; };
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+
+
+// body: a round barrel, stubby legs, a short upturned tail
+const body = sculpt(V(-0.15, 1.15, 0), 3.4, 72);
+body.ball(-0.15, 1.05, 0, 0.66); body.ball(0.25, 1.0, 0, 0.6); body.ball(-0.55, 1.12, 0, 0.55); body.ball(0.05, 0.82, 0, 0.55);
+body.ball(0.62, 1.12, 0, 0.42);                              // neck, hidden under the frill
+body.capsule([-0.95, 1.08, 0], [-1.48, 1.34, 0], 0.32, 0.12, 6);
+for (const [x, z] of [[0.42, 0.36], [0.42, -0.36], [-0.52, 0.38], [-0.52, -0.38]]) body.capsule([x, 0.62, z], [x + 0.02, 0.24, z * 1.04], 0.26, 0.24, 4);
+body.update(); squash.add(body);
+cone(squash, V(-1.52, 1.36, 0), V(-1, 0.55, 0), 0.1, 0.26, clayMat);
+for (const [x, z] of [[0.42, 0.36], [0.42, -0.36], [-0.52, 0.38], [-0.52, -0.38]]) nails(squash, x, z * 1.04, 3);   // three hooves show on each foot
+
+const [headPivot, head] = pivot(squash, 0.7, 1.2);
+const skull = sculpt(V(1.1, 1.45, 0), 3.0, 84);
+skull.ball(1.2, 1.32, 0, 0.6); skull.ball(1.12, 1.12, 0.3, 0.42); skull.ball(1.12, 1.12, -0.3, 0.42);
+skull.ball(1.62, 1.14, 0, 0.42); skull.ball(1.9, 1.06, 0, 0.3); skull.ball(1.84, 1.26, 0, 0.2);
+skull.ball(1.86, 0.84, 0, 0.24); skull.ball(1.55, 0.86, 0, 0.32);
+// frill: a solid shield behind the head, tilted back over the neck, with a gently waved rim
+const FC = V(0.62, 1.66, 0), tilt = -0.62;
+for (let k = 0; k <= 22; k++) {
+  const a = -Math.PI * 0.6 + (k / 22) * Math.PI * 1.2, R = 0.86 + 0.035 * Math.cos(k * Math.PI * 0.5), y = Math.cos(a) * R, z = Math.sin(a) * R * 1.1;
+  skull.ball(FC.x - y * Math.sin(tilt), FC.y + y * Math.cos(tilt), z, 0.18);
+}
+for (const [R, rr, n] of [[0.58, 0.23, 12], [0.3, 0.27, 7]]) for (let k = 0; k <= n; k++) {
+  const a = -Math.PI * 0.6 + (k / n) * Math.PI * 1.2, y = Math.cos(a) * R, z = Math.sin(a) * R * 1.1;
+  skull.ball(FC.x - y * Math.sin(tilt) - 0.04, FC.y + y * Math.cos(tilt), z, rr);
+}
+skull.ball(FC.x - 0.04, FC.y, 0, 0.32);
+skull.update(); head.add(skull);
+for (const s of [1, -1]) {
+  cone(head, V(1.36, 1.74, s * 0.26), V(0.6, 1, s * 0.14), 0.11, 0.6, hornMat);        // brow horns
+  cone(head, V(1.05, 0.98, s * 0.56), V(-0.2, -0.55, s), 0.07, 0.2, hornMat);          // cheek points
+}
+cone(head, V(1.88, 1.38, 0), V(0.45, 1, 0), 0.1, 0.32, hornMat);                         // nose horn
+const bill = ball(head, [2.13, 1.02, 0], 0.17, beakMat, [1.0, 1.05, 0.8]); bill.rotation.z = -0.5;
+const hook = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.16, 16).rotateZ(Math.PI), beakMat); hook.position.set(2.22, 0.9, 0); hook.rotation.z = 0.35; head.add(hook);
+ball(head, [2.0, 0.84, 0], 0.12, beakMat, [1.0, 0.8, 0.75]);
+smile(head, [[2.03, 0.93, 0.17], [1.9, 0.9, 0.27], [1.74, 0.91, 0.34], [1.58, 0.97, 0.4]]);
+for (const s of [1, -1]) addEye(head, [1.56, 1.38, 0.42], 0.13, s);
+
+function move(k, t, idle) {        // anticipation squash, hop forward with the head down, land, settle
+  let c = { sq: 0, hop: 0, fwd: 0, nod: 0 };
+  if (k >= 0 && k <= 1.5) {
+    if (k < 0.25) { const u = ease(k / 0.25); c = { sq: u, hop: 0, fwd: -0.15 * u, nod: -0.3 * u }; }
+    else if (k < 0.65) { const u = (k - 0.25) / 0.4; c = { sq: -0.6 * Math.sin(u * Math.PI), hop: 0.55 * Math.sin(u * Math.PI), fwd: -0.15 + 0.85 * ease(u), nod: -0.3 + 0.75 * ease(u) }; }
+    else if (k < 0.8) { const u = (k - 0.65) / 0.15; c = { sq: 0.7 * Math.sin(u * Math.PI), hop: 0, fwd: 0.7, nod: 0.45 }; }
+    else { const u = ease((k - 0.8) / 0.7); c = { sq: 0, hop: 0, fwd: 0.7 * (1 - u), nod: 0.45 * (1 - u) }; }
+  }
+  headPivot.rotation.z = -c.nod * 0.6 + 0.03 * idle * Math.sin(t * 1.1);
+  headPivot.rotation.y = 0.08 * idle * Math.sin(t * 0.45);
+  return c;
+}
+
+// ---------------------------------------------------------------- motion
+const clock = new THREE.Clock();
+let start = -10, nextBlink = 1.5;
+const ease = t => t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+const bump = (t, a, b) => t < a || t > b ? 0 : Math.sin(Math.PI * (t - a) / (b - a));      // 0 -> 1 -> 0 between a and b
+const ramp = (t, a, b, c, d) => t < a || t > d ? 0 : t < b ? ease((t - a) / (b - a)) : t < c ? 1 : 1 - ease((t - c) / (d - c));   // rise, hold, fall
+const go = () => { start = clock.getElapsedTime(); };
+document.getElementById('roar').addEventListener('click', go);
+const spinBtn = document.getElementById('spin');
+spinBtn.addEventListener('click', () => { controls.autoRotate = !controls.autoRotate && !reduceMotion; spinBtn.setAttribute('aria-pressed', controls.autoRotate); });
+document.getElementById('reset').addEventListener('click', () => { camera.position.copy(HOME.pos); controls.target.copy(HOME.target); controls.update(); });
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(); let down = null;
+canvas.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY }; });
+canvas.addEventListener('pointerup', e => {
+  if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) return;
+  const r = canvas.getBoundingClientRect(); ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ptr, camera); if (ray.intersectObject(dino, true).length) go();
+});
+addEventListener('message', e => { const d = e.data || {}; if ('spin' in d) { controls.autoRotate = !!d.spin && !reduceMotion; spinBtn.setAttribute('aria-pressed', controls.autoRotate); } if (d.reset) document.getElementById('reset').click(); });
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h;
+  camera.position.copy(HOME.pos).sub(HOME.target).multiplyScalar(Math.max(1, 1.3 / (w / h))).add(HOME.target);
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+function loop() {
+  const t = clock.getElapsedTime(), k = t - start, idle = reduceMotion ? 0 : 1;
+  const m = move(k, t, idle) || {};
+  const breathe = 0.015 * idle * Math.sin(t * 2.2), sq = m.sq || 0;
+  squash.scale.set(1 + 0.12 * sq, 1 - 0.14 * sq + breathe, 1 + 0.1 * sq);
+  dino.position.set(m.fwd || 0, m.hop || 0, 0);
+  if (t > nextBlink) { const b = t - nextBlink, s = b < 0.07 ? 1 - b / 0.07 : b < 0.16 ? (b - 0.07) / 0.09 : 1; eyes.forEach(e => e.scale.y = Math.max(0.08, s)); if (b > 0.16) nextBlink = t + 2.5 + Math.random() * 3; }
+  controls.update();
+  renderer.render(scene, camera);
+}
+renderer.setAnimationLoop(loop);
+document.getElementById('status').remove();
+</script>
+</body>
+</html>

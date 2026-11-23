@@ -96,6 +96,9 @@ python3 src/scenery.py
 python3 src/styles.py [style ...] [species ...]
 python3 src/styles.py lowpoly trex triceratops stegosaurus titanosaur ankylosaurus spinosaurus
 
+# Chibi 3D models (soft clay style): writes 3d/<species>-chibi.html
+python3 src/chibi_3d.py
+
 # Group poster to scale (measures each drawing in a browser)
 python3 src/group_poster.py
 

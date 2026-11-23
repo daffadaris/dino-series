@@ -24,11 +24,11 @@ Dark outlines only on outer edges, dark stripes over the back and tail, a pale b
 
 ## Style variants (svg/styles/)
 
-Ten 2D design styles of one species, built by `src/styles.py` on `src/stylekit.py`. Style choice and sources: `reports/Dinosaur SVG illustration styles.md` (local, untracked). They are separate files; the definitive drawings and the boxy-head baseline stay untouched.
+Eleven 2D design styles of one species, built by `src/styles.py` on `src/stylekit.py`. The big-head explainer style is the episode look (sprites come from it); the paleontologist host `src/char_paleontologist.py` is drawn in the same style. Emotions (face kit in `dinokit.face_eye`/`EMOTIONS`, body language in `sprites.BODY`) are sprite poses. Style choice and sources: `reports/Dinosaur SVG illustration styles.md` (local, untracked). They are separate files; the definitive drawings and the boxy-head baseline stay untouched.
 
 All rules below must hold. Several come from `ANIMATION_GUIDE.md`: the variants are meant to become cutout sprites in its 2D-in-3D pipeline.
 
-- **Distinct at a glance:** each style differs in shape language and technique (silhouette, line, how tone is made), never only in colour or filters; all ten must be told apart as thumbnails.
+- **Distinct at a glance:** each style differs in shape language and technique (silhouette, line, how tone is made), never only in colour or filters; all must be told apart as thumbnails.
 - **Rig intact:** keep every group id, class, pivot wrapper and the motion CSS; generate geometry inside each part's own group in original coordinates so texture moves with the part (no "shower door" patterns fixed to the page). Proportion changes (bigger head, shorter tail) go through the pivot wrappers, and a scaled head carries its jaw.
 - **Sprite-ready:** transparent background in the SVG (backgrounds live in the preview page), crisp alpha silhouette with nothing soft or glowing outside it (the guide cuts sprites at `alphaTest: 0.5`), and readable at phone size, exported at 2x (1600 px wide).
 - **No pure black:** ink is lifted charcoal (`#2A1C22` series outline or `#1d1e30` guide ink), never `#000000`.

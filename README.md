@@ -126,11 +126,12 @@ python3 src/char_paleontologist.py               # the host's drawing
 python3 src/sprites.py                           # public/sprites/<model>/<pose>.png (default, blink, mouth, happy, angry, sad,
                                                  # surprised, scared, smug, walk, signature move) + public/sprites/scenery/*.png
 python3 src/props.py                             # fossil props (svg/props/, public/sprites/props/): healed horn, skull, neck bones
-npm run prep:voice -- --input episodes/<ep>/raw-vo.wav --script episodes/<ep>/voiceover.txt   # public/audio/ voiceover + transcript.json
+npm run gen:voice -- --input episodes/<ep>/voiceover-gemini.json   # Gemini TTS take -> episodes/<ep>/raw-vo.wav (key from .env, never committed)
+npm run prep:voice -- --input episodes/<ep>/raw-vo.wav --script episodes/<ep>/voiceover.txt --max-pause 0.5 --keep-gap 0.3   # public/audio/ voiceover + transcript.json
 npm run gen:sfx                                  # seeded SFX (public/audio/sfx/) and day/night beds
 npx remotion studio                              # preview Ep01TrexVsTriceratops
 npx remotion render Ep01TrexVsTriceratops out/draft.mp4 --scale=0.5 --crf=23 --gl=angle
-npx remotion render Ep01TrexVsTriceratops out/episode-master.mp4 --codec=h264 --pixel-format=yuv420p --crf=17 --gl=angle
+npx remotion render Ep01TrexVsTriceratops out/episode-master.mp4 --codec=h264 --pixel-format=yuv420p --crf=17 --gl=angle --props='{"showSafeZones":false}'
 ```
 
 - Every pose swap, badge, SFX hit and camera key in `src/video/choreography/ep01.ts` is looked up by word in `public/audio/transcript.json`, so re-running `prep:voice` re-times the whole episode.

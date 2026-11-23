@@ -45,6 +45,23 @@ Follow the principles from Stone Librande's GDC talk [One-Page Designs](https://
 - **Layered hierarchy like a poster:** Lead with an immediate visual hook for the big picture, with finer details and data readable on closer inspection.
 - **Use the constraint to design:** Treat the page limit as a filter to cut fluff, clarify relationships and catch structural problems early.
 
+## Episodes (video)
+
+Remotion 2D-in-3D shorts in `src/video/`, one folder per episode in `episodes/`. `ANIMATION_GUIDE.md` holds the pipeline; these preferences override it where they differ.
+
+- **Length 60–75 s** (1800–2250 frames at 30 fps). At least 60 s; cap 75 s.
+- **Unrushed pacing:** voice at 1.0x, natural pauses kept (`prep:voice --max-pause 0.5 --keep-gap 0.3`), about 2.5–3 words per second, about 1 s of picture before the first word.
+- **Show what you say:** every line has its speaker or the thing it names at the focal point, and every claim gets a visual (bite marks shown, a head pop popped). Nothing important off-frame or behind a caption.
+- **Camera:** glides within and between stations; cut only when changing location.
+- **Per episode:** lighting moods (Ep01: daylight to late afternoon, no night) and host format (two hosts, Skeptic = Puck and Paleontologist = Charon, or a single narrator).
+- **Science on screen:** say only what the sources say, with their hedges ("likely"); show post-mortem evidence as feeding, not as a fight result. Cite in the README.
+- **Voice:** Gemini TTS via `npm run gen:voice` (key in the repo-root `.env`, git-excluded; never print, commit or copy it). Whisper drops or mishears words; fix captions in `public/audio/transcript.json` by hand after every `prep:voice`.
+- **Approval flow:** stills of every new shot, then a half-res draft for the user, then the 1080x1920 master only after approval. Renders go to `out/` (git-ignored).
+
+## Git (this repo)
+
+Markdown is committed here (README, guides, `CLAUDE.md`, episode scripts), an exception to the global rule. `HANDOVER.md`, `.env` and `out/` stay local.
+
 ## Checking work
 
 Render to PNG with headless Chrome or Playwright and look at the result before calling something done. The 3D pages need a local server for module imports when testing offline.

@@ -1,5 +1,7 @@
 # Episode 02 — Pachycephalosaurus (Script & Beat Sheet)
 
+> **Needs revision for the series rules (CLAUDE.md "Episodes"):** 60–75 s with natural pauses at about 2.5–3 words per second, so trim the 233 words to roughly 160–210; pick a host format (two hosts or narrator) and lighting moods (Night Blue and Sunset must be re-added to `LightingRig.tsx` if kept); make every line show what it says.
+
 - **Format:** 9:16 vertical short (`1080×1920`, `30 fps`, target `~60 s` / `1800` frames)
 - **Setting:** Hell Creek Formation floodplain (`svg/scenery/set-hell-creek.svg`)
 - **Cast:** *Pachycephalosaurus wyomingensis* (low-poly sprites in `sprites/pachycephalosaurus-*.png`, from `svg/styles/pachycephalosaurus-lowpoly.svg`)

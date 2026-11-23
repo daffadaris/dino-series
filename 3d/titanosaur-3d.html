@@ -235,7 +235,7 @@ const rex = new THREE.Group(); scene.add(rex);
 const hips = new THREE.Group(); hips.position.set(0, 4.25, 0); rex.add(hips);
 const trunk = new THREE.Group(); hips.add(trunk);                 // breathes
 
-const bellyMass = mesh(ellipsoid(2.8, 1.6, 1.45), skinMat, { stripes: true }); bellyMass.position.set(0.2, -0.1, 0); trunk.add(bellyMass);
+const bellyMass = mesh(ellipsoid(2.9, 1.9, 1.6), skinMat, { stripes: true }); bellyMass.position.set(0.2, -0.3, 0); trunk.add(bellyMass);   // deep, rounded torso, as in the 2D drawing
 const hipMass = mesh(ellipsoid(1.45, 1.4, 1.25), skinMat, { stripes: true }); hipMass.position.set(-1.7, 0.12, 0); trunk.add(hipMass);
 const shoulderMass = mesh(ellipsoid(1.55, 1.55, 1.3), skinMat, { stripes: true }); shoulderMass.position.set(1.95, 0.1, 0); trunk.add(shoulderMass);
 // osteoderms: small bony plates scattered over the back

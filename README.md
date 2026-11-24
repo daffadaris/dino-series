@@ -153,6 +153,10 @@ The drawings follow published anatomy for general shape and proportion. Skin col
 | Titanosaur (*Patagotitan*) | Proportions follow published skeletal reconstructions and scale diagrams (used for general proportions, not traced): at 31 m long the back stands about 5 m high and the head about 12 m up, with a long neck raised at roughly 45 degrees, a deep, rounded torso, short pillar-like legs and a long, tapering tail. The earlier drawing's torso was about three times too deep |
 | Spinosaurus | Researched against Wikipedia, the Natural History Museum, Ibrahim and others (2020) and Sereno and others (2022), with skeletal reconstructions for proportions. Drawn as a 14 m biped standing with its weight over the hips (Sereno and others 2022); the Museum notes that posture is still debated. Short hind legs with long, flat-bottomed toes; robust arms with three fingers and an enlarged thumb claw; a long, low, crocodile-like skull with straight conical teeth, a notch near the jaw tip, nostrils set well back and a small crest in front of the eyes; an S-curved neck; a thin sail of neural spines up to about 1.65 m, peaking over the rear of the back (its exact outline is not known); and a deep, paddle-like tail from tall neural spines and long chevrons (Ibrahim and others 2020) |
 
+### Spinosaurus avatar
+
+`python3 src/avatar_spinosaurus.py` writes `svg/spinosaurus-avatar.svg` and a 1024 x 1024 `svg/spinosaurus-avatar.png` (renders with Node Playwright). It is a head, neck and sail bust in profile, using the anatomy in the Spinosaurus row above: a long, low skull with a small crest ahead of the eyes, nostrils set well back, and a tall sail of neural spines (its outline is not known, so the scalloped edge is stylised). The animal is shown wading at the water's edge, in line with the semi-aquatic habits Ibrahim and others (2020) argued for; that behaviour is still debated. The ferns are a stylised nod to *Weichselia*, a Bahariya-era fern, and are not botanically drawn. Palette: `#16382C` tide, `#2E7D46`/`#46A85E` body, `#8BE052` accent, `#0B1712` ink, `#D9F7BE` mint halo.
+
 ### Episode 01 facts
 
 | Claim | Source |

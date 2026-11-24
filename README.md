@@ -153,6 +153,10 @@ The drawings follow published anatomy for general shape and proportion. Skin col
 | Titanosaur (*Patagotitan*) | Proportions follow published skeletal reconstructions and scale diagrams (used for general proportions, not traced): at 31 m long the back stands about 5 m high and the head about 12 m up, with a long neck raised at roughly 45 degrees, a deep, rounded torso, short pillar-like legs and a long, tapering tail. The earlier drawing's torso was about three times too deep |
 | Spinosaurus | Researched against Wikipedia, the Natural History Museum, Ibrahim and others (2020) and Sereno and others (2022), with skeletal reconstructions for proportions. Drawn as a 14 m biped standing with its weight over the hips (Sereno and others 2022); the Museum notes that posture is still debated. Short hind legs with long, flat-bottomed toes; robust arms with three fingers and an enlarged thumb claw; a long, low, crocodile-like skull with straight conical teeth, a notch near the jaw tip, nostrils set well back and a small crest in front of the eyes; an S-curved neck; a thin sail of neural spines up to about 1.65 m, peaking over the rear of the back (its exact outline is not known); and a deep, paddle-like tail from tall neural spines and long chevrons (Ibrahim and others 2020) |
 
+### Channel avatar (Spinosaurus)
+
+`python3 src/avatar_spinosaurus.py` writes `svg/avatar/spinosaurus-avatar.svg` (1024 px master, three layer groups: `background`, `middle`, `foreground`) and a silhouette copy; `node src/avatar_check.js` exports `avatar/spinosaurus-avatar-{1024,800,400,320,200}.png` and the six-point `avatar/publishing-test.png`. The head follows the Spinosaurus row above: long, low, narrow skull, rounded snout tip, nostril set back, small crest in front of the eye (*S. aegyptiacus*; the much taller crest belongs to *S. mirabilis*, Sereno and others 2026), sail of neural spines (shape unknown). Teeth are left out on purpose so the design reads at 40 px. Plants are simplified *Weichselia* (Bahariya set above).
+
 ### Episode 01 facts
 
 | Claim | Source |

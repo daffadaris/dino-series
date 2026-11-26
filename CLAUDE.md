@@ -1,12 +1,15 @@
 # dino-series: notes for Claude Code
 
-An illustrated dinosaur series (T. rex, Triceratops, Stegosaurus, titanosaur) as animated SVG, GSAP pages, poster and rig-sheet boards, and Three.js models. See README.md for the file map and rebuild commands.
+An illustrated dinosaur series of seven species (T. rex, Triceratops, Stegosaurus, Dreadnoughtus, Ankylosaurus, Spinosaurus, Pachycephalosaurus) as animated SVG, GSAP pages, poster and rig-sheet boards, and Three.js models. See README.md for the file map and rebuild commands.
 
 ## Decisions that must hold
 
-- The T. rex head is the big, boxy skull with the rounded, blunt snout, drawn at 1.4x. It is the definitive version. Do not redesign it or swap in a wedge-shaped skull. `src/trex_svg.py` checks the head's shapes, ids, classes and pivots against `baseline/trex-boxy-head/baseline.json` and stops if they change.
-- Keep the existing body proportions, group ids, classes, pivots and GSAP selectors unless asked. Each `svg/*-animated.svg` and its `gsap/*-gsap.html` must carry the identical drawing; rebuild both together.
+- T. rex: `src/sp_trex.py` (dinokit pattern) is the definitive build since 2026-11-24; the boxy-head pipeline (`trex_drawing.py`, `trex_svg.py`, `trex_gsap.py`, `trex_poster.py`, `trex_rig.py`) and its baseline are removed. Head per `RESEARCH_GUIDE.md`: skull about 13% of length, lips over the teeth.
+- Rework in progress (user, 2026-11-24): every species is redrawn from a hidden skeleton layer per `RESEARCH_GUIDE.md`, keeping group ids, classes and GSAP selectors. This round covers `svg/` and `gsap/` only; posters, rig sheets, styles, sprites and 3D follow later and are stale until then. Order: Dreadnoughtus, Spinosaurus, Stegosaurus, T. rex, Pachycephalosaurus, Ankylosaurus, Triceratops. Each species: research, preview PNG, user approval, build.
+- Keep the existing group ids, classes and GSAP selectors unless asked (proportions and pivot positions change in the rework). Each `svg/*-animated.svg` and its `gsap/*-gsap.html` must carry the identical drawing; rebuild both together.
 - All drawings are original. Do not trace or reproduce reference artwork the user shares; use references only for general anatomy.
+- `RESEARCH_GUIDE.md` is the science reference for all seven species: chosen species and specimens, size and proportion targets, rig rules, debates and what to avoid. Read the species' section before drawing, rigging or scripting a claim about it. Its series rules hold: never invent a measurement, never present reconstructed soft tissue or colour as fossil fact, never drop a distinctive feature to simplify a rig, and label the seven together as a size comparison, not one ecosystem.
+- The titanosaur is *Dreadnoughtus schrani* (decided 2026-11-24, replacing *Patagotitan*). Its skull and most of its neck are reconstructed; say so wherever it appears.
 - Research before drawing. Before drawing or redrawing any species (2D or 3D), check its anatomy and size against published sources (the describing papers where reachable, the Natural History Museum Dino Directory, Wikipedia's description sections) and look at photos of mounted skeletons or skeletal diagrams for overall proportions. For 3D work, also look at published 3D models of the species (for example Sketchfab searches, museum scans such as the Smithsonian's, and well-regarded life restorations) and check the model from the side, front and three-quarter views, not only the default camera. Note open debates (posture, sail or plate shape) and pick the current mainstream view. Record the choices and sources in the README's "Scientific accuracy" section. Show the user a preview before building the full set.
 - Lengths drive the group poster: use checked adult lengths for the species actually drawn, and cite them.
 
@@ -14,9 +17,20 @@ An illustrated dinosaur series (T. rex, Triceratops, Stegosaurus, titanosaur) as
 
 - Every moving part is a group inside a pivot wrapper: `translate(x y)` > group with id/class > `translate(-x -y)`. Rotate with `transform-origin: 0 0` (GSAP: `svgOrigin: "0 0"`).
 - Layout: outputs in `svg/`, `gsap/`, `3d/` and `boards/`; builders in `src/`; screenshots in `shots/` (untracked). Run builders as `python3 src/<builder>.py`.
-- `src/dinokit.py` is the shared toolkit (series style, motion CSS, poster and rig builders). Species modules `src/sp_<name>.py` build a `SPEC` dict on import with no side effects; running them writes the outputs.
+- `src/dinokit.py` is the shared toolkit (series style, motion CSS, poster and rig builders). Species modules `src/sp_<name>.py` (all seven, T. rex included) build a `SPEC` dict on import with no side effects; running them writes the outputs.
 - Class prefixes: `tr-` (T. rex), `tri-`, `stg-`, `tit-`. Root classes: `<prefix>anim` (idle), `<prefix>acting` (click move), `<prefix>loop` (standalone SVG repeats the move).
 - New species: add `src/sp_<name>.py` following the existing three, reuse `dinokit.Look`, `skin_part`, `piv`, `eye`, and give each moving part an id and a pivot.
+
+## Character model rules (rework, user 2026-11-24)
+
+Every reworked `svg/<species>-animated.svg` is an anatomical character asset for editing, rigging and animation, not a poster or scene.
+
+- **Look:** cel-shaded vector; bold dark outlines of one consistent weight; clean smooth Béziers; flat base colours with a few controlled gradient shadows; clearly defined anatomical forms; subtle, simplified skin texture; a strong, research-based silhouette; polished educational finish.
+- **Construction:** built from distinct anatomical parts; every independently moving part is its own group with a pivot at its joint; closed paths where possible; each part's outline lives in the same group as its fill; no tangled or needlessly intersecting paths; overlaps designed so a part can move or be separated without showing a gap.
+- **Required groups** (nested inside the existing ids so GSAP selectors keep working): head/skull; upper and lower jaw where the anatomy has them; neck; chest/torso; pelvis/hips; tail in segments where it bends; left and right upper and lower forelimbs, hands and digits; left and right upper and lower hindlimbs, feet and digits; each species-specific structure (plates, spikes, horns, frill, sail, club, dome, osteoderm groups) as its own group.
+- **Composition:** full body, three-quarter side view facing right, neutral standing pose, every structure visible, head, tail and feet inside the canvas, orthographic character presentation, transparent background, no ground plane, no ground shadow, no scenery.
+- **Restrictions:** SVG geometry only; no raster textures, photographic effects, particle effects or background objects; no text, labels, watermark or frame; no tiny decorative paths.
+- **Priority:** anatomical accuracy, then clean vector construction and animation-friendly separation, then visual complexity.
 
 ## Style
 

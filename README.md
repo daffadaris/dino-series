@@ -40,15 +40,12 @@ dino-series/
 │   ├── sp_*.py                one builder per species (Triceratops, Stegosaurus, titanosaur, Ankylosaurus, Spinosaurus)
 │   ├── sprites.py             transparent pose PNGs and scenery cards for the 2D-in-3D episodes
 │   ├── video/                 Remotion episode (TypeScript): choreography/, scene/, post/ (ink then DoF), ui/
-│   ├── trex_drawing.py        the definitive T. rex drawing
-│   ├── trex_svg.py            shading pass over it; writes svg/trex-animated.svg
-│   ├── trex_gsap.py, trex_poster.py, trex_rig.py
+│   ├── sp_trex.py             T. rex: animated SVG and GSAP page
 │   ├── group_poster.py        every species to scale
 │   ├── scenery.py             scenery kit: plants and ground by habitat, and the four poster backgrounds
 │   ├── triceratops_3d.py      Triceratops 3D page, generated from the T. rex engine
 │   ├── ankylosaurus_3d.py     Ankylosaurus 3D page, generated from the same engine
 │   └── spinosaurus_3d.py      Spinosaurus 3D page, generated from the T. rex page
-├── baseline/trex-boxy-head/   saved T. rex baseline: head shapes, ids and pivots
 ├── shots/                     local screenshots (not tracked)
 ├── CLAUDE.md                  project rules for Claude Code
 └── README.md
@@ -77,10 +74,7 @@ Requires Python 3.11+ with `matplotlib`. The screenshot and browser checks also 
 
 ```sh
 # T. rex
-python3 src/trex_svg.py          # svg/trex-animated.svg, checked against baseline/trex-boxy-head/baseline.json
-python3 src/trex_gsap.py         # gsap/trex-gsap.html
-python3 src/trex_poster.py       # boards/Main.dc.html
-python3 src/trex_rig.py          # boards/Rig.dc.html
+python3 src/sp_trex.py           # svg/trex-animated.svg, gsap/trex-gsap.html
 
 # Other species: animated SVG, GSAP page, poster and rig sheet
 python3 src/sp_triceratops.py
@@ -137,7 +131,6 @@ npx remotion render Ep01TrexVsTriceratops out/episode-master.mp4 --codec=h264 --
 - Every pose swap, badge, SFX hit and camera key in `src/video/choreography/ep01.ts` is looked up by word in `public/audio/transcript.json`, so re-running `prep:voice` re-times the whole episode.
 - The ink pass finds depth edges with a second difference of reciprocal depth, not the guide's first-order Sobel, which inked flat ground near the horizon as a dark band.
 
-- `trex_drawing.py` is the definitive T. rex drawing. `trex_svg.py` layers the shading and texture pass over it without changing its shapes, ids or pivots, and stops if any of them change.
 - Each animated SVG and its GSAP page carry the identical drawing, so rebuild them together.
 - The 3D pages load Three.js 0.160 from jsdelivr and need no build step. When testing offline, serve the folder locally so the module imports resolve.
 

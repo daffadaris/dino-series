@@ -1,247 +1,235 @@
 import os as _os
 HERE = _os.path.dirname(_os.path.abspath(__file__))  # src/
 ROOT = _os.path.dirname(HERE)                          # repository root
-"""Stegosaurus for the dinosaur series. Building SPEC has no side effects; run as a script to write outputs."""
-import sys
+"""Stegosaurus stenops for the dinosaur series (RESEARCH_GUIDE.md). Building SPEC has no side effects; run as a script
+to write the SVG and GSAP page.
+
+Built skeleton first, in metres, at 6.5 m, the adult S. stenops length (Wikipedia; the NHM's 9 m is for the genus).
+Proportions from "Sophie" (NHMUK PV R36730, Maidment, Brassey and Barrett 2015, PLOS ONE), a 5.5-6 m young adult with
+a 0.87 m femur, scaled up: hip socket about 1.85 m, shoulder joint about 1.2 m (forelimb about 65% of the hind limb),
+so the back slopes up to high hips; the head stays below about 1 m (Wikipedia). 19 dermal plates (Sophie: 18 found,
+19 estimated) in two staggered rows, largest over the hips and tail base, smaller toward neck and tail, set in the
+skin; four tail spikes in two pairs, angled steeply up, back and out (posterodorsolateral, PLOS). Hind feet three
+short hoofed toes; front feet five toes, the inner two with blunt hooves (the hand is not preserved in Sophie:
+RECONSTRUCTED from other specimens). No throat ossicles (absent in Sophie). Plate colour is unknown: dark accents
+are an artistic choice."""
+import sys, math
 sys.path.insert(0, HERE)
 import dinokit as K
 import scenery
-from dinokit import SKIN, D, OL, path, stroke, line, rim, piv, skin_part, stripes, spots, dots, spike, eye
-
-def plate(x, y, w, h, lean=-8):
-    """broad, round-topped plate standing on (x, y), as on the S. stenops skeleton 'Sophie'"""
-    return (f"M{x-.3*w:.1f} {y} C{x-.62*w:.1f} {y-.3*h:.1f} {x-.6*w+lean*.4:.1f} {y-.72*h:.1f} {x-.28*w+lean*.7:.1f} {y-.9*h:.1f} "
-            f"C{x-.1*w+lean:.1f} {y-1.0*h:.1f} {x+.1*w+lean:.1f} {y-1.02*h:.1f} {x+.3*w+lean*.7:.1f} {y-.88*h:.1f} "
-            f"C{x+.62*w+lean*.4:.1f} {y-.68*h:.1f} {x+.62*w:.1f} {y-.3*h:.1f} {x+.3*w:.1f} {y} Z")
+from dinokit import OL, D, CLAW, path, stroke, line, piv, dots
 
 C = "stg"
-LOOK = K.Look(C, skin="#5E7E7A", belly="#DCD2B2", accent="#B25C3A")
-PLATE, PLATE_RIM, FLUSH, HORN, NAIL, BEAK = "#B25C3A", "#7E3A24", "#E8402A", "#E6D9BC", "#3A2A2C", "#4A3A30"
+LOOK = K.Look(C, skin="#6F7F5A", belly="#D9CCA6", accent="#5B4A3B")   # muted green, sand, dark plates: artistic
+S = 130                                  # drawing units per metre
+F = K.Frame(500, 514, S)                 # x 0 = hip socket, y 0 = ground
+FAR = (0.14, 0.06)                       # three-quarter view: far-side limbs sit forward and higher
 
-# ------------------------------------------------------------------ geometry
-BODY_D = ("M318 233 C350 190 410 160 470 160 C560 160 650 210 720 280 C740 300 750 320 748 340 "
-          "C744 370 720 392 680 400 C600 414 500 414 430 400 C380 390 344 352 326 300 Z")
-BODY_TOP = "M318 233 C350 190 410 160 470 160 C560 160 650 210 720 280"
-TAIL_D = "M340 238 C250 220 150 206 40 194 C30 193 28 202 36 206 C150 226 250 256 340 310 Z"
-TAIL_TOP = "M340 238 C250 220 150 206 40 194"
-# long, nearly straight hind leg: heavy thigh, knee at the front, shin down to a short ankle and three-toed foot
-HIND_D = ("M380 250 C430 224 510 236 530 290 C544 330 540 364 526 388 C520 400 516 412 514 426 "
-          "C510 448 506 466 504 480 C504 490 508 496 512 500 L512 508 L432 508 C424 500 428 490 436 484 "
-          "C442 462 442 438 436 418 C430 402 418 392 404 380 C380 356 368 322 370 296 C370 276 372 262 380 250 Z")
-HIND_FOOT = "M420 494 C432 486 480 486 498 494 C506 500 506 512 498 514 L426 514 C416 514 414 500 420 494 Z"
-# short, stout foreleg with the elbow slightly flexed back and a column-like hand
-FORE_D = ("M660 320 C690 308 722 322 724 352 C726 376 714 394 700 404 C696 428 698 456 700 480 "
-          "C702 496 694 508 680 508 L646 508 C634 506 632 496 636 486 C642 466 642 444 636 426 "
-          "C628 408 628 380 634 356 C638 338 648 326 660 320 Z")
-def open_top(d):
-    """outline for a limb: drops the first segment (the arc where it meets the body) and the closing Z"""
-    head, rest = d.split(" C", 1)
-    first_end = " ".join(rest.split(" ")[4:6])
-    return "M" + first_end + " C" + rest.split(" C", 1)[1].rstrip(" Z")
-HIND_OUT = open_top(HIND_D)
-FORE_FOOT = "M632 494 C644 486 682 486 696 494 C704 500 704 512 696 514 L638 514 C628 514 626 500 632 494 Z"
-NECK_D = "M696 286 C740 290 790 320 826 352 L838 410 C800 410 756 396 716 372 C700 344 692 306 696 286 Z"
-HEAD_D = "M812 350 C842 340 886 346 916 362 C936 372 942 388 932 396 C906 408 866 410 836 406 C814 402 802 378 812 350 Z"
+def part(pts, **kw): return K.rig_part(LOOK, pts, **kw)
+def m(ps, off=(0, 0)): return F.pts([(x + off[0], y + off[1]) for x, y in ps])
+def rot(ps, deg):
+    a = math.radians(deg); c, s = math.cos(a), math.sin(a)
+    return [(x * c - y * s, x * s + y * c) for x, y in ps]
+def margin(x, pts):
+    """y of a profile line at x, from (x, y) points"""
+    pts = sorted(pts)
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        if x0 <= x <= x1: return y0 + (y1 - y0) * (x - x0) / (x1 - x0)
+    return pts[0][1] if x < pts[0][0] else pts[-1][1]
 
-def spine(t):
-    """point on the back line, t in 0..1 from rump (318,233) through hips (470,160) to shoulders (720,280)"""
-    if t < 0.4:
-        return K.bez((318, 233), (350, 190), (410, 160), (470, 160), t / 0.4)
-    return K.bez((470, 160), (560, 160), (650, 210), (720, 280), (t - 0.4) / 0.6)
+# ------------------------------------------------------------------ skeleton (metres): joint centres
+HIP, KNEE, ANKLE = (0, 1.85), (0.15, 1.0), (0.08, 0.28)
+SHOULDER, ELBOW, WRIST = (1.75, 1.2), (1.82, 0.72), (1.82, 0.22)
 
-def tail_top(t):
-    return K.bez((340, 238), (250, 220), (150, 206), (40, 194), t)
+# ------------------------------------------------------------------ hind limbs: thigh > shin > foot > three hoofed toes
+THIGH = [(0.38, 2.0), (0.45, 1.55), (0.35, 1.15), (0.22, 0.95), (-0.05, 0.93), (-0.25, 1.2), (-0.33, 1.6), (-0.3, 2.0), (0.05, 2.1)]
+SHIN = [(0.35, 1.1), (0.3, 0.6), (0.22, 0.28), (-0.05, 0.25), (-0.15, 0.5), (-0.12, 1.05), (0.12, 1.15)]
+FOOT = [(-0.12, 0.36), (0.14, 0.36), (0.28, 0.2), (0.36, 0.08), (0.3, 0.0), (-0.14, 0.0), (-0.2, 0.14)]
+HIND_TOES = [((0.16, 0.07), 0.18), ((0.2, 0.035), 0.22), ((0.24, 0.0), 0.25)]     # back to front: (base, length)
 
-def nails(xf, y=500):
-    """two hoof-like nails at the front of a foot"""
-    return "".join(path(f"M{xf-6} {y-6+k*8} C{xf+2} {y-8+k*8} {xf+8} {y-3+k*8} {xf+8} {y+2+k*8} C{xf+2} {y+3+k*8} {xf-4} {y+3+k*8} {xf-6} {y+1+k*8} Z", NAIL)
-                   for k in (0, 1))
-
-def plate_markup(ds, far=False):
-    out = []
-    for d in ds:
-        out.append(path(d, PLATE))
-        out.append(path(d, LOOK.url("shade")))
-        out.append(f'<path d="{d}" fill="none" stroke="{PLATE_RIM}" stroke-width="5" stroke-linejoin="round" opacity="0.85"></path>')
-        if far: out.append(path(d, D, 0.3))
-        out.append(stroke(d, 2.5))
-    return "".join(out)
-
-def plate_veins(specs):
-    out = []
-    for x, y, w, h, lean in specs:
-        tx, ty = x + lean * 0.55, y - h * 0.62
-        out.append(f"M{x} {y-3} L{tx:.1f} {ty:.1f} M{x+(tx-x)*0.45:.1f} {y-(y-ty)*0.45:.1f} L{x-w*0.28:.1f} {y-h*0.5:.1f} "
-                   f"M{x+(tx-x)*0.45:.1f} {y-(y-ty)*0.45:.1f} L{x+w*0.26:.1f} {y-h*0.48:.1f}")
-    return line(" ".join(out), 0.22, 1.5)
-
-# plates along the back: (t on spine, height, width), far row slightly darker and offset
-# tallest plates over the hips and base of the tail, smaller toward the shoulders; S. stenops plates are broad
-NEAR_PLATES = [(0.08, 100, 78), (0.24, 108, 84), (0.42, 94, 74), (0.6, 74, 58), (0.78, 52, 42), (0.92, 32, 28)]
-FAR_PLATES = [(0.16, 108, 84), (0.33, 102, 80), (0.51, 84, 66), (0.69, 62, 50), (0.86, 40, 32)]
-def plate_specs(rows, dy):
-    out = []
-    for t, h, w in rows:
-        x, y = spine(t)
-        out.append((round(x, 1), round(y + dy, 1), w, h, -8 - 6 * (1 - t)))
+def toes(side, specs, far, o, kind="toe", hooved=None, h=0.075):
+    """short toes pointing forward from their bases, each its own group; hooved: indices with a blunt hoof"""
+    out = ""
+    for i, ((bx, by), ln) in enumerate(specs):
+        toe = [(bx, by + h), (bx + ln * 0.7, by + h * 0.92), (bx + ln, by + h * 0.4), (bx + ln * 0.96, by), (bx, by)]
+        hoof = [(bx + ln * 0.62, by + h * 0.95), (bx + ln * 0.92, by + h * 0.8), (bx + ln * 1.08, by + h * 0.3), (bx + ln * 1.04, by), (bx + ln * 0.62, by)]
+        cap = path(K.smooth(m(hoof, o))[0], CLAW, 0.85 if far else None) if hooved is None or i in hooved else ""
+        out += piv(f"{kind}-{side}-{len(specs) - i}", f"{C}-{kind}", *F(bx + o[0], by + o[1]), part(m(toe, o), skip=(4,), far=far, tex=False) + cap)
     return out
-near_specs, far_specs = plate_specs(NEAR_PLATES, 8), plate_specs(FAR_PLATES, 6)
-TAIL_NEAR = [(0.07, 84, 66), (0.22, 62, 50), (0.37, 42, 34), (0.5, 26, 22)]
-TAIL_FAR = [(0.14, 72, 58), (0.3, 50, 40), (0.44, 32, 26)]
-def tail_plate_specs(rows, dy):
-    out = []
-    for t, h, w in rows:
-        x, y = tail_top(t)
-        out.append((round(x, 1), round(y + dy, 1), w, h, -10))
+
+def hind_leg(side):
+    far = side == "far"; o = FAR if far else (0, 0)
+    foot = piv(f"foot-{side}", f"{C}-foot", *F(ANKLE[0] + o[0], ANKLE[1] + o[1]),
+               part(m(FOOT, o), far=far, tex=False) + toes(side, HIND_TOES, far, o, h=0.085))
+    shin = piv(f"shin-{side}", f"{C}-shin", *F(KNEE[0] + o[0], KNEE[1] + o[1]), foot + part(m(SHIN, o), far=far))
+    return piv(f"leg-{side}", f"{C}-leg", *F(HIP[0] + o[0], HIP[1] + o[1]), shin + part(m(THIGH, o), skip=(7, 8), seam=(0, 6), far=far, seam_op=0.3))
+
+# ------------------------------------------------------------------ forelimbs: upper arm > forearm > hand (five toes, inner two hoofed)
+UPPER_ARM = [(1.5, 1.5), (2.0, 1.5), (2.05, 1.1), (1.95, 0.75), (1.8, 0.68), (1.62, 0.78), (1.52, 1.15)]
+FOREARM = [(1.98, 0.78), (1.95, 0.4), (1.92, 0.22), (1.7, 0.2), (1.68, 0.42), (1.66, 0.75), (1.82, 0.85)]
+HAND = [(1.68, 0.28), (1.94, 0.28), (2.0, 0.14), (2.02, 0.04), (1.98, 0.0), (1.65, 0.0), (1.66, 0.14)]
+FRONT_TOES = [((1.9, 0.07), 0.13), ((1.94, 0.035), 0.15), ((1.97, 0.0), 0.17)]   # back to front; the front two (inner digits) hoofed
+
+def foreleg(side):
+    far = side == "far"; o = FAR if far else (0, 0)
+    digits = f'<g id="digits-{side}" class="{C}-digits">{toes(side, FRONT_TOES, far, o, kind="finger", hooved=(1, 2), h=0.09)}</g>'
+    hand = piv(f"hand-{side}", f"{C}-hand", *F(WRIST[0] + o[0], WRIST[1] + o[1]), part(m(HAND, o), far=far, tex=False) + digits)
+    forearm = piv(f"forearm-{side}", f"{C}-forearm", *F(ELBOW[0] + o[0], ELBOW[1] + o[1]), part(m(FOREARM, o), far=far) + hand)
+    return piv(f"foreleg-{side}", f"{C}-foreleg", *F(SHOULDER[0] + o[0], SHOULDER[1] + o[1]), forearm + part(m(UPPER_ARM, o), skip=(0,), seam=(1, 6), far=far, seam_op=0.3))
+
+# ------------------------------------------------------------------ plates: 19, staggered in two rows, set in the skin
+# (number, x along the back in metres, height, row): largest (13) over the hips; odd numbers near row, even far row
+PLATES = [(1, 2.78, 0.16), (2, 2.6, 0.2), (3, 2.4, 0.26), (4, 2.18, 0.34), (5, 1.95, 0.43), (6, 1.7, 0.52), (7, 1.45, 0.6),
+          (8, 1.2, 0.68), (9, 0.95, 0.75), (10, 0.7, 0.81), (11, 0.45, 0.86), (12, 0.2, 0.9), (13, -0.05, 0.93),
+          (14, -0.32, 0.88), (15, -0.62, 0.78), (16, -0.92, 0.65), (17, -1.22, 0.52), (18, -1.52, 0.4), (19, -1.8, 0.28)]
+
+def plate(n, base, up, h):
+    """broad plate standing on base (drawing units) along direction up (degrees from vertical, + leans back), height h (m)"""
+    w = h * (0.78 if h > 0.4 else 0.9)
+    shape = [(-w / 2, 0), (-w * 0.6, h * 0.38), (-w * 0.42, h * 0.8), (-w * 0.08, h), (w * 0.3, h * 0.78), (w * 0.5, h * 0.36), (w / 2, 0), (0, -0.12)]
+    pts = [(base[0] + x * S, base[1] - y * S) for x, y in rot(shape, up)]
+    fill, out = K.smooth(pts, skip=(6, 7))
+    grooves = " ".join(f"M{K._f((base[0] + p[0] * S, base[1] - p[1] * S))} L{K._f((base[0] + q[0] * S, base[1] - q[1] * S))}"
+                       for p, q in (rot([(t * w * 0.2, h * 0.08), (t * w * 0.38, h * 0.62)], up) for t in (-0.75, -0.25, 0.3, 0.65)))
+    far = n % 2 == 0
+    return piv(f"plate-{n}", f"{C}-plate", round(base[0], 1), round(base[1], 1),
+               path(fill, LOOK.accent) + line(grooves, 0.22, 1.8) + path(fill, LOOK.url("shade"))
+               + (path(fill, D, 0.28) if far else path(fill, "#FFE4C0", 0.12)) + stroke(out))
+
+def on_spine(spine, x_m):
+    """base point and lean for a plate standing on a neck or tail centreline at x (metres)"""
+    tx_ = F(x_m, 0)[0]; s = min(range(0, int(spine.length) + 1, 2), key=lambda q: abs(spine.at(q)[0] - tx_))
+    x, y, tx, ty, d = spine.at(s); nx, ny = -ty, tx
+    if ny > 0: nx, ny = -nx, -ny
+    return (x + nx * d * 0.4, y + ny * d * 0.4), math.degrees(math.atan2(-nx, -ny))
+
+def plates_where(xs_ok, spine=None):
+    out = ""
+    for n, x, h in sorted(PLATES, key=lambda p: p[0] % 2 == 1):          # far row first, near row in front
+        if not xs_ok(x): continue
+        if spine: base, up = on_spine(spine, x)
+        else:
+            y0, y1 = margin(x - 0.05, BACK), margin(x + 0.05, BACK)
+            base, up = F(x, (y0 + y1) / 2 - 0.08), math.degrees(math.atan2(y1 - y0, 0.1))
+        out += plate(n, base, up + 6, h)
     return out
-tail_near, tail_far = tail_plate_specs(TAIL_NEAR, 7), tail_plate_specs(TAIL_FAR, 6)
-pd = lambda specs: [plate(*s) for s in specs]
 
-def flush_group(specs):
-    return f'<g class="{C}-flush" opacity="0" fill="{FLUSH}">' + "".join(f'<path d="{d}"></path>' for d in pd(specs)) + "</g>"
+# ------------------------------------------------------------------ torso
+BACK = [(-0.75, 1.98), (-0.6, 2.08), (-0.2, 2.25), (0.3, 2.28), (0.8, 2.18), (1.3, 1.98), (1.8, 1.72), (2.15, 1.62), (2.4, 1.6)]   # runs on into the neck top
+BARREL = BACK[1:] + [(2.6, 1.3), (2.4, 1.01), (2.0, 0.8), (1.4, 0.68), (0.7, 0.72), (0.1, 0.9), (-0.35, 1.2), (-0.65, 1.5), (-0.8, 1.75)]
+BELLY = [(2.4, 1.01), (2.0, 0.8), (1.4, 0.68), (0.7, 0.72), (0.1, 0.9), (0.1, 1.15), (0.7, 0.98), (1.4, 0.95), (2.0, 1.05), (2.4, 1.2), (2.62, 1.2), (2.6, 1.08)]
+CHEST = [(1.3, 1.98), (1.8, 1.72), (2.15, 1.62), (2.4, 1.6), (2.6, 1.3), (2.4, 1.01), (2.0, 0.8), (1.5, 0.7), (1.2, 1.1), (1.15, 1.6)]
+PELVIS = [(-0.6, 2.08), (-0.2, 2.25), (0.3, 2.28), (0.7, 2.2), (0.8, 1.6), (0.5, 0.78), (0.1, 0.9), (-0.35, 1.2), (-0.65, 1.5), (-0.8, 1.75)]
+body_poly = m([(-0.5, 2.0), (0.8, 2.05), (2.2, 1.5), (2.2, 1.0), (1.0, 0.8), (-0.3, 1.3)])
+BODY = piv("body", f"{C}-body", *F(0.9, 0.9), (
+    f'<g id="plates" class="{C}-plates">' + plates_where(lambda x: -0.2 < x < 2.25) + "</g>"
+    + f'<g id="abdomen" class="{C}-abdomen">' + part(m(BARREL), skip=(7, 8), belly=K.smooth(m(BELLY))[0],
+                                                     layers=dots(body_poly, 60, 1.4, 2.4, 0.08, seed=17)) + "</g>"
+    + f'<g id="pelvis" class="{C}-pelvis">' + part(m(PELVIS), seam=(3, 4), seam_op=0.1) + "</g>"
+    + f'<g id="chest" class="{C}-chest">' + part(m(CHEST), skip=(3, 4), seam=(7, 8, 9), seam_op=0.1,
+                                                  belly=K.smooth(m([(2.4, 1.01), (2.0, 0.8), (1.5, 0.7), (1.45, 0.95), (2.0, 1.05), (2.4, 1.2), (2.62, 1.2), (2.6, 1.08)]))[0]) + "</g>"))
 
-# ------------------------------------------------------------------ parts
-LOOK_L = LOOK
-far_hind = (skin_part(LOOK, HIND_D, ao=True, far=True, tex=False, outline_d=open_top(HIND_D)) + skin_part(LOOK, HIND_FOOT, ao=True, far=True, tex=False) + nails(500))
-far_fore = (skin_part(LOOK, FORE_D, ao=True, far=True, tex=False, outline_d=open_top(FORE_D)) + skin_part(LOOK, FORE_FOOT, ao=True, far=True, tex=False) + nails(698))
-LEG_FAR = f'<g id="leg-far" transform="translate(36 -2)">{far_hind}</g>'
-FORELEG_FAR = f'<g id="foreleg-far" transform="translate(32 -2)">{far_fore}</g>'
+# ------------------------------------------------------------------ tail: base, middle, tip; four spikes on the tip
+TAIL_SPINE = K.Spine([(*F(x, y), d * S) for x, y, d in
+                      [(0.2, 1.75, 0.95), (-0.6, 1.78, 0.75), (-1.4, 1.62, 0.5), (-2.2, 1.4, 0.32), (-2.9, 1.22, 0.2), (-3.25, 1.12, 0.08)]])
 
-# tail with its plates and four spikes (far pair behind, near pair in front)
-def cone(bx, by, tx, ty, w, bend=0.18):
-    """evenly tapered, slightly back-curved spike from a base of half-width w at (bx, by) to the tip (tx, ty)"""
-    lx, rx = bx - w, bx + w
-    dx, dy = tx - bx, ty - by; ln = (dx * dx + dy * dy) ** 0.5; nx, ny = -dy / ln, dx / ln
-    c1 = ((lx + tx) / 2 + nx * ln * bend * 0.5, (by + ty) / 2 + ny * ln * bend * 0.5)
-    c2 = ((rx + tx) / 2 + nx * ln * bend * 0.35, (by + ty) / 2 + ny * ln * bend * 0.35)
-    return f"M{lx} {by+3} Q{c1[0]:.1f} {c1[1]:.1f} {tx} {ty} Q{c2[0]:.1f} {c2[1]:.1f} {rx} {by+3} Z"
-# the four spikes stuck out sideways and back, so from the side they point back and only a little up
-spikes_far = [cone(132, 206, 86, 150, 8, 0.12), cone(92, 202, 46, 150, 7, 0.12)]
-spikes_near = [cone(148, 210, 96, 160, 9, 0.12), cone(108, 205, 56, 160, 8, 0.12)]
-def spike_markup(ds, far=False):
-    out = []
-    for d in ds:
-        out.append(path(d, HORN)); out.append(path(d, LOOK.url("shade")))
-        if far: out.append(path(d, D, 0.34))
-        out.append(stroke(d, 2.4))
-    return "".join(out)
-tail_inner = (spike_markup(spikes_far, far=True) + plate_markup(pd(tail_far), far=True) + plate_markup(pd(tail_near))
-              + flush_group(tail_near + tail_far)
-              + skin_part(LOOK, TAIL_D,
-                          belly="M36 206 C150 226 250 256 340 310 L340 292 C250 240 150 214 44 202 Z",
-                          layers=stripes([(84, 199, 8, 7), (130, 203, 11, 9), (180, 207, 14, 10), (230, 213, 17, 12), (280, 222, 20, 13)])
-                          + spots([(60, 198), (200, 208), (330, 240), (330, 290), (200, 236), (60, 204)], 10, 2, 4, 0.12, 21)
-                          + line("M330 268 C260 248 170 226 60 204", 0.12, 2.2),
-                          outline_d=TAIL_D.rstrip(" Z"), fade=True, rim_d=TAIL_TOP)
-              + spike_markup(spikes_near)
-              + line("M136 208 L136 214 M96 203 L96 209", 0.3, 2))
-TAIL = piv("tail", f"{C}-tail", 330, 262, tail_inner)
+def spike(n, x_m, ln, lift, far):
+    """tapering, slightly curved tail spike rising from the tail top at x, pointing back and up by lift degrees"""
+    base, up = on_spine(TAIL_SPINE, x_m)
+    ang = math.radians(180 - lift + (6 if far else 0))                    # backwards, raised
+    dx, dy = math.cos(ang), -math.sin(ang)                                 # page direction (y down)
+    nx, ny = -dy, dx; w = 0.045 * S; L = ln * S
+    tip = (base[0] + dx * L, base[1] + dy * L)
+    mid = (base[0] + dx * L * 0.55 - nx * w * 0.35, base[1] + dy * L * 0.55 - ny * w * 0.35)
+    pts = [(base[0] + nx * w, base[1] + ny * w), mid, tip, (mid[0] - nx * w * 0.9, mid[1] - ny * w * 0.9), (base[0] - nx * w, base[1] - ny * w)]
+    pts[1] = (mid[0] + nx * w * 0.55, mid[1] + ny * w * 0.55)
+    fill, out = K.smooth(pts)
+    return piv(f"spike-{n}", f"{C}-spike", round(base[0], 1), round(base[1], 1),
+               path(fill, "#E6DCC2") + path(fill, LOOK.url("shade")) + (path(fill, D, 0.3) if far else "") + stroke(out))
 
-# body with the two plate rows behind its back line
-plates_inner = (plate_markup(pd(far_specs), far=True) + plate_veins(far_specs)
-                + plate_markup(pd(near_specs)) + plate_veins(near_specs)
-                + flush_group(near_specs + far_specs))
-PLATES = f'<g id="plates">{plates_inner}</g>'
-body_inner = (PLATES + skin_part(
-    LOOK, BODY_D,
-    belly="M748 330 C744 370 720 392 680 400 C600 414 500 414 430 400 C380 390 344 352 326 300 L340 296 C356 340 392 372 440 384 C510 396 600 396 670 384 C710 376 736 356 744 326 Z",
-    layers=(path("M318 233 C350 190 410 160 470 160 C560 160 650 210 720 280 L708 290 C640 226 560 182 470 182 C414 182 362 206 330 246 Z", D, 0.24)
-            + stripes([(360, 198, 34, 14), (420, 174, 40, 15), (490, 168, 44, 16), (556, 178, 42, 15), (616, 200, 36, 14), (668, 236, 30, 12)])
-            + spots([(330, 240), (470, 172), (650, 218), (735, 300), (720, 380), (600, 404), (450, 396), (340, 330)], 24, 3, 7, 0.13, 7)
-            + line("M600 236 C612 280 610 330 596 376 M650 246 C660 286 660 330 648 368", 0.08, 2.4)
-            + line("M560 392 C578 398 600 400 622 398 M574 404 C590 408 608 408 626 406", 0.18, 2)),
-    outline_d=BODY_D.rstrip(" Z"), rim_d=BODY_TOP))
-BODY = piv("body", f"{C}-body", 520, 410, body_inner)
+SPIKES_FAR = spike(2, -2.5, 0.6, 54, True) + spike(4, -2.8, 0.55, 46, True)
+SPIKES_NEAR = spike(1, -2.6, 0.62, 34, False) + spike(3, -2.9, 0.56, 26, False)
+TAIL_IDS = ["tail", "tail-2", "tail-3"]
+TAIL_CUTS = [0, 0.38, 0.7, 1.0]
 
-LEG_NEAR = ('<g id="leg-near">'
-            + skin_part(LOOK, HIND_D, ao=True, outline_d=HIND_OUT,
-                        layers=line("M380 300 C410 286 452 288 486 302 M398 340 C420 352 444 356 468 354", 0.12, 2.2)
-                        + line("M444 446 C458 452 476 454 494 450 M444 460 C458 466 476 468 494 464 M500 396 C512 404 522 404 528 398", 0.22, 1.8),
-                        rim_d="M392 246 C430 226 500 232 526 280")
-            + skin_part(LOOK, HIND_FOOT, ao=True) + line("M448 490 L448 512 M472 490 L472 512", 0.26, 1.8) + nails(500)
-            + "</g>")
-FORELEG_NEAR = ('<g id="foreleg-near">'
-                + skin_part(LOOK, FORE_D, ao=True, outline_d=open_top(FORE_D), layers=line("M644 444 C656 450 674 452 694 448 M644 458 C656 464 674 466 694 462 M634 410 C650 418 676 416 700 404", 0.22, 1.8)
-                            + line("M664 330 C684 336 704 350 716 368", 0.12, 2.2))
-                + skin_part(LOOK, FORE_FOOT, ao=True) + line("M660 490 L660 512 M680 490 L680 512", 0.26, 1.8) + nails(698)
-                + "</g>")
+def tail_under(k, s0, s1):
+    L = TAIL_SPINE.length; a, b = TAIL_SPINE.at(s1)[0], TAIL_SPINE.at(s0)[0]
+    lo, hi = (a - F.x0) / S, (b - F.x0) / S
+    return plates_where(lambda x: lo < x <= hi and x <= -0.2, TAIL_SPINE) + (SPIKES_FAR if k == 2 else "")
 
-head_inner = (
-    skin_part(LOOK, NECK_D, belly="M838 410 C800 410 756 396 716 372 L724 358 C760 380 800 394 834 396 Z",
-              layers=stripes([(712, 288, 22, 11), (750, 300, 20, 10), (786, 318, 16, 9)], 0.26)
-              + line("M744 318 C752 334 756 352 754 370 M776 330 C784 346 788 362 786 380 M806 344 C812 358 816 372 814 388", 0.16, 2)
-              + dots([(730, 372), (780, 392), (826, 402), (826, 396), (780, 386), (730, 366)], 18, 1.2, 2.2, 0.22, 9),
-              outline_d="M722 293 C760 304 798 326 826 352 M838 410 C808 410 776 400 744 386",
-              rim_d="M700 288 C740 292 790 320 822 348")
-    + skin_part(LOOK, HEAD_D, belly="M836 406 C866 410 906 408 932 396 L928 388 C904 398 868 400 838 398 Z",
-                layers=path("M812 350 C842 340 886 346 916 362 L912 368 C884 356 846 352 818 362 Z", D, 0.2)
-                + line("M842 396 C872 398 902 396 932 390", 0.45, 2.2) + line("M824 372 C830 382 836 390 846 396", 0.18, 1.8)
-                + dots([(820, 356), (880, 350), (926, 372), (900, 392), (836, 394)], 26, 0.7, 1.3, 0.14, 4),
-                rim_d="M814 348 C842 338 886 344 914 358", light=True)
-    + path("M918 368 C934 372 944 384 938 394 C930 400 920 400 912 396 Z", BEAK) + stroke("M918 368 C934 372 944 384 938 394 C930 400 920 400 912 396", 2.2)
-    + stroke("M918 378 C922 376 926 377 928 380", 2, D, 0.55)
-    + eye(860, 366, f"{C}-eyelid", 4.8)
-    + path("M846 360 C852 352 868 350 878 356 C878 358 876 360 874 360 C866 356 856 357 850 364 Z", D, 0.42)
-)
-# small plates continue up the neck; bony ossicles stud the throat
-neck_plates = "".join(path(plate(x, y, w, h, -6), PLATE) + path(plate(x, y, w, h, -6), LOOK.url("shade")) + stroke(plate(x, y, w, h, -6), 2.2)
-                      for x, y, w, h in [(722, 296, 26, 30), (756, 308, 22, 24), (788, 326, 18, 18)])
-gular = "".join(f'<circle cx="{x}" cy="{y}" r="{r}" fill="#E6D9BC" stroke="#2A1C22" stroke-width="1.2"></circle>' for x, y, r in [(770, 396, 3.4), (790, 402, 3), (810, 405, 2.6), (782, 392, 2.4)])
-HEAD = piv("head", f"{C}-head", 712, 322, neck_plates + head_inner + gular)
+TAIL = K.segmented(LOOK, TAIL_SPINE, TAIL_CUTS, TAIL_IDS, 0.3 * S, [3, 3, 2], tip_cap=0.5, end=SPIKES_NEAR, under=tail_under)
 
-SHADOW = '<ellipse cx="520" cy="514" rx="300" ry="12" fill="#000000" opacity="0.3"></ellipse>'
-ANIMAL = (SHADOW + LEG_FAR + FORELEG_FAR + TAIL + BODY + LEG_NEAR + HEAD + FORELEG_NEAR)
-FRAG = piv("act", f"{C}-act", 520, 514, ANIMAL)
+# ------------------------------------------------------------------ head: very small, long and low; toothless beak at the front
+HF = K.Frame(0, 0, S)
+SKULL = [(-0.03, 0.05), (0.03, 0.13), (0.12, 0.16), (0.22, 0.15), (0.32, 0.11), (0.42, 0.06), (0.47, 0.0), (0.45, -0.04),
+         (0.35, -0.05), (0.2, -0.05), (0.08, -0.06), (-0.02, -0.04)]
+BEAK = [(0.36, 0.07), (0.43, 0.05), (0.475, 0.0), (0.455, -0.04), (0.38, -0.05), (0.36, 0.0)]
+LOWER_JAW = [(0.0, -0.03), (0.2, -0.045), (0.38, -0.045), (0.45, -0.035), (0.44, -0.075), (0.35, -0.09), (0.2, -0.095), (0.05, -0.085), (-0.02, -0.06)]
+LOWER_BEAK = [(0.37, -0.045), (0.45, -0.035), (0.44, -0.075), (0.38, -0.08)]
+JAW = piv("jaw", f"{C}-jaw", *HF(0.06, -0.05), part(HF.pts(LOWER_JAW), tex=False) + path(K.smooth(HF.pts(LOWER_BEAK))[0], CLAW, 0.85))
+UPPER = f'<g id="upper-jaw" class="{C}-upper-jaw">' + path(K.smooth(HF.pts(BEAK))[0], CLAW, 0.85) + "</g>"
+ex, ey = HF(0.13, 0.075)
+SKULL_G = (f'<g id="skull" class="{C}-skull">' + part(HF.pts(SKULL), light=True, tex=False)
+           + f'<ellipse cx="{HF(0.4, 0.04)[0]}" cy="{HF(0.4, 0.04)[1]}" rx="3" ry="2" fill="{OL}" opacity="0.6"></ellipse>'
+           + K.eye(ex, ey, f"{C}-eyelid", r=3.6) + "</g>")
+HEAD_ANGLE = 18
 
-# ------------------------------------------------------------------ motion
+# ------------------------------------------------------------------ neck: short, sloping down to the low head; small plates ride on it
+NECK_SPINE = K.Spine([(*F(x, y), d * S) for x, y, d in [(2.0, 1.25, 0.8), (2.45, 1.31, 0.56), (2.8, 1.22, 0.36), (3.0, 1.1, 0.26)]])   # slight arch, thinning so the head reads
+hx, hy, *_ = NECK_SPINE.at(NECK_SPINE.length)
+HEAD = (f'<g transform="translate({hx:.1f} {hy:.1f}) rotate({HEAD_ANGLE})">' + piv("head", f"{C}-head", 0, 0, SKULL_G + JAW + UPPER) + "</g>")
+NECK = K.segmented(LOOK, NECK_SPINE, [0, 1.0], ["neck"], 0, [2], tip_cap=0.1, end=HEAD,
+                   under=lambda k, s0, s1: plates_where(lambda x: x >= 2.25, NECK_SPINE))
+
+# ------------------------------------------------------------------ hidden skeletal guide
+def _guide():
+    bones = f"M{K._f(F(*HIP))} L{K._f(F(*KNEE))} L{K._f(F(*ANKLE))} M{K._f(F(*SHOULDER))} L{K._f(F(*ELBOW))} L{K._f(F(*WRIST))}"
+    spines = "".join('<path d="M' + " L".join(K._f(sp.at(sp.length * k / 20)[:2]) for k in range(21)) + '" fill="none" stroke="#3A7BD5" stroke-width="2"></path>'
+                     for sp in (TAIL_SPINE, NECK_SPINE))
+    joints = "".join(f'<circle cx="{F(*p)[0]}" cy="{F(*p)[1]}" r="4" fill="#E5484D"></circle>' for p in (HIP, KNEE, ANKLE, SHOULDER, ELBOW, WRIST))
+    return (f'<g id="skeleton-guide" class="{C}-guide" display="none" pointer-events="none">'
+            f'<path d="{bones}" fill="none" stroke="#3A7BD5" stroke-width="3"></path>{spines}{joints}</g>')
+
+FRAG = piv("act", f"{C}-act", *F(0.9, 0), hind_leg("far") + foreleg("far") + TAIL + NECK + BODY + hind_leg("near") + foreleg("near") + _guide())
+
+# ------------------------------------------------------------------ move: spiked tail swing (wind up, swipe, recover); no plate colour change
 ACTION = {
-    "tail": [(0, "rotate(0)"), (0.22, "rotate(12deg)"), (0.4, "rotate(12deg)"), (0.52, "rotate(-14deg)"), (0.62, "rotate(-10deg)"),
-             (0.74, "rotate(3deg)"), (0.86, "rotate(-1deg)"), (1, "rotate(0)")],
-    "head": [(0, "rotate(0)"), (0.25, "rotate(4deg)"), (0.7, "rotate(4deg)"), (1, "rotate(0)")],
-    "flush": [(0, "0"), (0.25, "0.6"), (0.7, "0.6"), (1, "0")],
-    "act": [(0, "translateX(0)"), (0.52, "translateX(0)"), (0.6, "translateX(-6px)"), (0.75, "translateX(0)"), (1, "translateX(0)")],
+    "tail": [(0, "rotate(0)"), (0.25, "rotate(6deg)"), (0.5, "rotate(-9deg)"), (0.7, "rotate(-7deg)"), (1, "rotate(0)")],
+    "tail-2": [(0, "rotate(0)"), (0.25, "rotate(5deg)"), (0.52, "rotate(-11deg)"), (0.7, "rotate(-8deg)"), (1, "rotate(0)")],
+    "tail-3": [(0, "rotate(0)"), (0.25, "rotate(4deg)"), (0.55, "rotate(-13deg)"), (0.72, "rotate(-9deg)"), (1, "rotate(0)")],
+    "head": [(0, "rotate(0)"), (0.3, "rotate(-5deg)"), (0.7, "rotate(-5deg)"), (1, "rotate(0)")],
+    "act": [(0, "translateX(0)"), (0.25, "translateX(4px)"), (0.5, "translateX(-6px)"), (0.7, "translateX(-4px)"), (1, "translateX(0)")],
 }
-GSAP = """      .call(() => gsap.getTweensOf(parts.tail).forEach(t => { if (t.parent !== act) t.pause(); }), [], 0)
-      .to(parts.tail, { rotation: 12, duration: 0.35, ease: 'power2.out' }, 0)
-      .to(parts.head, { rotation: 4, duration: 0.3, ease: 'power2.out' }, 0)
-      .to(document.querySelectorAll('.stg-flush'), { opacity: 0.6, duration: 0.3 }, 0)
-      .to(parts.tail, { rotation: -14, duration: 0.22, ease: 'power3.in' }, 0.62)
-      .to(parts.act, { x: -6, duration: 0.12, yoyo: true, repeat: 1, ease: 'power1.out' }, 0.84)
-      .to(parts.tail, { rotation: 0, duration: 0.8, ease: 'elastic.out(1, 0.45)' }, 0.95)
-      .to(parts.head, { rotation: 0, duration: 0.5, ease: 'power2.inOut' }, 1.0)
-      .to(document.querySelectorAll('.stg-flush'), { opacity: 0, duration: 0.6 }, 1.0)
-      .call(() => gsap.getTweensOf(parts.tail).forEach(t => { if (t.parent !== act) t.resume(); }))"""
+GSAP = """      .to(parts.tail, { rotation: 6, duration: 0.45, ease: 'power2.out' }, 0)
+      .to(parts.tail_2, { rotation: 5, duration: 0.45, ease: 'power2.out' }, 0)
+      .to(parts.tail_3, { rotation: 4, duration: 0.45, ease: 'power2.out' }, 0)
+      .to(parts.act, { x: 4, duration: 0.45, ease: 'power2.out' }, 0)
+      .to(parts.head, { rotation: -5, duration: 0.5, ease: 'power2.out' }, 0.1)
+      .to(parts.tail, { rotation: -9, duration: 0.35, ease: 'power3.in' }, 0.45)
+      .to(parts.tail_2, { rotation: -11, duration: 0.38, ease: 'power3.in' }, 0.47)
+      .to(parts.tail_3, { rotation: -13, duration: 0.4, ease: 'power3.in' }, 0.5)
+      .to(parts.act, { x: -6, duration: 0.35, ease: 'power3.in' }, 0.45)
+      .to([parts.tail, parts.tail_2, parts.tail_3, parts.head], { rotation: 0, duration: 0.6, ease: 'power2.inOut' }, 1.25)
+      .to(parts.act, { x: 0, duration: 0.6, ease: 'power2.inOut' }, 1.25)"""
 
-# ------------------------------------------------------------------ poster scene: Morrison floodplain (src/scenery.py)
-SCENE = scenery.set_morrison()
-
-# ------------------------------------------------------------------ rig sheet parts (viewBox crops in drawing units)
-RIG = [
-    ("Body and plates", "#body, #plates", BODY, (292, 80, 470, 340)),
-    ("Tail with spikes", "#tail", TAIL, (20, 110, 330, 210)),
-    ("Head and neck", "#head", HEAD, (688, 280, 262, 136)),
-    ("Near hind leg", "#leg-near", LEG_NEAR, (362, 218, 190, 300)),
-    ("Far hind leg", "#leg-far", LEG_FAR, (398, 216, 190, 300)),
-    ("Forelegs", "#foreleg-near, #foreleg-far", f'<g transform="translate(-20 0)">{FORELEG_NEAR}</g>' + f'<g transform="translate(30 0)">{FORELEG_FAR}</g>', (606, 312, 202, 206)),
-]
+IDS = ["act", "body", "plates", "chest", "abdomen", "pelvis", "tail", "tail-2", "tail-3", "neck", "head", "skull", "upper-jaw", "jaw",
+       "leg-near", "leg-far", "foreleg-near", "foreleg-far"]
+MIDLINE = ([TAIL_SPINE.at(TAIL_SPINE.length * (1 - k / 10))[:2] for k in range(11)] + [F(1.0, 1.5)]
+           + [NECK_SPINE.at(NECK_SPINE.length * k / 4)[:2] for k in range(5)]
+           + [(hx + math.cos(math.radians(HEAD_ANGLE)) * 0.47 * S, hy + math.sin(math.radians(HEAD_ANGLE)) * 0.47 * S)])
 
 SPEC = dict(
     code=C, slug="stegosaurus", board="Stegosaurus", name="Stegosaurus", short="Stegosaurus", look=LOOK,
-    viewbox=(1000, 560), frag=FRAG,
-    ids=["act", "body", "plates", "tail", "head", "leg-near", "leg-far", "foreleg-near", "foreleg-far"],
-    action=ACTION, dur=1.6, gsap=GSAP,
+    viewbox=(1000, 560), frag=FRAG, ids=IDS, action=ACTION, dur=2.0, gsap=GSAP,
     action_label="Make the Stegosaurus swing its tail", action_verb="swing its tail", page_bg="#D9D4C4",
-    scene=SCENE, title="Stegosaurus", title_px=190, binomial="Stegosaurus stenops", subtitle="the narrow-faced roof lizard",
+    scene=scenery.set_morrison(), title="Stegosaurus", title_px=190, binomial="Stegosaurus stenops", subtitle="the narrow-faced roof lizard",
     paragraph="A plant eater with two staggered rows of tall bony plates down its back and a spiked tail for defence, carrying its small head about a metre off the ground.",
     facts=[("6.5 m", "adult length"), ("152–145", "million years ago"), ("4", "tail spikes")],
     footer="Fossils come from the Morrison Formation of Colorado, Wyoming and Utah, with more found in Portugal.",
-    hint="Tap the Stegosaurus to swing its tail", skin_swatches=["#5E7E7A", "#7A8450", "#9E6B7B", "#8A6A3E"],
-    dino_top=262, rig_parts=RIG, rig_h=960,
+    hint="Tap the Stegosaurus to swing its tail", skin_swatches=["#6F7F5A", "#5E7E7A", "#7A8450", "#8A6A3E"],
+    dino_top=60, midline=MIDLINE, ground=F.g,
 )
 
 if __name__ == "__main__":
-    frag = K.write_all(SPEC)
-    K.poster_board(SPEC, frag)
-    K.rig_board(SPEC, frag)
-    K.shoot("stegosaurus-animated.svg", 1000, 560)
+    K.write_all(SPEC)          # this rework round: svg/ and gsap/ only; poster and rig board follow later
     print("ok")

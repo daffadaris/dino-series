@@ -1,197 +1,167 @@
 import os as _os
 HERE = _os.path.dirname(_os.path.abspath(__file__))  # src/
 ROOT = _os.path.dirname(HERE)                          # repository root
-"""Titanosaur (Patagotitan mayorum) for the dinosaur series. Import has no side effects;
-run as a script to write the SVG, GSAP page, poster board and rig board."""
+"""Dreadnoughtus schrani, the series titanosaur (RESEARCH_GUIDE.md). Import has no side effects; run as a script to
+write the SVG and GSAP page.
+
+Built skeleton first, in metres, from the describing team's figures (Lacovara et al. 2014, via Drexel's FAQ):
+26 m long = head about 0.9 m + neck 11.3 m + torso and hips 5.1 m + tail 8.7 m. The neck is held low, closer to
+horizontal than in Brachiosaurus, as Lacovara et al. reconstructed it; forelimbs long but not much longer than the
+hind limbs; wide-gauge columnar stance. RECONSTRUCTED from other titanosaurs: the skull (only a maxilla fragment
+and a tooth are known), most of the neck (one cervical per specimen), the hand (not preserved; titanosaur hands were
+columns of metacarpals without fingers or claws) and most of the foot (metatarsals I-II and the digit I claw are
+known). Hip height is about 4.2 m to the top of the pelvis (UNVERIFIED: the guide's working ~3.9 m; Wikipedia's 6 m
+shoulder height is unexplained). No osteoderms: none are reported for this animal."""
 import sys
 sys.path.insert(0, HERE)
 import dinokit as K
-import scenery
-from dinokit import SKIN, D, L, OL, CLAW, path, stroke, line, rim, stripes, spots, dots, skin_part, piv, bez
+from dinokit import OL, CLAW, path, line, piv, dots
 
 C = "tit"
-LOOK = K.Look(C, skin="#7C8AA0", belly="#D8D2C2")
+LOOK = K.Look(C, skin="#A08672", belly="#DCCDB6", accent="#8A5A4A")   # dusty clay, artistic interpretation
+S = 36                                   # drawing units per metre
+F = K.Frame(386, 362, S)                 # x 0 = hip socket, y 0 = ground
+FAR = (0.5, 0.2)                         # three-quarter view: far-side limbs sit forward and higher
 
-# ------------------------------------------------------------------ proportions
-# Follows published skeletal reconstructions of Patagotitan for general proportions (not traced): at 31 m the back
-# stands about 4.7 m high and the head about 11-12 m up; a long neck raised at roughly 45 degrees, a comparatively
-# small, deep torso, short pillar-like legs and a long, tapering tail. About 34 drawing units per metre.
+def part(pts, **kw): return K.rig_part(LOOK, pts, **kw)
 
-# ------------------------------------------------------------------ legs (columnar, padded feet)
-HIND = ("M438 520 C466 502 520 504 530 530 C536 550 530 566 522 578 L524 632 C526 644 518 650 508 650 "
-        "L468 650 C458 650 454 642 456 632 L458 586 C444 572 432 540 438 520 Z")
-HIND_FOOT = "M450 636 C458 628 520 628 532 636 C536 642 534 650 528 650 L456 650 C448 650 446 642 450 636 Z"
-HIND_NAILS = "M522 638 C529 638 534 643 533 649 C528 647 524 646 520 646 Z M510 640 C516 640 520 644 519 649 C515 647 512 647 509 647 Z"
-FORE = ("M642 518 C670 502 712 508 718 530 C722 550 716 566 708 578 L710 632 C712 644 704 650 694 650 "
-        "L658 650 C648 650 644 642 646 632 L648 586 C638 572 634 536 642 518 Z")
-FORE_FOOT = "M640 638 C648 630 708 630 718 638 C722 644 720 650 714 650 L646 650 C638 650 636 642 640 638 Z"
+def m(ps, off=(0, 0)): return F.pts([(x + off[0], y + off[1]) for x, y in ps])
 
-def open_top(d):
-    """limb outline without the arc where it meets the body"""
-    head, rest = d.split(" C", 1)
-    return "M" + " ".join(rest.split(" ")[4:6]) + " C" + rest.split(" C", 1)[1].rstrip(" Z")
+# ------------------------------------------------------------------ skeleton (metres): joint centres
+HIP, KNEE, ANKLE = (0, 3.35), (0.1, 1.6), (0.05, 0.48)
+SHOULDER, ELBOW, WRIST = (3.5, 3.45), (3.52, 1.8), (3.53, 0.62)
 
-def leg(gid, d, foot, nails=None, far=False, dx=0, creases=""):
-    if far:
-        inner = (skin_part(LOOK, d, ao=True, far=True, tex=False, outline_d=open_top(d))
-                 + skin_part(LOOK, foot, far=True, tex=False) + (path(nails, CLAW, 0.85) if nails else ""))
-    else:
-        inner = (skin_part(LOOK, d, ao=True, outline_d=open_top(d), layers=line(creases, 0.18, 2))
-                 + skin_part(LOOK, foot, tex=False) + (path(nails, CLAW) if nails else ""))
-    t = f' transform="translate({dx} -2)"' if dx else ""
-    return f'<g id="{gid}"{t}>{inner}</g>'
+# ------------------------------------------------------------------ hind limbs: thigh > shin > foot > toes (digits I-III clawed)
+THIGH = [(0.75, 3.95), (0.88, 3.0), (0.62, 2.1), (0.45, 1.6), (0.1, 1.42), (-0.25, 1.55), (-0.5, 2.4), (-0.75, 3.4), (-0.6, 3.95), (0.1, 4.12)]
+SHIN = [(0.42, 1.75), (0.4, 1.1), (0.36, 0.55), (0.05, 0.42), (-0.27, 0.55), (-0.3, 1.1), (-0.28, 1.72), (0.07, 1.9)]
+FOOT = [(-0.33, 0.62), (0.38, 0.62), (0.62, 0.4), (0.84, 0.13), (0.8, 0.0), (-0.48, 0.0), (-0.58, 0.16), (-0.5, 0.42)]
+TOES = [((0.66, 0.36), 0.3, 0.13), ((0.76, 0.22), 0.24, 0.11), ((0.82, 0.1), 0.17, 0.09)]   # (base, length, height)
 
-LEG_FAR = leg("leg-far", HIND, HIND_FOOT, HIND_NAILS, far=True, dx=40)
-FORELEG_FAR = leg("foreleg-far", FORE, FORE_FOOT, far=True, dx=36)
-LEG_NEAR = leg("leg-near", HIND, HIND_FOOT, HIND_NAILS, creases="M462 600 C478 606 500 606 518 600 M462 614 C480 620 500 620 518 614")
-FORELEG_NEAR = leg("foreleg-near", FORE, FORE_FOOT, creases="M652 600 C668 606 688 606 706 600 M652 614 C670 620 688 620 706 614")
+def hind_leg(side):
+    far = side == "far"; o = FAR if far else (0, 0)
+    toes = "".join(piv(f"toe-{side}-{i + 1}", f"{C}-toe", *F(b[0] + o[0], b[1] + o[1]),
+                       path(K.smooth(m(K.claw(b, ln, h), o))[0], CLAW, 0.85 if far else None))
+                   for i, (b, ln, h) in enumerate(TOES))
+    foot = piv(f"foot-{side}", f"{C}-foot", *F(ANKLE[0] + o[0], ANKLE[1] + o[1]), toes + part(m(FOOT, o), far=far, tex=False))
+    shin = piv(f"shin-{side}", f"{C}-shin", *F(KNEE[0] + o[0], KNEE[1] + o[1]), part(m(SHIN, o), far=far) + foot)
+    return piv(f"leg-{side}", f"{C}-leg", *F(HIP[0] + o[0], HIP[1] + o[1]), shin + part(m(THIGH, o), skip=(8, 9), seam=(0, 1, 2, 6, 7), far=far, seam_op=0.22))
 
-# ------------------------------------------------------------------ tail (long and tapering)
-TAIL_TOP = "M424 506 C350 512 256 532 154 562 C104 578 66 592 40 602"
-TAIL_D = TAIL_TOP + " C30 604 32 612 42 610 C84 602 140 594 200 588 C300 578 380 576 440 580 Z"
-TAIL = piv("tail", f"{C}-tail", 420, 544, skin_part(
-    LOOK, TAIL_D,
-    belly="M42 610 C84 602 140 594 200 588 C300 578 380 576 440 580 L440 568 C380 564 300 566 200 576 C140 580 80 588 44 594 Z",
-    layers=path(TAIL_TOP + " C70 582 110 572 160 562 C260 540 356 522 424 520 Z", D, 0.24)
-           + stripes([(120, 568, 7, 6), (180, 554, 9, 7), (240, 540, 11, 8), (300, 526, 13, 9), (360, 514, 15, 10)])
-           + dots([(60, 590), (430, 490), (430, 566), (200, 578)], 60)
-           + line("M428 548 C350 550 250 560 120 582", 0.12, 2),
-    fade=True, rim_d=TAIL_TOP, outline_d=TAIL_D.rstrip(" Z")))
+# ------------------------------------------------------------------ forelimbs: upper arm > forearm > hand (metacarpal column, no fingers)
+UPPER_ARM = [(3.0, 4.3), (3.95, 4.25), (4.1, 3.4), (3.95, 2.4), (3.82, 1.75), (3.5, 1.62), (3.22, 1.8), (3.12, 2.5), (2.95, 3.4), (2.8, 4.0)]
+FOREARM = [(3.82, 1.95), (3.83, 1.2), (3.8, 0.62), (3.5, 0.55), (3.27, 0.62), (3.25, 1.2), (3.24, 1.92), (3.52, 2.05)]
+HAND = [(3.25, 0.72), (3.82, 0.72), (3.9, 0.35), (3.93, 0.0), (3.16, 0.0), (3.18, 0.35)]
+DIGITS = "M{} L{} M{} L{} M{} L{}"     # grooves between the metacarpal pads at the front of the hand
 
-# ------------------------------------------------------------------ body (with osteoderms): smaller and lower than before
-BODY_TOP = "M408 500 C462 480 556 468 640 470 C696 472 734 500 744 536"
-BODY_D = BODY_TOP + " C752 566 732 588 694 596 C620 608 516 606 456 594 C420 586 400 562 400 536 C400 522 402 508 408 500 Z"
-BODY_POLY = [(412, 506), (560, 478), (730, 506), (740, 562), (600, 598), (420, 580)]
-osteo = "".join(
-    f'<ellipse cx="{x}" cy="{y}" rx="{r*1.6:.1f}" ry="{r:.1f}" fill="{SKIN}" stroke="{OL}" stroke-width="1.2"></ellipse>'
-    f'<ellipse cx="{x}" cy="{y}" rx="{r*1.6:.1f}" ry="{r:.1f}" fill="{D}" opacity="0.2"></ellipse>'
-    for x, y, r in K.scatter([(430, 502), (560, 478), (690, 480), (716, 504), (560, 500), (430, 518)], 14, 2.4, 3.8, seed=21))
-BODY = piv("body", f"{C}-body", 566, 588, skin_part(
-    LOOK, BODY_D,
-    belly="M744 536 C752 566 732 588 694 596 C620 608 516 606 456 594 C420 586 400 562 400 536 L414 536 C418 556 436 570 464 578 C524 588 616 588 684 576 C718 568 738 554 742 536 Z",
-    layers=path(BODY_TOP + " L734 542 C722 514 694 492 640 490 C560 490 468 498 412 520 Z", D, 0.24)
-           + stripes([(430, 494, 22, 12), (476, 482, 24, 13), (520, 474, 26, 14), (564, 470, 26, 14), (608, 470, 24, 13), (652, 474, 22, 12), (694, 484, 18, 11)])
-           + spots(BODY_POLY, 20, 2.4, 5, 0.14, seed=7) + dots(BODY_POLY, 180)
-           + line("M640 486 C654 516 654 560 640 596", 0.07, 2.2)
-           + osteo,
-    rim_d=BODY_TOP, outline_d=BODY_TOP + " C752 566 732 588 694 596 C620 608 516 606 456 594"))
+def foreleg(side):
+    far = side == "far"; o = FAR if far else (0, 0)
+    g = [F(x + o[0], y + o[1]) for x, y in [(3.5, 0.0), (3.52, 0.2), (3.66, 0.0), (3.68, 0.22), (3.8, 0.0), (3.82, 0.2)]]
+    digits = f'<g id="digits-{side}" class="{C}-digits">{line(DIGITS.format(*(K._f(p) for p in g)), 0.4, 2)}</g>'
+    hand = piv(f"hand-{side}", f"{C}-hand", *F(WRIST[0] + o[0], WRIST[1] + o[1]), part(m(HAND, o), far=far, tex=False) + digits)
+    forearm = piv(f"forearm-{side}", f"{C}-forearm", *F(ELBOW[0] + o[0], ELBOW[1] + o[1]), part(m(FOREARM, o), far=far) + hand)
+    return piv(f"foreleg-{side}", f"{C}-foreleg", *F(SHOULDER[0] + o[0], SHOULDER[1] + o[1]), forearm + part(m(UPPER_ARM, o), skip=(9, 0), seam=(1, 6, 7, 8), far=far, seam_op=0.22))
 
-# ------------------------------------------------------------------ head + jaw (inside the neck)
-JAW = piv("jaw", f"{C}-jaw", 858, 154,
-    path("M858 152 C880 146 910 136 936 126 C944 134 944 142 938 148 Z", "#4A1C1E")
-    + path("M866 154 C890 150 916 146 932 144 L930 148 C912 150 890 154 868 158 Z", "#8E3A3E")
-    + skin_part(LOOK, "M856 150 C880 156 916 154 938 146 C944 152 938 162 926 164 C900 168 870 168 856 162 Z",
-                belly="M858 160 C880 166 908 166 926 162 C934 160 938 156 940 152 L938 150 C930 158 910 160 880 158 C870 158 862 156 858 156 Z", tex=False)
-    + line("M862 156 C884 160 912 158 936 150", 0.3, 1.6))
-SKULL_D = "M838 118 C858 102 902 102 928 116 C946 126 950 138 940 146 C918 154 880 158 856 154 C840 150 830 132 838 118 Z"
-HEAD = piv("head", f"{C}-head", 850, 140,
-    JAW
-    + skin_part(LOOK, SKULL_D,
-                layers=path("M838 118 C858 102 902 102 928 116 C940 122 946 128 948 136 L940 134 C930 122 904 112 880 112 C862 112 848 118 842 128 Z", D, 0.22)
-                       + dots([(842, 120), (900, 106), (944, 132), (900, 150), (850, 148)], 30, 0.6, 1.1, 0.12)
-                       + line("M858 150 C884 154 914 150 938 144", 0.4, 1.8)
-                       + line("M846 132 C850 142 856 148 864 152", 0.16, 1.6),
-                light=True, rim_d="M838 118 C858 102 902 102 928 116 C946 126 950 138 948 140")
-    + path("M882 108 C888 96 906 95 914 106 Z", SKIN) + stroke("M882 108 C888 96 906 95 914 106", 2.2) + path("M886 106 C892 100 904 99 910 105 Z", D, 0.18)
-    + stroke("M906 108 C910 105 915 106 917 109", 2, D, 0.6)
-    + K.eye(874, 122, f"{C}-eyelid", r=4)
-    + path("M862 116 C868 110 882 110 888 116 C882 114 870 114 864 120 Z", D, 0.45))
+# ------------------------------------------------------------------ tail: five nested segments on one centreline
+TAIL_SPINE = K.Spine([(*F(x, y), d * S) for x, y, d in
+                      [(0.2, 3.5, 1.25), (-1.0, 3.5, 1.1), (-2.6, 3.27, 0.9), (-4.2, 2.88, 0.68), (-5.8, 2.38, 0.48), (-7.6, 1.78, 0.3), (-9.6, 1.15, 0.08)]])
+TAIL_CUTS = [0, 0.22, 0.42, 0.6, 0.8, 1.0]
 
-# ------------------------------------------------------------------ neck (contains the head): long, raised at about 45 degrees
-NECK_TOP = ((560, 492), (690, 462), (772, 340), (826, 268))
-NECK_D = ("M560 492 C690 462 772 340 826 268 C850 236 884 212 920 216 L934 252 "
-          "C900 268 858 306 822 356 C790 402 760 470 732 562 C690 552 610 528 560 492 Z")
-neck_stripes = []
-for t, ln, w in [(0.2, 18, 11), (0.34, 17, 10), (0.48, 16, 10), (0.62, 14, 9), (0.76, 12, 8), (0.9, 10, 7)]:
-    x, y = bez(*NECK_TOP, t)
-    neck_stripes.append((round(x), round(y + 3), ln, w))
-# the head keeps its drawing, scaled to sauropod proportions and seated on the end of the neck
-HEAD_PLACED = f'<g transform="translate(924 238) rotate(10) scale(0.72) translate(-850 -140)">{HEAD}</g>'
-NECK = piv("neck", f"{C}-neck", 680, 510, skin_part(
-    LOOK, NECK_D,
-    belly="M934 252 C900 268 858 306 822 356 C790 402 760 470 732 560 L718 552 C744 468 774 398 808 350 C846 298 886 264 924 244 Z",
-    layers=path("M560 492 C690 462 772 340 826 268 C850 236 884 212 920 216 L912 230 C892 230 872 244 858 258 C786 340 700 470 580 506 Z", D, 0.22)
-           + stripes(neck_stripes)
-           + dots([(610, 500), (700, 466), (772, 360), (826, 276), (920, 238), (822, 360), (730, 556), (660, 520)], 110)
-           + line("M852 292 C858 296 864 297 868 296 M824 328 C830 332 836 333 840 332 M798 366 C804 370 810 371 814 370 M776 406 C782 410 788 411 792 410", 0.2, 1.6),
-    rim_d="M566 488 C692 458 772 338 826 266 C850 236 882 214 914 216",
-    outline_d="M560 492 C690 462 772 340 826 268 C850 236 884 212 920 216 L934 252 C900 268 858 306 822 356 C790 402 760 470 732 562")
-    + HEAD_PLACED)
+TAIL = K.segmented(LOOK, TAIL_SPINE, TAIL_CUTS, ["tail", "tail-2", "tail-3", "tail-4", "tail-5"], 0.4 * S, [3, 3, 3, 3, 2], tip_cap=0.5)
 
-# snout-to-tail midline in drawing units; the group poster measures length along it, since the raised neck
-# makes the straight-line span much shorter than the animal
-MIDLINE = [(992, 252), (924, 238), (850, 262), (790, 340), (740, 410), (680, 500), (600, 522), (420, 540), (250, 562), (40, 604)]
+# ------------------------------------------------------------------ head: skull with upper jaw, lower jaw on its own hinge (RECONSTRUCTED)
+# local frame in metres from the back of the skull, x along the skull; titanosaur comparison: long, low skull,
+# narrow snout, nostrils retracted above the eyes, slender lower jaw
+HF = K.Frame(0, 0, S)
+SKULL = [(-0.08, 0.12), (0.04, 0.3), (0.22, 0.37), (0.38, 0.34), (0.5, 0.35), (0.62, 0.27), (0.8, 0.16), (0.93, 0.08),
+         (0.97, 0.0), (0.93, -0.07), (0.7, -0.08), (0.4, -0.09), (0.15, -0.13), (0.0, -0.15), (-0.1, -0.04)]
+UPPER_JAW = [(0.3, -0.03), (0.6, -0.01), (0.86, 0.02), (0.96, 0.0), (0.93, -0.07), (0.7, -0.08), (0.4, -0.09), (0.28, -0.08)]
+TEETH = [(0.5, -0.08), (0.92, -0.06), (0.92, -0.11), (0.5, -0.12)]
+LOWER_JAW = [(0.02, -0.06), (0.3, -0.085), (0.6, -0.075), (0.88, -0.065), (0.95, -0.1), (0.9, -0.16), (0.6, -0.19), (0.3, -0.2), (0.05, -0.17), (-0.04, -0.11)]
+JAW_HINGE = (0.08, -0.1)
 
-# ------------------------------------------------------------------ assemble
-INNER = (f'<ellipse cx="540" cy="652" rx="300" ry="12" fill="{D}" opacity="0.3"></ellipse>'
-         + LEG_FAR + FORELEG_FAR + TAIL + NECK + BODY + LEG_NEAR + FORELEG_NEAR)
-FRAG = piv("act", f"{C}-act", 540, 650, INNER)
+def hp(ps): return HF.pts(ps)
+JAW = piv("jaw", f"{C}-jaw", *HF(*JAW_HINGE), part(hp(LOWER_JAW), tex=False, belly=K.smooth(hp([(0.1, -0.15), (0.6, -0.165), (0.9, -0.14), (0.86, -0.165), (0.6, -0.185), (0.3, -0.195), (0.08, -0.17)]))[0]))
+UPPER = (f'<g id="upper-jaw" class="{C}-upper-jaw">' + path(K.smooth(hp(TEETH))[0], K.IVORY)
+         + part(hp(UPPER_JAW), skip=(0, 1, 2, 7), tex=False) + "</g>")
+ex, ey = HF(0.3, 0.19); nx_, ny_ = HF(0.5, 0.27)
+SKULL_G = (f'<g id="skull" class="{C}-skull">' + part(hp(SKULL), light=True, tex=False)
+           + f'<ellipse cx="{nx_}" cy="{ny_}" rx="2.2" ry="1.4" fill="{OL}" opacity="0.7"></ellipse>'
+           + K.eye(ex, ey, f"{C}-eyelid", r=2.2) + "</g>")
+HEAD_ANGLE = 16                          # degrees, snout tipped down at rest
 
+# ------------------------------------------------------------------ neck: four nested segments, head at the end (most of it RECONSTRUCTED)
+NECK_SPINE = K.Spine([(*F(x, y), d * S) for x, y, d in
+                      [(3.9, 3.65, 2.4), (6.0, 4.88, 1.8), (8.6, 6.25, 1.35), (11.4, 7.08, 1.02), (14.5, 7.55, 0.68)]])
+hx, hy, htx, hty, _ = NECK_SPINE.at(NECK_SPINE.length)
+HEAD = (f'<g transform="translate({hx:.1f} {hy:.1f}) rotate({HEAD_ANGLE})">'
+        + piv("head", f"{C}-head", 0, 0, SKULL_G + UPPER + JAW) + "</g>")
+NECK = K.segmented(LOOK, NECK_SPINE, [0, 0.3, 0.53, 0.76, 1.0], ["neck", "neck-2", "neck-3", "neck-4"], 0.35 * S, [3, 3, 3, 2], tip_cap=0.1, end=HEAD)
+# ------------------------------------------------------------------ torso: abdomen (whole barrel) under chest and pelvis
+BARREL = [(-1.45, 3.85), (-0.7, 4.1), (0.3, 4.2), (1.5, 4.26), (2.6, 4.45), (3.5, 4.78), (4.3, 5.06), (4.95, 4.95), (5.05, 3.9),
+          (4.5, 2.85), (3.7, 1.95), (2.8, 1.58), (1.8, 1.5), (0.8, 1.62), (-0.2, 2.05), (-0.9, 2.55), (-1.4, 2.95), (-1.65, 3.45)]
+BELLY = [(4.5, 2.85), (3.7, 1.95), (2.8, 1.58), (1.8, 1.5), (0.8, 1.62), (-0.2, 2.05), (-0.2, 2.5), (0.8, 2.1), (1.8, 1.98), (2.8, 2.05), (3.6, 2.38), (4.3, 3.15)]
+CHEST = [(1.9, 4.33), (2.6, 4.45), (3.5, 4.78), (4.3, 5.06), (4.95, 4.95), (5.05, 3.9), (4.5, 2.85), (3.7, 1.95), (2.8, 1.58), (2.2, 1.52), (1.9, 2.4), (1.75, 3.5)]
+CHEST_BELLY = [(4.5, 2.85), (3.7, 1.95), (2.8, 1.58), (2.2, 1.52), (2.2, 1.98), (2.8, 2.05), (3.6, 2.38), (4.3, 3.15)]
+PELVIS = [(-1.45, 3.85), (-0.7, 4.1), (0.3, 4.2), (1.2, 4.24), (1.35, 3.6), (1.1, 2.4), (0.5, 1.8), (-0.2, 2.05), (-0.9, 2.55), (-1.4, 2.95), (-1.65, 3.45)]
+BACK = K.Spine([(*F(x, y + 0.0), 0.9 * S) for x, y in [(-1.2, 3.55), (0.3, 3.75), (1.9, 3.85), (3.4, 4.25), (4.6, 4.5)]])
+body_poly = m([(-1.2, 3.8), (1.5, 4.1), (4.4, 4.7), (4.3, 2.4), (2.0, 1.9), (-0.8, 2.7)])
+BODY = piv("body", f"{C}-body", *F(1.6, 2.0), (
+    f'<g id="abdomen" class="{C}-abdomen">' + part(m(BARREL), skip=(6, 7), seam=(8,), seam_op=0.18, belly=K.smooth(m(BELLY))[0], layers=dots(body_poly, 60, 1.2, 2.0, 0.08, seed=11)) + "</g>"
+    + f'<g id="pelvis" class="{C}-pelvis">' + part(m(PELVIS), seam=(3, 4, 5), seam_op=0.1, layers=K.spine_stripes(BACK, 0, BACK.length * 0.42, 3)) + "</g>"
+    + f'<g id="chest" class="{C}-chest">' + part(m(CHEST), skip=(3, 4), seam=(5, 9, 10, 11), seam_op=0.1, belly=K.smooth(m(CHEST_BELLY))[0],
+                                                  layers=K.spine_stripes(BACK, BACK.length * 0.5, BACK.length, 3)) + "</g>"))
+
+# ------------------------------------------------------------------ hidden skeletal guide (joint centres and spines, for editing)
+def _guide():
+    j = [HIP, KNEE, ANKLE, SHOULDER, ELBOW, WRIST]
+    bones = f"M{K._f(F(*HIP))} L{K._f(F(*KNEE))} L{K._f(F(*ANKLE))} M{K._f(F(*SHOULDER))} L{K._f(F(*ELBOW))} L{K._f(F(*WRIST))}"
+    spines = "".join(f'<path d="M' + " L".join(K._f(sp.at(sp.length * k / 20)[:2]) for k in range(21)) + '" fill="none" stroke="#3A7BD5" stroke-width="2"></path>'
+                     for sp in (TAIL_SPINE, NECK_SPINE))
+    dots_ = "".join(f'<circle cx="{F(*p)[0]}" cy="{F(*p)[1]}" r="4" fill="#E5484D"></circle>' for p in j)
+    return (f'<g id="skeleton-guide" class="{C}-guide" display="none" pointer-events="none">'
+            f'<path d="{bones}" fill="none" stroke="#3A7BD5" stroke-width="3"></path>{spines}{dots_}</g>')
+
+FRAG = piv("act", f"{C}-act", *F(1.6, 0), hind_leg("far") + foreleg("far") + TAIL + NECK + BODY + hind_leg("near") + foreleg("near") + _guide())
+
+# snout-to-tail midline in drawing units (the group poster measures length along it)
+_ht = (hx + htx * 0.97 * S, hy + hty * 0.97 * S)
+MIDLINE = ([TAIL_SPINE.at(TAIL_SPINE.length * (1 - k / 10))[:2] for k in range(11)] + [F(1.6, 3.3)]
+           + [NECK_SPINE.at(NECK_SPINE.length * k / 10)[:2] for k in range(11)] + [_ht])
+
+# ------------------------------------------------------------------ move: neck raise and call
 ACTION = {
-    "neck": [(0, "rotate(0)"), (0.3, "rotate(-12deg)"), (0.75, "rotate(-12deg)"), (1, "rotate(0)")],
-    "head": [(0, "rotate(0)"), (0.3, "rotate(10deg)"), (0.75, "rotate(10deg)"), (1, "rotate(0)")],
+    "neck": [(0, "rotate(0)"), (0.3, "rotate(-6deg)"), (0.75, "rotate(-6deg)"), (1, "rotate(0)")],
+    "neck-2": [(0, "rotate(0)"), (0.3, "rotate(-4deg)"), (0.75, "rotate(-4deg)"), (1, "rotate(0)")],
+    "neck-3": [(0, "rotate(0)"), (0.3, "rotate(-3deg)"), (0.75, "rotate(-3deg)"), (1, "rotate(0)")],
+    "head": [(0, "rotate(0)"), (0.3, "rotate(4deg)"), (0.75, "rotate(4deg)"), (1, "rotate(0)")],
     "jaw": [(0, "rotate(0)"), (0.32, "rotate(0)"), (0.45, "rotate(16deg)"), (0.52, "rotate(12deg)"), (0.6, "rotate(16deg)"), (0.7, "rotate(15deg)"), (0.82, "rotate(0)"), (1, "rotate(0)")],
-    "tail": [(0, "rotate(0)"), (0.3, "rotate(3deg)"), (0.75, "rotate(3deg)"), (1, "rotate(0)")],
+    "tail": [(0, "rotate(0)"), (0.3, "rotate(2deg)"), (0.75, "rotate(2deg)"), (1, "rotate(0)")],
 }
-GSAP = """      .to(parts.neck, { rotation: -12, duration: 0.65, ease: 'power2.out' }, 0)
-      .to(parts.head, { rotation: 10, duration: 0.65, ease: 'power2.out' }, 0)
-      .to(parts.tail, { rotation: 3, duration: 0.65, ease: 'sine.out' }, 0)
+GSAP = """      .to(parts.neck, { rotation: -6, duration: 0.65, ease: 'power2.out' }, 0)
+      .to(parts.neck_2, { rotation: -4, duration: 0.65, ease: 'power2.out' }, 0.05)
+      .to(parts.neck_3, { rotation: -3, duration: 0.65, ease: 'power2.out' }, 0.1)
+      .to(parts.head, { rotation: 4, duration: 0.65, ease: 'power2.out' }, 0.1)
+      .to(parts.tail, { rotation: 2, duration: 0.65, ease: 'sine.out' }, 0)
       .to(parts.jaw, { rotation: 16, duration: 0.25, ease: 'power2.out' }, 0.7)
       .to(parts.jaw, { rotation: 12, duration: 0.12, yoyo: true, repeat: 3, ease: 'none' }, 0.95)
       .to(parts.jaw, { rotation: 0, duration: 0.25, ease: 'power2.in' }, 1.55)
-      .to([parts.neck, parts.head, parts.tail], { rotation: 0, duration: 0.6, ease: 'power2.inOut' }, 1.6)"""
+      .to([parts.neck, parts.neck_2, parts.neck_3, parts.head, parts.tail], { rotation: 0, duration: 0.6, ease: 'power2.inOut' }, 1.6)"""
 
-# ------------------------------------------------------------------ poster scene: Cerro Barcino floodplain (src/scenery.py)
-SCENE = scenery.set_cerro_barcino()
+IDS = ["act", "body", "chest", "abdomen", "pelvis", "tail", "tail-2", "tail-3", "tail-4", "tail-5",
+       "neck", "neck-2", "neck-3", "neck-4", "head", "skull", "upper-jaw", "jaw",
+       "leg-near", "leg-far", "foreleg-near", "foreleg-far"]
 
 SPEC = dict(
-    code=C, slug="titanosaur", board="Titanosaur", name="Titanosaur", short="titanosaur", look=LOOK,
-    viewbox=(1000, 700), frag=FRAG,
-    ids=["act", "body", "tail", "neck", "head", "jaw", "leg-near", "leg-far", "foreleg-near", "foreleg-far"],
-    action=ACTION, dur=2.2, gsap=GSAP,
+    code=C, slug="titanosaur", board="Titanosaur", name="Dreadnoughtus", short="titanosaur", look=LOOK,
+    viewbox=(1000, 380), frag=FRAG, ids=IDS, action=ACTION, dur=2.2, gsap=GSAP,
     action_label="Make the titanosaur call", action_verb="make it call", page_bg="#D3DBDF",
-    scene=SCENE, title="Titanosaur", title_px=180, binomial="Patagotitan mayorum", subtitle="the titan from Patagonia",
-    paragraph="One of the largest animals ever to walk on land: a long-necked plant eater weighing around 50 to 57 tonnes by recent estimates.",
-    facts=[("31 m", "estimated length"), ("102", "million years ago"), ("2.38 m", "thigh bone")],
-    footer="Known only from La Flecha ranch in Chubut Province, Argentina, in rocks about 101.6 million years old.",
-    hint="Tap the titanosaur to make it call", skin_swatches=["#7C8AA0", "#7A8450", "#9E6B7B", "#5E7E7A"],
-    dino_top=130, midline=MIDLINE,
-    rig_parts=[
-        ("Neck, head and jaw", "#neck, #head, #jaw", NECK, (550, 196, 450, 370)),
-        ("Body", "#body", BODY, (392, 460, 362, 150)),
-        ("Tail", "#tail", TAIL, (24, 494, 424, 112)),
-        ("Near hind leg", "#leg-near", LEG_NEAR, (426, 466, 116, 188)),
-        ("Far hind leg", "#leg-far", LEG_FAR, (466, 464, 116, 188)),
-        ("Near front leg", "#foreleg-near", FORELEG_NEAR, (630, 472, 96, 182)),
-        ("Far front leg", "#foreleg-far", FORELEG_FAR, (666, 470, 96, 182)),
-    ],
-    rig_h=1080,
+    title="Dreadnoughtus", title_px=150, binomial="Dreadnoughtus schrani", subtitle="the titan from southern Patagonia",
+    paragraph="One of the most complete giant titanosaurs: about 70% of its bone types (skull aside) were found. Its mass is debated, from about 22 to 59 tonnes depending on the method.",
+    facts=[("26 m", "estimated length"), ("70%", "of bone types found, skull aside"), ("22–59 t", "mass, by method")],
+    footer="Found in the Cerro Fortaleza Formation of Santa Cruz Province, Argentina; the type individual was still growing.",
+    hint="Tap the titanosaur to make it call", skin_swatches=["#A08672", "#7C8AA0", "#9A8F7E", "#8A5A4A"],
+    dino_top=60, midline=MIDLINE, ground=F.g,
 )
 
-FONT_CSS = """<style>
-@font-face{font-family:'Big Shoulders Display';font-weight:800;src:url(/tmp/fonts/node_modules/@fontsource/big-shoulders-display/files/big-shoulders-display-latin-800-normal.woff2)}
-@font-face{font-family:'Big Shoulders Display';font-weight:900;src:url(/tmp/fonts/node_modules/@fontsource/big-shoulders-display/files/big-shoulders-display-latin-900-normal.woff2)}
-@font-face{font-family:'Public Sans';font-weight:400;src:url(/tmp/fonts/node_modules/@fontsource/public-sans/files/public-sans-latin-400-normal.woff2)}
-@font-face{font-family:'Public Sans';font-weight:500;src:url(/tmp/fonts/node_modules/@fontsource/public-sans/files/public-sans-latin-500-normal.woff2)}
-@font-face{font-family:'Public Sans';font-style:italic;font-weight:400;src:url(/tmp/fonts/node_modules/@fontsource/public-sans/files/public-sans-latin-400-italic.woff2)}
-@font-face{font-family:'Public Sans';font-weight:600;src:url(/tmp/fonts/node_modules/@fontsource/public-sans/files/public-sans-latin-500-normal.woff2)}
-</style>"""
-
-def pw_shoot(name, w, h, crop=None):
-    from playwright.sync_api import sync_playwright
-    src = K.OUT / "shots" / f"{name}.html"
-    html = src.read_text().replace("<style>", FONT_CSS + "<style>", 1)
-    tmp = K.OUT / "shots" / f"{name}-fonts.html"; tmp.write_text(html)
-    with sync_playwright() as p:
-        b = p.chromium.launch(executable_path="/usr/bin/google-chrome", args=["--no-sandbox", "--allow-file-access-from-files"])
-        pg = b.new_page(viewport={"width": w, "height": h}); pg.goto(f"file://{tmp}"); pg.wait_for_timeout(900)
-        pg.screenshot(path=str(K.OUT / "shots" / f"{name}.png")); b.close()
-
 if __name__ == "__main__":
-    frag = K.write_all(SPEC)
-    K.poster_board(SPEC, frag)
-    K.rig_board(SPEC, frag)
-    K.shoot("titanosaur-animated.svg", 1000, 700)
-    pw_shoot("titanosaur-poster", 1080, 1350)
-    pw_shoot("titanosaur-rig", 1700, 1080)
+    K.write_all(SPEC)          # this rework round: svg/ and gsap/ only; poster and rig board follow later
     print("ok")

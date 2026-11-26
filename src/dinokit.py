@@ -116,6 +116,116 @@ def eye(cx, cy, cls, r=5.5):
             f'<circle cx="{cx+1.6}" cy="{cy-1.4}" r="1" fill="{L}"></circle>'
             + piv("", cls, cx, cy, lid))
 
+# ------------------------------------------------------------------ skeleton-first construction (rework, RESEARCH_GUIDE.md)
+class Frame:
+    """metres to drawing units: x forward (to the right), y up from the ground line"""
+    def __init__(self, x0, ground, s): self.x0, self.g, self.s = x0, ground, s
+    def __call__(self, x, y): return (round(self.x0 + x * self.s, 1), round(self.g - y * self.s, 1))
+    def pts(self, ps): return [self(x, y) for x, y in ps]
+
+def _f(p): return f"{p[0]:.1f} {p[1]:.1f}"
+
+def smooth(pts, skip=()):
+    """closed Catmull-Rom curve through pts; returns (fill_d, outline_d). The outline leaves out the segments that
+    start at the indices in skip (edges tucked under a neighbouring part), so it matches the fill exactly."""
+    n, fill, out, pen = len(pts), f"M{_f(pts[0])}", "", False
+    for i in range(n):
+        p0, p1, p2, p3 = pts[(i - 1) % n], pts[i], pts[(i + 1) % n], pts[(i + 2) % n]
+        c = f" C{_f((p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6))} {_f((p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6))} {_f(p2)}"
+        fill += c
+        if i in skip: pen = False; continue
+        if not pen: out += f" M{_f(p1)}"; pen = True
+        out += c
+    return fill + " Z", out.strip()
+
+class Spine:
+    """smooth centreline through (x, y, depth) control points in drawing units, sampled by arc length;
+    neck and tail segments are cut from it so neighbouring segments share their joint"""
+    def __init__(self, ctrl, steps=24):
+        P = [(x, y) for x, y, _ in ctrl]; n = len(P); self.dense = []
+        for i in range(n - 1):
+            p0, p1, p2, p3 = P[max(i - 1, 0)], P[i], P[i + 1], P[min(i + 2, n - 1)]
+            for k in range(steps + (i == n - 2)):
+                t = k / steps; t2, t3 = t * t, t * t * t
+                xy = [0.5 * (2 * p1[j] + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3) for j in (0, 1)]
+                self.dense.append((xy[0], xy[1], ctrl[i][2] + (ctrl[i + 1][2] - ctrl[i][2]) * t))
+        self.cum = [0.0]
+        for a, b in zip(self.dense, self.dense[1:]): self.cum.append(self.cum[-1] + math.dist(a[:2], b[:2]))
+        self.length = self.cum[-1]
+    def at(self, s):
+        """(x, y, unit tangent x, unit tangent y, depth) at arc length s"""
+        s = max(0.0, min(self.length, s)); i = max(1, next((k for k, c in enumerate(self.cum) if c >= s), len(self.cum) - 1))
+        a, b = self.dense[i - 1], self.dense[i]; seg = (self.cum[i] - self.cum[i - 1]) or 1; t = (s - self.cum[i - 1]) / seg
+        tx, ty = (b[0] - a[0]) / seg, (b[1] - a[1]) / seg
+        return a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, tx, ty, a[2] + (b[2] - a[2]) * t
+    def band(self, s0, s1, n=6, cap0=0.12, cap1=0.14, tight=False):
+        """closed outline of the body between arc lengths s0 and s1 with rounded ends; returns (points,
+        distal-cap segment indices, proximal-cap segment indices). tight: an extra sample just after the proximal
+        end keeps that corner from bulging out past the segment in front at a joint."""
+        top, bot = [], []
+        ss = [s0 + (s1 - s0) * k / n for k in range(n + 1)]
+        if tight: ss[1:1] = [s0 + (s1 - s0) / (5 * n)]
+        for sk in ss:
+            x, y, tx, ty, d = self.at(sk); nx, ny = -ty, tx
+            if ny > 0: nx, ny = -nx, -ny          # the normal that points up on the page
+            top.append((x + nx * d / 2, y + ny * d / 2)); bot.append((x - nx * d / 2, y - ny * d / 2))
+        x, y, tx, ty, d = self.at(s1); end = (x + tx * d * cap1, y + ty * d * cap1)
+        x, y, tx, ty, d = self.at(s0); start = (x - tx * d * cap0, y - ty * d * cap0)
+        k = len(top) - 1
+        return top + [end] + bot[::-1] + [start], (k, k + 1), (2 * k + 2, 2 * k + 3)
+
+def rig_part(look, pts, skip=(), seam=(), seam_op=0.3, far=False, **kw):
+    """one closed anatomical shape: outline on its exposed edges, a light seam where it overlaps the next part"""
+    fill, out = smooth(pts, skip=set(skip) | set(seam))
+    sm = line(smooth(pts, skip=[i for i in range(len(pts)) if i not in seam])[1], seam_op, 2) if seam else ""
+    return skin_part(look, fill, outline=bool(out), outline_d=out, far=far, ao=far, **kw) + sm   # empty outline: draw none, not the whole shape
+
+def spine_stripes(spine, s0, s1, n, op=0.26):
+    """the series' dark back stripes, spaced along a centreline"""
+    out = []
+    for k in range(n):
+        x, y, _, _, d = spine.at(s0 + (s1 - s0) * (k + 0.5) / n)
+        out.append((round(x - d * 0.06), round(y - d * 0.47), round(d * 0.36), round(max(5, d * 0.16))))
+    return stripes(out, op)
+
+def band_belly(spine, s0, s1, n=6, share=0.3):
+    """pale underside strip of a neck or tail segment"""
+    lo, hi = [], []
+    for k in range(n + 1):
+        x, y, tx, ty, d = spine.at(s0 + (s1 - s0) * k / n); nx, ny = -ty, tx
+        if ny > 0: nx, ny = -nx, -ny
+        lo.append((x - nx * d * 0.48, y - ny * d * 0.48)); hi.append((x - nx * d * (0.5 - share), y - ny * d * (0.5 - share)))
+    return smooth(lo + hi[::-1])[0]
+
+def segmented(look, spine, cuts, ids, overlap, stripe_n, tip_cap=0.14, end="", layers=None, under=None, joint_cap=0.14, tight_joints=False):
+    """nested chain of neck or tail segments cut from one spine; each pivots at its own proximal joint and carries
+    the segments beyond it. end: markup riding on the last segment (a head). layers(k, s0, s1): extra marks on a
+    segment; under(k, s0, s1): parts behind it that move with it (plates, far-side spikes)."""
+    L = spine.length; inner = end
+    for k in reversed(range(len(cuts) - 1)):
+        s0, s1 = cuts[k] * L, cuts[k + 1] * L
+        last = k == len(cuts) - 2
+        pts, dcap, pcap = spine.band(max(0, s0 - overlap), s1, cap1=tip_cap if last else joint_cap, tight=tight_joints)
+        extra = layers(k, s0, s1) if layers else ""
+        if tight_joints and not last:          # seam drawn as an arc starting inside the edges, so nothing pokes out
+            x, y, tx, ty, d = spine.at(s1); nx, ny = -ty, tx
+            if ny > 0: nx, ny = -nx, -ny
+            a_, b_ = (x + nx * d * 0.38, y + ny * d * 0.38), (x - nx * d * 0.38, y - ny * d * 0.38)
+            c_ = (x + tx * d * joint_cap * 0.9, y + ty * d * joint_cap * 0.9)
+            extra += line(f"M{_f(a_)} Q{_f(c_)} {_f(b_)}", 0.22, 2)
+        hidden = (0, pcap[0] - 1) if tight_joints else ()     # first stretch of each edge lies under the segment (or body) in front
+        shape = rig_part(look, pts, skip=pcap + hidden + (dcap if tight_joints and not last else ()), seam=() if last or tight_joints else dcap, seam_op=0.22,
+                         belly=band_belly(spine, max(0, s0 - overlap), s1), layers=spine_stripes(spine, s0, s1, stripe_n[k]) + extra)
+        if under: shape = under(k, s0, s1) + shape
+        x, y, *_ = spine.at(s0)
+        inner = piv(ids[k], f"{look.code}-{ids[k]}", round(x, 1), round(y, 1), (shape + inner) if (last and end) else (inner + shape))
+    return inner
+
+def claw(b, ln, h):
+    """claw outline from base point b (metres), pointing forward"""
+    x, y = b
+    return [(x, y + h / 2), (x + ln * 0.55, y + h * 0.3), (x + ln, y - h * 0.3), (x + ln * 0.5, y - h * 0.22), (x, y - h / 2)]
+
 # ------------------------------------------------------------------ expressive face (big-head explainer style: host and styles.explainer)
 BLUSH, TEAR = "#E88A7A", "#7EC8E8"
 FACE_HIDDEN = ["brow", "tear", "sweat", "mouth-open", "mouth-grin", "mouth-frown", "mouth-flat"]
